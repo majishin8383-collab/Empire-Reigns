@@ -10,7 +10,7 @@
       margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background: #0b0f14; color: #e8eef7;
     }
-    .wrap { max-width: 900px; margin: 0 auto; padding: 18px; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
     .top {
       display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
       border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: 12px; margin-bottom: 14px;
@@ -18,7 +18,7 @@
     h1 { font-size: 18px; margin: 0; letter-spacing: .4px; }
     .sub { opacity: .75; font-size: 12px; }
     .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
-    @media (min-width: 760px) { .grid { grid-template-columns: 1.2fr .8fr; } }
+    @media (min-width: 820px) { .grid { grid-template-columns: 1.2fr .8fr; } }
     .card {
       background: rgba(255,255,255,.04);
       border: 1px solid rgba(255,255,255,.10);
@@ -44,6 +44,7 @@
     }
     button:hover { background: rgba(255,255,255,.10); }
     button.primary { background: rgba(120,180,255,.18); border-color: rgba(120,180,255,.35); }
+    button.gold { background: rgba(255,210,120,.14); border-color: rgba(255,210,120,.30); }
     button.danger { background: rgba(255,100,120,.14); border-color: rgba(255,100,120,.28); }
     button:disabled { opacity: .5; cursor: not-allowed; }
     .small { font-size: 12px; opacity: .8; line-height: 1.35; }
@@ -60,7 +61,7 @@
     <div class="top">
       <div>
         <h1>Compound</h1>
-        <div class="sub">Idle empire MVP — ticks, upgrades, saves, offline progress</div>
+        <div class="sub">Idle empire MVP — upgrades + save/offline + prestige</div>
       </div>
       <div class="sub" id="status">Loading…</div>
     </div>
@@ -81,7 +82,18 @@
         <div class="statRow" style="margin-top:10px;">
           <div class="stat">
             <div class="label">Operations Multiplier</div>
-            <div class="value mono" id="mult">x1.00</div>
+            <div class="value mono" id="opsMult">x1.00</div>
+          </div>
+          <div class="stat">
+            <div class="label">Prestige Multiplier</div>
+            <div class="value mono" id="prestMult">x1.00</div>
+          </div>
+        </div>
+
+        <div class="statRow" style="margin-top:10px;">
+          <div class="stat">
+            <div class="label">Equity Points (EP)</div>
+            <div class="value mono" id="ep">0</div>
           </div>
           <div class="stat">
             <div class="label">Lifetime Earned</div>
@@ -92,13 +104,29 @@
         <div class="btnRow">
           <button class="primary" id="workBtn">Do Work (+$1)</button>
           <button id="saveBtn">Save</button>
-          <button class="danger" id="resetBtn">Reset</button>
+          <button class="danger" id="resetBtn">Hard Reset</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="item">
+          <div class="itemTop">
+            <div style="font-weight:800;">Prestige: Exit & Reinvest</div>
+            <div class="pill mono" id="prestReq">$10.00K goal</div>
+          </div>
+          <div class="small" id="prestHint">
+            Reach the goal to unlock Prestige. Prestige resets your run but increases your permanent multiplier.
+          </div>
+          <div class="btnRow" style="margin-top:10px;">
+            <button class="gold" id="prestigeBtn" disabled>Prestige (Locked)</button>
+          </div>
         </div>
 
         <div class="hr"></div>
 
         <div class="small">
-          Today’s win: 4 upgrades total. Next we can add prestige (locked until a goal).
+          This is intentionally simple: Prestige gives EP based on lifetime earned, and EP boosts all future income.
+          Next: we can gate upgrades and add visuals once the loop feels right.
         </div>
       </div>
 
@@ -112,7 +140,6 @@
         </div>
 
         <div class="list">
-          <!-- 1) Assistant -->
           <div class="item">
             <div class="itemTop">
               <div style="font-weight:700;">Hire an Assistant</div>
@@ -122,33 +149,30 @@
             <button id="buyAssistantBtn">Buy</button>
           </div>
 
-          <!-- 2) Tools -->
           <div class="item">
             <div class="itemTop">
               <div style="font-weight:700;">Buy Better Tools</div>
               <div class="pill mono" id="toolsCost">$60</div>
             </div>
-            <div class="small">Multiply all income by ×1.25 per purchase. Price grows each time.</div>
+            <div class="small">Multiply income by ×1.25 per purchase. Price grows each time.</div>
             <button id="buyToolsBtn">Buy</button>
           </div>
 
-          <!-- 3) Processes -->
           <div class="item">
             <div class="itemTop">
               <div style="font-weight:700;">Standardize Processes</div>
               <div class="pill mono" id="procCost">$150</div>
             </div>
-            <div class="small">Multiply all income by ×1.40 per purchase. Price grows each time.</div>
+            <div class="small">Multiply income by ×1.40 per purchase. Price grows each time.</div>
             <button id="buyProcBtn">Buy</button>
           </div>
 
-          <!-- 4) Automation -->
           <div class="item">
             <div class="itemTop">
               <div style="font-weight:700;">Basic Automation</div>
               <div class="pill mono" id="autoCost">$400</div>
             </div>
-            <div class="small">Multiply all income by ×2.00 per purchase. Price grows each time.</div>
+            <div class="small">Multiply income by ×2.00 per purchase. Price grows each time.</div>
             <button id="buyAutoBtn">Buy</button>
           </div>
         </div>
@@ -161,33 +185,36 @@
     </div>
 
     <footer>
-      Single-file GitHub Pages MVP. We are intentionally keeping this tight.
+      Single-file GitHub Pages MVP. Prestige is now live.
     </footer>
   </div>
 
   <script>
-    // ---------- Compound v0 (single-file, GitHub Pages friendly) ----------
-    const KEY = "compound_idle_v0_1";
+    // ---------- Compound v0.2 (single-file) ----------
+    const KEY = "compound_idle_v0_2";
 
     const state = {
+      // run
       cash: 0,
       lastTickMs: Date.now(),
       lastSaveMs: Date.now(),
       lifetimeEarned: 0,
 
+      // prestige
+      ep: 0,                // Equity Points
+      prestigeCount: 0,
+
+      // upgrades owned
       owned: { assistant: 0, tools: 0, proc: 0, auto: 0 },
 
       // costs
       assistantCost: 25,
       toolsCost: 60,
       procCost: 150,
-      autoCost: 400,
-
-      // derived
-      baseIncomePerSecond: 0,
-      mult: 1
+      autoCost: 400
     };
 
+    // --- helpers ---
     function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
     function money(n) {
@@ -209,6 +236,12 @@
       }, 1200);
     }
 
+    function safeOwnedMerge() {
+      state.owned = Object.assign({ assistant:0, tools:0, proc:0, auto:0 }, state.owned || {});
+      if (typeof state.ep !== "number") state.ep = 0;
+      if (typeof state.prestigeCount !== "number") state.prestigeCount = 0;
+    }
+
     function save(silent=false) {
       state.lastSaveMs = Date.now();
       localStorage.setItem(KEY, JSON.stringify(state));
@@ -221,36 +254,79 @@
       try {
         const data = JSON.parse(raw);
         Object.assign(state, data);
-        // ensure new keys exist if older save
-        state.owned = Object.assign({ assistant:0, tools:0, proc:0, auto:0 }, state.owned || {});
+        safeOwnedMerge();
         return true;
       } catch {
         return false;
       }
     }
 
-    function resetAll() {
+    function hardReset() {
       localStorage.removeItem(KEY);
       location.reload();
     }
 
-    function computeDerived() {
-      // Base income from assistants
-      state.baseIncomePerSecond = (state.owned.assistant || 0) * 1.0;
-
-      // Multipliers stack multiplicatively
+    // --- economics ---
+    function opsMultiplier() {
       const toolsMult = Math.pow(1.25, state.owned.tools || 0);
       const procMult  = Math.pow(1.40, state.owned.proc  || 0);
       const autoMult  = Math.pow(2.00, state.owned.auto  || 0);
-      state.mult = toolsMult * procMult * autoMult;
+      return toolsMult * procMult * autoMult;
+    }
+
+    function prestigeMultiplier() {
+      // EP adds +20% per point: x(1.2^EP)
+      return Math.pow(1.2, state.ep || 0);
+    }
+
+    function baseIncomePerSecond() {
+      return (state.owned.assistant || 0) * 1.0;
     }
 
     function incomePerSecond() {
-      return state.baseIncomePerSecond * state.mult;
+      return baseIncomePerSecond() * opsMultiplier() * prestigeMultiplier();
     }
 
+    // Prestige gate: keep it reachable fast for dopamine
+    const PRESTIGE_GOAL = 10000; // $10K cash requirement
+
+    function epGainIfPrestigeNow() {
+      // Simple: EP gained based on log10(lifetimeEarned + 1)
+      // Example: $10,000 lifetime -> 4 EP (log10 10001 ~ 4.0)
+      const le = Math.max(0, state.lifetimeEarned || 0) + 1;
+      return Math.max(1, Math.floor(Math.log10(le)));
+    }
+
+    function canPrestige() {
+      return (state.cash || 0) >= PRESTIGE_GOAL;
+    }
+
+    function doPrestige() {
+      if (!canPrestige()) return;
+
+      const gain = epGainIfPrestigeNow();
+      state.ep = (state.ep || 0) + gain;
+      state.prestigeCount = (state.prestigeCount || 0) + 1;
+
+      // Reset run state, keep prestige
+      state.cash = 0;
+      state.lastTickMs = Date.now();
+      state.lastSaveMs = Date.now();
+      state.lifetimeEarned = 0;
+
+      state.owned = { assistant: 0, tools: 0, proc: 0, auto: 0 };
+      state.assistantCost = 25;
+      state.toolsCost = 60;
+      state.procCost = 150;
+      state.autoCost = 400;
+
+      save(true);
+      setStatus(`Prestiged: +${gain} EP`);
+      render();
+    }
+
+    // --- offline progress ---
     function applyOfflineProgress() {
-      computeDerived();
       const now = Date.now();
       const secondsAway = (now - (state.lastTickMs || now)) / 1000;
       const capped = clamp(secondsAway, 0, 6 * 3600);
@@ -266,10 +342,12 @@
       state.lastTickMs = now;
     }
 
-    // UI refs
+    // --- UI refs ---
     const $cash = document.getElementById("cash");
     const $ips = document.getElementById("ips");
-    const $mult = document.getElementById("mult");
+    const $opsMult = document.getElementById("opsMult");
+    const $prestMult = document.getElementById("prestMult");
+    const $ep = document.getElementById("ep");
     const $lifetime = document.getElementById("lifetime");
     const $ownedPill = document.getElementById("ownedPill");
 
@@ -283,17 +361,21 @@
     const $buyProcBtn = document.getElementById("buyProcBtn");
     const $buyAutoBtn = document.getElementById("buyAutoBtn");
 
+    const $prestigeBtn = document.getElementById("prestigeBtn");
+    const $prestReq = document.getElementById("prestReq");
+    const $prestHint = document.getElementById("prestHint");
+
     function totalOwned() {
       return (state.owned.assistant||0) + (state.owned.tools||0) + (state.owned.proc||0) + (state.owned.auto||0);
     }
 
     function render() {
-      computeDerived();
-
-      $cash.textContent = money(state.cash);
+      $cash.textContent = money(state.cash || 0);
       $ips.textContent = money(incomePerSecond()) + "/s";
-      $mult.textContent = fmtX(state.mult);
-      $lifetime.textContent = money(state.lifetimeEarned);
+      $opsMult.textContent = fmtX(opsMultiplier());
+      $prestMult.textContent = fmtX(prestigeMultiplier());
+      $ep.textContent = String(state.ep || 0);
+      $lifetime.textContent = money(state.lifetimeEarned || 0);
       $ownedPill.textContent = "Owned: " + totalOwned();
 
       $assistantCost.textContent = money(state.assistantCost);
@@ -301,15 +383,24 @@
       $procCost.textContent = money(state.procCost);
       $autoCost.textContent = money(state.autoCost);
 
-      $buyAssistantBtn.disabled = state.cash < state.assistantCost;
-      $buyToolsBtn.disabled = state.cash < state.toolsCost;
-      $buyProcBtn.disabled = state.cash < state.procCost;
-      $buyAutoBtn.disabled = state.cash < state.autoCost;
+      $buyAssistantBtn.disabled = (state.cash || 0) < state.assistantCost;
+      $buyToolsBtn.disabled = (state.cash || 0) < state.toolsCost;
+      $buyProcBtn.disabled = (state.cash || 0) < state.procCost;
+      $buyAutoBtn.disabled = (state.cash || 0) < state.autoCost;
 
-      $buyAssistantBtn.textContent = state.cash < state.assistantCost ? "Need more cash" : "Buy";
-      $buyToolsBtn.textContent = state.cash < state.toolsCost ? "Need more cash" : "Buy";
-      $buyProcBtn.textContent = state.cash < state.procCost ? "Need more cash" : "Buy";
-      $buyAutoBtn.textContent = state.cash < state.autoCost ? "Need more cash" : "Buy";
+      $buyAssistantBtn.textContent = ((state.cash || 0) < state.assistantCost) ? "Need more cash" : "Buy";
+      $buyToolsBtn.textContent = ((state.cash || 0) < state.toolsCost) ? "Need more cash" : "Buy";
+      $buyProcBtn.textContent = ((state.cash || 0) < state.procCost) ? "Need more cash" : "Buy";
+      $buyAutoBtn.textContent = ((state.cash || 0) < state.autoCost) ? "Need more cash" : "Buy";
+
+      // Prestige UI
+      $prestReq.textContent = money(PRESTIGE_GOAL) + " goal";
+      const ok = canPrestige();
+      $prestigeBtn.disabled = !ok;
+      $prestigeBtn.textContent = ok ? `Prestige (+${epGainIfPrestigeNow()} EP)` : "Prestige (Locked)";
+      $prestHint.textContent = ok
+        ? "Ready. This will reset your upgrades and cash, but permanently increase your multiplier."
+        : `Locked until Cash ≥ ${money(PRESTIGE_GOAL)}. Current EP gain if you prestige: +${epGainIfPrestigeNow()}.`;
     }
 
     function tick() {
@@ -324,11 +415,10 @@
       }
 
       if (now - state.lastSaveMs > 10000) save(true);
-
       render();
     }
 
-    // Actions
+    // --- actions ---
     document.getElementById("workBtn").addEventListener("click", () => {
       state.cash += 1;
       state.lifetimeEarned += 1;
@@ -336,47 +426,48 @@
     });
 
     document.getElementById("saveBtn").addEventListener("click", () => save(false));
-    document.getElementById("resetBtn").addEventListener("click", resetAll);
+    document.getElementById("resetBtn").addEventListener("click", hardReset);
+    $prestigeBtn.addEventListener("click", doPrestige);
 
     $buyAssistantBtn.addEventListener("click", () => {
-      if (state.cash < state.assistantCost) return;
+      if ((state.cash || 0) < state.assistantCost) return;
       state.cash -= state.assistantCost;
       state.owned.assistant = (state.owned.assistant || 0) + 1;
       state.assistantCost = Math.ceil(state.assistantCost * 1.35);
-      render();
       setStatus("Assistant hired");
+      render();
     });
 
     $buyToolsBtn.addEventListener("click", () => {
-      if (state.cash < state.toolsCost) return;
+      if ((state.cash || 0) < state.toolsCost) return;
       state.cash -= state.toolsCost;
       state.owned.tools = (state.owned.tools || 0) + 1;
       state.toolsCost = Math.ceil(state.toolsCost * 1.45);
-      render();
       setStatus("Tools upgraded");
+      render();
     });
 
     $buyProcBtn.addEventListener("click", () => {
-      if (state.cash < state.procCost) return;
+      if ((state.cash || 0) < state.procCost) return;
       state.cash -= state.procCost;
       state.owned.proc = (state.owned.proc || 0) + 1;
       state.procCost = Math.ceil(state.procCost * 1.55);
-      render();
       setStatus("Processes standardized");
+      render();
     });
 
     $buyAutoBtn.addEventListener("click", () => {
-      if (state.cash < state.autoCost) return;
+      if ((state.cash || 0) < state.autoCost) return;
       state.cash -= state.autoCost;
       state.owned.auto = (state.owned.auto || 0) + 1;
       state.autoCost = Math.ceil(state.autoCost * 1.70);
-      render();
       setStatus("Automation installed");
+      render();
     });
 
-    // Boot
+    // --- boot ---
     const hadSave = load();
-    computeDerived();
+    safeOwnedMerge();
     applyOfflineProgress();
     render();
     setStatus(hadSave ? "Loaded" : "New run");
