@@ -112,8 +112,61 @@
       font-weight: 900;
       letter-spacing: .3px;
       font-size: 12px;
+      z-index: 15;
     }
     .neonSign span { opacity:.75; font-weight:700; margin-left:6px; }
+
+    /* ====== HOTSPOTS ====== */
+    .hotspots {
+      position:absolute;
+      left:0; right:0;
+      top: 0; bottom: 0;
+      z-index: 14;
+      pointer-events: none;
+    }
+    .hotspot {
+      pointer-events: auto;
+      position: absolute;
+      width: 120px; height: 76px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
+      gap: 2px;
+      cursor: pointer;
+      user-select:none;
+      transition: transform .08s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+    }
+    .hotspot:hover { background: rgba(255,255,255,.06); }
+    .hotspot:active { transform: translateY(1px) scale(.99); }
+
+    .hotspot .t { font-weight: 950; font-size: 12px; letter-spacing: .2px; }
+    .hotspot .s { font-size: 10px; opacity: .75; font-weight: 800; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 1px rgba(120,180,255,.18), 0 0 0 rgba(120,180,255,.0); }
+      70% { box-shadow: 0 0 0 1px rgba(120,180,255,.32), 0 0 22px rgba(120,180,255,.14); }
+      100% { box-shadow: 0 0 0 1px rgba(120,180,255,.18), 0 0 0 rgba(120,180,255,.0); }
+    }
+    .hotspot.canBuy {
+      border-color: rgba(120,180,255,.40);
+      animation: pulse 1.25s ease-in-out infinite;
+    }
+
+    /* Positioning hotspots relative to the road/ground area */
+    .hs-office     { left: 12vw;  bottom: calc(18vh + 110px); }
+    .hs-warehouse  { left: 34vw;  bottom: calc(18vh + 70px);  }
+    .hs-garage     { left: 56vw;  bottom: calc(18vh + 85px);  }
+    .hs-shop       { left: 76vw;  bottom: calc(18vh + 120px); }
+
+    @media (max-width: 520px){
+      .hotspot { width: 102px; height: 70px; border-radius: 16px; }
+      .hs-office     { left: 6vw;  }
+      .hs-warehouse  { left: 28vw; }
+      .hs-garage     { left: 52vw; }
+      .hs-shop       { left: 74vw; }
+    }
 
     /* ====== UI OVERLAY ====== */
     .hud {
@@ -260,6 +313,43 @@
     /* spacing so bottom nav doesn't cover content */
     .padBottom{ height: 86px; }
 
+    /* ====== MODAL ====== */
+    .modalBackdrop{
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      z-index: 90;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 14px;
+    }
+    .modal{
+      width: min(640px, 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.55);
+      box-shadow: 0 30px 110px rgba(0,0,0,.55);
+      overflow: hidden;
+    }
+    .modalHeader{
+      padding: 12px 12px;
+      display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+    .modalHeader .title{
+      font-weight: 950;
+      letter-spacing: .2px;
+    }
+    .modalBody{ padding: 12px; display:grid; gap:10px; }
+    .modalRow{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .modalClose{
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 950;
+    }
   </style>
 </head>
 <body>
@@ -272,6 +362,22 @@
     <div class="layer ground">
       <div class="road"></div>
       <div class="neonSign">COMPOUND<span id="sceneNote">starting out</span></div>
+    </div>
+
+    <!-- Hotspots (active only on World screen, but they can stay visible) -->
+    <div class="hotspots" aria-label="World hotspots">
+      <div class="hotspot hs-office" id="hsOffice" role="button" tabindex="0" aria-label="Office hotspot">
+        <div class="t">Office</div><div class="s">Hire</div>
+      </div>
+      <div class="hotspot hs-warehouse" id="hsWarehouse" role="button" tabindex="0" aria-label="Warehouse hotspot">
+        <div class="t">Warehouse</div><div class="s">Tools</div>
+      </div>
+      <div class="hotspot hs-garage" id="hsGarage" role="button" tabindex="0" aria-label="Garage hotspot">
+        <div class="t">Garage</div><div class="s">Processes</div>
+      </div>
+      <div class="hotspot hs-shop" id="hsShop" role="button" tabindex="0" aria-label="Shop hotspot">
+        <div class="t">Shop</div><div class="s">Automation</div>
+      </div>
     </div>
 
     <!-- HUD -->
@@ -323,7 +429,7 @@
                     <button id="quickHireBtn" style="min-width:160px;">Hire (Quick)</button>
                   </div>
                   <div class="small" style="margin-top:8px;">
-                    Tip: Upgrades glow when affordable. New Run keeps EP. Hard Reset wipes everything.
+                    Tap hotspots in the world to open location menus (Office/Warehouse/Garage/Shop).
                   </div>
                   <div class="hr"></div>
                   <div class="btnRow">
@@ -432,10 +538,10 @@
               <div class="item" style="margin-top:12px;">
                 <div class="itemTop">
                   <div style="font-weight:900;">System</div>
-                  <div class="pill mono" id="verPill">v0.7</div>
+                  <div class="pill mono" id="verPill">v0.8</div>
                 </div>
                 <div class="small" style="margin-top:8px;">
-                  Cartoon-style background is now active. Next step is swapping in real art assets (SVG/PNGs) and adding character/location buttons.
+                  Hotspots are live. Next we can add: character sprites, building upgrades, and distinct menus per location.
                 </div>
               </div>
             </div>
@@ -454,10 +560,34 @@
         <button class="navBtn" id="navPr"><div>Prestige</div><div class="k">Reset → grow</div></button>
       </div>
     </div>
+
+    <!-- Hotspot Modal -->
+    <div class="modalBackdrop" id="modalBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Location menu">
+        <div class="modalHeader">
+          <div>
+            <div class="title" id="modalTitle">Location</div>
+            <div class="small" id="modalSubtitle">…</div>
+          </div>
+          <button class="modalClose" id="modalClose">Close</button>
+        </div>
+        <div class="modalBody">
+          <div class="modalRow">
+            <div class="small" id="modalDesc">…</div>
+            <div class="pill mono" id="modalOwned">Owned: 0</div>
+          </div>
+          <div class="modalRow">
+            <div class="pill mono" id="modalCost">$0</div>
+            <button id="modalBuyBtn">Buy</button>
+          </div>
+          <div class="small" id="modalLockNote" style="opacity:.8;"> </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const KEY = "compound_idle_v0_7";
+    const KEY = "compound_idle_v0_8";
 
     const state = {
       cash: 0,
@@ -621,6 +751,23 @@
 
     const $sceneNote = document.getElementById("sceneNote");
 
+    // hotspots
+    const $hsOffice = document.getElementById("hsOffice");
+    const $hsWarehouse = document.getElementById("hsWarehouse");
+    const $hsGarage = document.getElementById("hsGarage");
+    const $hsShop = document.getElementById("hsShop");
+
+    // modal
+    const $modalBackdrop = document.getElementById("modalBackdrop");
+    const $modalClose = document.getElementById("modalClose");
+    const $modalTitle = document.getElementById("modalTitle");
+    const $modalSubtitle = document.getElementById("modalSubtitle");
+    const $modalDesc = document.getElementById("modalDesc");
+    const $modalOwned = document.getElementById("modalOwned");
+    const $modalCost = document.getElementById("modalCost");
+    const $modalBuyBtn = document.getElementById("modalBuyBtn");
+    const $modalLockNote = document.getElementById("modalLockNote");
+
     function totalOwned(){
       return (state.owned.assistant||0) + (state.owned.tools||0) + (state.owned.proc||0) + (state.owned.auto||0);
     }
@@ -701,6 +848,15 @@
       // quick hire glow
       const q = document.getElementById("quickHireBtn");
       q.classList.toggle("canBuy", canBuyA);
+
+      // hotspot glow states (affordable + unlocked)
+      $hsOffice.classList.toggle("canBuy", canBuyA);
+      $hsWarehouse.classList.toggle("canBuy", unlockedTools() && cash >= state.toolsCost);
+      $hsGarage.classList.toggle("canBuy", unlockedProc() && cash >= state.procCost);
+      $hsShop.classList.toggle("canBuy", unlockedAuto() && cash >= state.autoCost);
+
+      // keep modal content current while open
+      if ($modalBackdrop.style.display === "flex") renderModalCurrent();
     }
 
     function tick(){
@@ -725,6 +881,148 @@
       onSuccess();
       return true;
     }
+
+    // ====== Hotspot Modal Logic ======
+    let modalContext = null; // "assistant" | "tools" | "proc" | "auto"
+
+    function openModal(kind){
+      modalContext = kind;
+      $modalBackdrop.style.display = "flex";
+      $modalBackdrop.setAttribute("aria-hidden", "false");
+      renderModalCurrent();
+    }
+
+    function closeModal(){
+      $modalBackdrop.style.display = "none";
+      $modalBackdrop.setAttribute("aria-hidden", "true");
+      modalContext = null;
+    }
+
+    function renderModalCurrent(){
+      const cash = state.cash || 0;
+
+      if (modalContext === "assistant") {
+        $modalTitle.textContent = "Office";
+        $modalSubtitle.textContent = "Hiring & staffing";
+        $modalDesc.textContent = "Hire assistants to generate steady income per second.";
+        $modalOwned.textContent = "Owned: " + (state.owned.assistant || 0);
+        $modalCost.textContent = "Cost: " + money(state.assistantCost);
+
+        const can = cash >= state.assistantCost;
+        $modalBuyBtn.disabled = !can;
+        $modalBuyBtn.textContent = can ? "Hire Assistant" : "Need more cash";
+        $modalLockNote.textContent = "Unlock: available immediately.";
+      }
+
+      if (modalContext === "tools") {
+        $modalTitle.textContent = "Warehouse";
+        $modalSubtitle.textContent = "Equipment & output";
+        $modalDesc.textContent = "Better tools multiply your income. Unlocks after hiring 1 assistant.";
+        $modalOwned.textContent = "Owned: " + (state.owned.tools || 0);
+        $modalCost.textContent = "Cost: " + money(state.toolsCost);
+
+        const unlocked = unlockedTools();
+        const can = unlocked && cash >= state.toolsCost;
+        $modalBuyBtn.disabled = !can;
+        $modalBuyBtn.textContent = !unlocked ? "Locked" : (can ? "Buy Tools" : "Need more cash");
+        $modalLockNote.textContent = unlocked ? "Unlocked." : "Locked until: 1 assistant.";
+      }
+
+      if (modalContext === "proc") {
+        $modalTitle.textContent = "Garage";
+        $modalSubtitle.textContent = "Systems & workflow";
+        $modalDesc.textContent = "Standardized processes multiply income. Unlocks after buying 1 tools.";
+        $modalOwned.textContent = "Owned: " + (state.owned.proc || 0);
+        $modalCost.textContent = "Cost: " + money(state.procCost);
+
+        const unlocked = unlockedProc();
+        const can = unlocked && cash >= state.procCost;
+        $modalBuyBtn.disabled = !can;
+        $modalBuyBtn.textContent = !unlocked ? "Locked" : (can ? "Standardize" : "Need more cash");
+        $modalLockNote.textContent = unlocked ? "Unlocked." : "Locked until: 1 tools.";
+      }
+
+      if (modalContext === "auto") {
+        $modalTitle.textContent = "Shop";
+        $modalSubtitle.textContent = "Automation & scaling";
+        $modalDesc.textContent = "Automation multiplies income hard. Unlocks after buying 1 process.";
+        $modalOwned.textContent = "Owned: " + (state.owned.auto || 0);
+        $modalCost.textContent = "Cost: " + money(state.autoCost);
+
+        const unlocked = unlockedAuto();
+        const can = unlocked && cash >= state.autoCost;
+        $modalBuyBtn.disabled = !can;
+        $modalBuyBtn.textContent = !unlocked ? "Locked" : (can ? "Install Automation" : "Need more cash");
+        $modalLockNote.textContent = unlocked ? "Unlocked." : "Locked until: 1 process.";
+      }
+    }
+
+    $modalClose.addEventListener("click", closeModal);
+    $modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === $modalBackdrop) closeModal();
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && $modalBackdrop.style.display === "flex") closeModal();
+    });
+
+    $modalBuyBtn.addEventListener("click", () => {
+      if (!modalContext) return;
+
+      if (modalContext === "assistant") {
+        const ok = tryBuy(state.assistantCost, () => {
+          state.owned.assistant = (state.owned.assistant||0) + 1;
+          state.assistantCost = Math.ceil(state.assistantCost * 1.35);
+          setStatus("Assistant hired");
+        });
+        if (ok) render();
+        return;
+      }
+
+      if (modalContext === "tools") {
+        if (!unlockedTools()) return;
+        const ok = tryBuy(state.toolsCost, () => {
+          state.owned.tools = (state.owned.tools||0) + 1;
+          state.toolsCost = Math.ceil(state.toolsCost * 1.45);
+          setStatus("Tools upgraded");
+        });
+        if (ok) render();
+        return;
+      }
+
+      if (modalContext === "proc") {
+        if (!unlockedProc()) return;
+        const ok = tryBuy(state.procCost, () => {
+          state.owned.proc = (state.owned.proc||0) + 1;
+          state.procCost = Math.ceil(state.procCost * 1.55);
+          setStatus("Processes standardized");
+        });
+        if (ok) render();
+        return;
+      }
+
+      if (modalContext === "auto") {
+        if (!unlockedAuto()) return;
+        const ok = tryBuy(state.autoCost, () => {
+          state.owned.auto = (state.owned.auto||0) + 1;
+          state.autoCost = Math.ceil(state.autoCost * 1.70);
+          setStatus("Automation installed");
+        });
+        if (ok) render();
+        return;
+      }
+    });
+
+    // Hotspot clicks
+    function bindHotspot(el, kind){
+      el.addEventListener("click", () => openModal(kind));
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(kind); }
+      });
+    }
+    bindHotspot($hsOffice, "assistant");
+    bindHotspot($hsWarehouse, "tools");
+    bindHotspot($hsGarage, "proc");
+    bindHotspot($hsShop, "auto");
 
     // events
     document.getElementById("workBtn").addEventListener("click", (e) => {
@@ -811,6 +1109,10 @@
       navWorld.classList.toggle("active", isW);
       navUp.classList.toggle("active", isU);
       navPr.classList.toggle("active", isP);
+
+      // optional: hide hotspots when not in World
+      document.querySelector(".hotspots").style.display = isW ? "block" : "none";
+      if (!isW && $modalBackdrop.style.display === "flex") closeModal();
     }
 
     tabWorld.addEventListener("click", () => setActive("world"));
@@ -827,6 +1129,7 @@
     applyOfflineProgress();
     render();
     setStatus(hadSave ? "Loaded" : "New run");
+    setActive("world");
     setInterval(tick, 100);
   </script>
 </body>
