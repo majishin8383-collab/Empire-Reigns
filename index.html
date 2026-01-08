@@ -13,8 +13,9 @@
       min-height: 100vh;
       position: relative;
       overflow: hidden;
-      background: radial-gradient(900px 420px at 18% 18%, rgba(255,255,255,.08), transparent 55%),
-                  linear-gradient(180deg, #0c1320 0%, #0a0f18 18%, #081018 100%);
+      background:
+        radial-gradient(900px 420px at 18% 18%, rgba(255,255,255,.08), transparent 55%),
+        linear-gradient(180deg, #0c1320 0%, #0a0f18 18%, #081018 100%);
     }
     .layer { position:absolute; left:0; right:0; }
     .sky {
@@ -51,7 +52,6 @@
         radial-gradient(660px 280px at 60% 100%, rgba(55,140,100,.26), transparent 72%),
         radial-gradient(540px 240px at 92% 100%, rgba(60,150,105,.24), transparent 72%);
     }
-
     .town {
       top: 54vh; height: 18vh;
       background:
@@ -116,59 +116,7 @@
     }
     .neonSign span { opacity:.75; font-weight:700; margin-left:6px; }
 
-    /* ====== HOTSPOTS ====== */
-    .hotspots {
-      position:absolute;
-      left:0; right:0;
-      top: 0; bottom: 0;
-      z-index: 14;
-      pointer-events: none;
-    }
-    .hotspot {
-      pointer-events: auto;
-      position: absolute;
-      width: 120px; height: 76px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.22);
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-      display:flex; flex-direction:column; justify-content:center; align-items:center;
-      gap: 2px;
-      cursor: pointer;
-      user-select:none;
-      transition: transform .08s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
-    }
-    .hotspot:hover { background: rgba(255,255,255,.06); }
-    .hotspot:active { transform: translateY(1px) scale(.99); }
-
-    .hotspot .t { font-weight: 950; font-size: 12px; letter-spacing: .2px; }
-    .hotspot .s { font-size: 10px; opacity: .75; font-weight: 800; }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 1px rgba(120,180,255,.18), 0 0 0 rgba(120,180,255,.0); }
-      70% { box-shadow: 0 0 0 1px rgba(120,180,255,.32), 0 0 22px rgba(120,180,255,.14); }
-      100% { box-shadow: 0 0 0 1px rgba(120,180,255,.18), 0 0 0 rgba(120,180,255,.0); }
-    }
-    .hotspot.canBuy {
-      border-color: rgba(120,180,255,.40);
-      animation: pulse 1.25s ease-in-out infinite;
-    }
-
-    /* Positioning hotspots relative to the road/ground area */
-    .hs-office     { left: 12vw;  bottom: calc(18vh + 110px); }
-    .hs-warehouse  { left: 34vw;  bottom: calc(18vh + 70px);  }
-    .hs-garage     { left: 56vw;  bottom: calc(18vh + 85px);  }
-    .hs-shop       { left: 76vw;  bottom: calc(18vh + 120px); }
-
-    @media (max-width: 520px){
-      .hotspot { width: 102px; height: 70px; border-radius: 16px; }
-      .hs-office     { left: 6vw;  }
-      .hs-warehouse  { left: 28vw; }
-      .hs-garage     { left: 52vw; }
-      .hs-shop       { left: 74vw; }
-    }
-
-    /* ====== UI OVERLAY ====== */
+    /* ====== HUD ====== */
     .hud {
       position: sticky; top: 0; z-index: 30;
       background: rgba(7,10,15,.70);
@@ -182,7 +130,6 @@
     .brand { display:flex; gap:10px; align-items:baseline; }
     .brand h1 { font-size: 16px; margin:0; letter-spacing:.35px; }
     .brand .sub { font-size:12px; opacity:.75; }
-
     .hudStats { display:flex; gap:10px; flex-wrap:wrap; }
     .hudPill{
       display:flex; flex-direction:column; gap:2px;
@@ -194,6 +141,7 @@
     .hudPill .k { font-size:10px; opacity:.7; }
     .hudPill .v { font-size:14px; font-weight:900; font-variant-numeric: tabular-nums; }
 
+    /* ====== UI PANELS ====== */
     .wrap{ max-width:1120px; margin:0 auto; padding:18px; position: relative; z-index: 20; }
     .panel {
       background: rgba(0,0,0,.30);
@@ -256,7 +204,7 @@
       box-shadow: 0 0 0 1px rgba(120,180,255,.18);
     }
 
-    /* Upgrade cards */
+    /* Cards */
     .list{ display:grid; gap:10px; }
     .item{
       display:grid; gap:6px;
@@ -309,46 +257,135 @@
     }
     .navBtn .k{ font-size:10px; opacity:.7; font-weight:800; }
     .navBtn.active{ background: rgba(120,180,255,.16); border-color: rgba(120,180,255,.35); }
-
-    /* spacing so bottom nav doesn't cover content */
     .padBottom{ height: 86px; }
 
-    /* ====== MODAL ====== */
-    .modalBackdrop{
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(6px);
-      z-index: 90;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 14px;
+    /* ====== BUILDINGS (SVG hotspots) ====== */
+    .buildings {
+      position:absolute; left:0; right:0; top:0; bottom:0;
+      z-index: 16;
+      pointer-events: none;
     }
-    .modal{
-      width: min(640px, 100%);
+    .building {
+      pointer-events: auto;
+      position:absolute;
+      width: 160px; height: 130px;
+      cursor: pointer;
+      user-select: none;
+      transform-origin: center bottom;
+      transition: transform .08s ease, filter .12s ease;
+      filter: drop-shadow(0 14px 18px rgba(0,0,0,.25));
+    }
+    .building:hover { transform: translateY(-1px) scale(1.01); }
+    .building:active { transform: translateY(0px) scale(.99); }
+
+    .b-office    { left: 8vw;  bottom: calc(18vh + 42px); }
+    .b-warehouse { left: 30vw; bottom: calc(18vh + 20px); }
+    .b-garage    { left: 54vw; bottom: calc(18vh + 24px); }
+    .b-shop      { left: 76vw; bottom: calc(18vh + 50px); }
+
+    @media (max-width: 540px){
+      .building{ width: 138px; height: 116px; }
+      .b-office    { left: 2vw;  }
+      .b-warehouse { left: 25vw; }
+      .b-garage    { left: 50vw; }
+      .b-shop      { left: 72vw; }
+    }
+
+    @keyframes glowPulse {
+      0% { filter: drop-shadow(0 14px 18px rgba(0,0,0,.25)) drop-shadow(0 0 0 rgba(120,180,255,0)); }
+      70% { filter: drop-shadow(0 14px 18px rgba(0,0,0,.25)) drop-shadow(0 0 18px rgba(120,180,255,.18)); }
+      100% { filter: drop-shadow(0 14px 18px rgba(0,0,0,.25)) drop-shadow(0 0 0 rgba(120,180,255,0)); }
+    }
+    .building.canBuy { animation: glowPulse 1.25s ease-in-out infinite; }
+
+    /* ====== PEOPLE (sprites near office) ====== */
+    .people {
+      position:absolute;
+      left: 10vw;
+      bottom: calc(18vh + 6px);
+      width: 220px;
+      height: 70px;
+      z-index: 17;
+      pointer-events:none;
+      display:flex;
+      gap: 6px;
+      align-items:flex-end;
+      flex-wrap:wrap;
+    }
+    @media (max-width:540px){
+      .people{ left: 4vw; width: 180px; }
+    }
+    .person {
+      width: 18px; height: 34px;
+      border-radius: 999px;
+      position: relative;
+      opacity: .95;
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,.25));
+    }
+    .person:before{
+      content:"";
+      position:absolute; left:50%; top:2px;
+      width: 14px; height: 14px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .person:after{
+      content:"";
+      position:absolute; left:50%; bottom:0;
+      width: 18px; height: 22px;
+      transform: translateX(-50%);
+      border-radius: 10px;
+      background: rgba(120,180,255,.12);
+      border: 1px solid rgba(120,180,255,.18);
+    }
+
+    /* ====== SPEECH BUBBLE PANEL (anchored) ====== */
+    .bubble {
+      position:absolute;
+      z-index: 50;
+      width: min(340px, 86vw);
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,.14);
       background: rgba(0,0,0,.55);
-      box-shadow: 0 30px 110px rgba(0,0,0,.55);
-      overflow: hidden;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 30px 90px rgba(0,0,0,.55);
+      display:none;
+      overflow:hidden;
     }
-    .modalHeader{
-      padding: 12px 12px;
-      display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+    .bubble:after{
+      content:"";
+      position:absolute;
+      width: 14px; height: 14px;
+      background: rgba(0,0,0,.55);
+      border-left: 1px solid rgba(255,255,255,.14);
+      border-bottom: 1px solid rgba(255,255,255,.14);
+      transform: rotate(45deg);
+      left: var(--tailX, 28px);
+      bottom: -7px;
+    }
+    .bubbleHeader{
+      padding: 10px 12px;
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
       border-bottom: 1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
     }
-    .modalHeader .title{
-      font-weight: 950;
-      letter-spacing: .2px;
-    }
-    .modalBody{ padding: 12px; display:grid; gap:10px; }
-    .modalRow{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
-    .modalClose{
+    .bubbleHeader .title{ font-weight: 950; letter-spacing: .2px; }
+    .bubbleBody{ padding: 12px; display:grid; gap:10px; }
+    .bubbleRow{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .bubbleClose{
       padding: 8px 10px;
       border-radius: 12px;
       font-size: 12px;
       font-weight: 950;
+    }
+    .backdropClickCatcher{
+      position:absolute;
+      inset:0;
+      z-index: 45;
+      display:none;
+      background: transparent;
     }
   </style>
 </head>
@@ -359,24 +396,147 @@
     <div class="layer hillsBack"></div>
     <div class="layer hillsFront"></div>
     <div class="layer town"></div>
+
     <div class="layer ground">
       <div class="road"></div>
       <div class="neonSign">COMPOUND<span id="sceneNote">starting out</span></div>
     </div>
 
-    <!-- Hotspots (active only on World screen, but they can stay visible) -->
-    <div class="hotspots" aria-label="World hotspots">
-      <div class="hotspot hs-office" id="hsOffice" role="button" tabindex="0" aria-label="Office hotspot">
-        <div class="t">Office</div><div class="s">Hire</div>
+    <!-- BUILDINGS -->
+    <div class="buildings" aria-label="World buildings">
+      <!-- Office -->
+      <div class="building b-office" id="bOffice" role="button" tabindex="0" aria-label="Office">
+        <svg viewBox="0 0 180 150" width="100%" height="100%">
+          <defs>
+            <linearGradient id="roofA" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="rgba(255,210,120,.20)"/>
+              <stop offset="1" stop-color="rgba(0,0,0,.20)"/>
+            </linearGradient>
+          </defs>
+          <!-- roof -->
+          <path d="M18 56 L90 18 L162 56 L152 62 L90 30 L28 62 Z" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.16)" stroke-width="2"/>
+          <!-- building -->
+          <rect x="26" y="58" width="128" height="78" rx="14" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.16)" stroke-width="2"/>
+          <rect x="26" y="58" width="128" height="78" rx="14" fill="url(#roofA)" opacity=".55"/>
+          <!-- sign -->
+          <rect x="44" y="46" width="92" height="20" rx="10" fill="rgba(120,180,255,.16)" stroke="rgba(120,180,255,.24)" stroke-width="2"/>
+          <text x="90" y="60" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,255,255,.85)">OFFICE</text>
+          <!-- door -->
+          <rect x="80" y="86" width="24" height="48" rx="10" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+          <circle cx="98" cy="110" r="2" fill="rgba(255,210,120,.35)"/>
+          <!-- windows -->
+          <g opacity=".9">
+            <rect x="44" y="78" width="20" height="16" rx="6" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.20)" stroke-width="2"/>
+            <rect x="116" y="78" width="20" height="16" rx="6" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.20)" stroke-width="2"/>
+            <rect x="44" y="104" width="20" height="16" rx="6" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
+            <rect x="116" y="104" width="20" height="16" rx="6" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
+          </g>
+          <!-- base -->
+          <rect x="34" y="132" width="112" height="10" rx="6" fill="rgba(0,0,0,.24)" opacity=".65"/>
+        </svg>
       </div>
-      <div class="hotspot hs-warehouse" id="hsWarehouse" role="button" tabindex="0" aria-label="Warehouse hotspot">
-        <div class="t">Warehouse</div><div class="s">Tools</div>
+
+      <!-- Warehouse -->
+      <div class="building b-warehouse" id="bWarehouse" role="button" tabindex="0" aria-label="Warehouse">
+        <svg viewBox="0 0 180 150" width="100%" height="100%">
+          <!-- roof -->
+          <rect x="26" y="40" width="128" height="22" rx="12" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+          <!-- building -->
+          <rect x="22" y="56" width="136" height="84" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+          <!-- stripes -->
+          <g opacity=".55">
+            <rect x="30" y="66" width="120" height="10" rx="6" fill="rgba(255,210,120,.10)"/>
+            <rect x="30" y="82" width="120" height="10" rx="6" fill="rgba(120,180,255,.10)"/>
+          </g>
+          <!-- big door -->
+          <rect x="58" y="78" width="64" height="60" rx="14" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+          <path d="M90 78 V138" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+          <!-- sign -->
+          <rect x="40" y="46" width="100" height="18" rx="9" fill="rgba(255,210,120,.14)" stroke="rgba(255,210,120,.22)" stroke-width="2"/>
+          <text x="90" y="59" text-anchor="middle" font-size="9" font-weight="900" fill="rgba(255,255,255,.85)">WAREHOUSE</text>
+          <!-- pallets -->
+          <rect x="28" y="120" width="20" height="16" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+          <rect x="132" y="120" width="20" height="16" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+        </svg>
       </div>
-      <div class="hotspot hs-garage" id="hsGarage" role="button" tabindex="0" aria-label="Garage hotspot">
-        <div class="t">Garage</div><div class="s">Processes</div>
+
+      <!-- Garage -->
+      <div class="building b-garage" id="bGarage" role="button" tabindex="0" aria-label="Garage">
+        <svg viewBox="0 0 180 150" width="100%" height="100%">
+          <!-- roof -->
+          <path d="M30 62 L90 28 L150 62 L140 70 L90 40 L40 70 Z" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+          <!-- building -->
+          <rect x="30" y="64" width="120" height="76" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+          <!-- garage door -->
+          <rect x="52" y="86" width="76" height="54" rx="14" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+          <g opacity=".7">
+            <path d="M56 98 H124" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+            <path d="M56 110 H124" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+            <path d="M56 122 H124" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+          </g>
+          <!-- wrench icon -->
+          <circle cx="46" cy="96" r="12" fill="rgba(120,180,255,.12)" stroke="rgba(120,180,255,.20)" stroke-width="2"/>
+          <path d="M42 96 L50 104" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M50 90 L56 96" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round"/>
+          <!-- sign -->
+          <rect x="54" y="52" width="72" height="18" rx="9" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.22)" stroke-width="2"/>
+          <text x="90" y="65" text-anchor="middle" font-size="9" font-weight="900" fill="rgba(255,255,255,.85)">GARAGE</text>
+        </svg>
       </div>
-      <div class="hotspot hs-shop" id="hsShop" role="button" tabindex="0" aria-label="Shop hotspot">
-        <div class="t">Shop</div><div class="s">Automation</div>
+
+      <!-- Shop -->
+      <div class="building b-shop" id="bShop" role="button" tabindex="0" aria-label="Shop">
+        <svg viewBox="0 0 180 150" width="100%" height="100%">
+          <!-- awning -->
+          <path d="M28 60 H152 L146 80 H34 Z" fill="rgba(255,210,120,.16)" stroke="rgba(255,210,120,.22)" stroke-width="2"/>
+          <g opacity=".45">
+            <path d="M40 60 L36 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+            <path d="M56 60 L52 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+            <path d="M72 60 L68 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+            <path d="M88 60 L84 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+            <path d="M104 60 L100 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+            <path d="M120 60 L116 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+            <path d="M136 60 L132 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+          </g>
+          <!-- building -->
+          <rect x="30" y="78" width="120" height="62" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+          <!-- window -->
+          <rect x="44" y="92" width="48" height="30" rx="12" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
+          <!-- door -->
+          <rect x="104" y="92" width="32" height="48" rx="12" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+          <circle cx="128" cy="118" r="2" fill="rgba(255,210,120,.35)"/>
+          <!-- sign -->
+          <rect x="52" y="44" width="76" height="20" rx="10" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+          <text x="90" y="58" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,255,255,.85)">SHOP</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- PEOPLE -->
+    <div class="people" id="peopleRow" aria-label="People near office"></div>
+
+    <!-- Click catcher for bubble (so clicking off closes) -->
+    <div class="backdropClickCatcher" id="bubbleCatcher"></div>
+
+    <!-- Speech bubble anchored UI -->
+    <div class="bubble" id="bubble" role="dialog" aria-modal="false" aria-label="Location panel">
+      <div class="bubbleHeader">
+        <div>
+          <div class="title" id="bubbleTitle">Office</div>
+          <div class="small" id="bubbleSubtitle">Hiring & staffing</div>
+        </div>
+        <button class="bubbleClose" id="bubbleClose">Close</button>
+      </div>
+      <div class="bubbleBody">
+        <div class="bubbleRow">
+          <div class="small" id="bubbleDesc">…</div>
+          <div class="pill mono" id="bubbleOwned">Owned: 0</div>
+        </div>
+        <div class="bubbleRow">
+          <div class="pill mono" id="bubbleCost">$0</div>
+          <button id="bubbleBuyBtn">Buy</button>
+        </div>
+        <div class="small" id="bubbleLockNote" style="opacity:.85;"></div>
       </div>
     </div>
 
@@ -429,7 +589,7 @@
                     <button id="quickHireBtn" style="min-width:160px;">Hire (Quick)</button>
                   </div>
                   <div class="small" style="margin-top:8px;">
-                    Tap hotspots in the world to open location menus (Office/Warehouse/Garage/Shop).
+                    Tap buildings in the world to buy upgrades through an in-world speech bubble.
                   </div>
                   <div class="hr"></div>
                   <div class="btnRow">
@@ -538,10 +698,10 @@
               <div class="item" style="margin-top:12px;">
                 <div class="itemTop">
                   <div style="font-weight:900;">System</div>
-                  <div class="pill mono" id="verPill">v0.8</div>
+                  <div class="pill mono" id="verPill">v0.9</div>
                 </div>
                 <div class="small" style="margin-top:8px;">
-                  Hotspots are live. Next we can add: character sprites, building upgrades, and distinct menus per location.
+                  Buildings + people are now in-world. Next: make buildings visually upgrade (levels) + add animated props.
                 </div>
               </div>
             </div>
@@ -560,34 +720,10 @@
         <button class="navBtn" id="navPr"><div>Prestige</div><div class="k">Reset → grow</div></button>
       </div>
     </div>
-
-    <!-- Hotspot Modal -->
-    <div class="modalBackdrop" id="modalBackdrop" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-label="Location menu">
-        <div class="modalHeader">
-          <div>
-            <div class="title" id="modalTitle">Location</div>
-            <div class="small" id="modalSubtitle">…</div>
-          </div>
-          <button class="modalClose" id="modalClose">Close</button>
-        </div>
-        <div class="modalBody">
-          <div class="modalRow">
-            <div class="small" id="modalDesc">…</div>
-            <div class="pill mono" id="modalOwned">Owned: 0</div>
-          </div>
-          <div class="modalRow">
-            <div class="pill mono" id="modalCost">$0</div>
-            <button id="modalBuyBtn">Buy</button>
-          </div>
-          <div class="small" id="modalLockNote" style="opacity:.8;"> </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script>
-    const KEY = "compound_idle_v0_8";
+    const KEY = "compound_idle_v0_9";
 
     const state = {
       cash: 0,
@@ -675,6 +811,7 @@
       state.toolsCost = 60;
       state.procCost = 150;
       state.autoCost = 400;
+      closeBubble();
       save(true);
       setStatus("New run started");
       render();
@@ -713,7 +850,7 @@
       setTimeout(() => d.remove(), 650);
     }
 
-    // UI refs
+    // refs
     const $hudCash = document.getElementById("hudCash");
     const $hudIps = document.getElementById("hudIps");
     const $hudEp = document.getElementById("hudEp");
@@ -751,22 +888,29 @@
 
     const $sceneNote = document.getElementById("sceneNote");
 
-    // hotspots
-    const $hsOffice = document.getElementById("hsOffice");
-    const $hsWarehouse = document.getElementById("hsWarehouse");
-    const $hsGarage = document.getElementById("hsGarage");
-    const $hsShop = document.getElementById("hsShop");
+    // buildings
+    const $bOffice = document.getElementById("bOffice");
+    const $bWarehouse = document.getElementById("bWarehouse");
+    const $bGarage = document.getElementById("bGarage");
+    const $bShop = document.getElementById("bShop");
 
-    // modal
-    const $modalBackdrop = document.getElementById("modalBackdrop");
-    const $modalClose = document.getElementById("modalClose");
-    const $modalTitle = document.getElementById("modalTitle");
-    const $modalSubtitle = document.getElementById("modalSubtitle");
-    const $modalDesc = document.getElementById("modalDesc");
-    const $modalOwned = document.getElementById("modalOwned");
-    const $modalCost = document.getElementById("modalCost");
-    const $modalBuyBtn = document.getElementById("modalBuyBtn");
-    const $modalLockNote = document.getElementById("modalLockNote");
+    // people
+    const $peopleRow = document.getElementById("peopleRow");
+
+    // bubble
+    const $bubble = document.getElementById("bubble");
+    const $bubbleCatcher = document.getElementById("bubbleCatcher");
+    const $bubbleClose = document.getElementById("bubbleClose");
+    const $bubbleTitle = document.getElementById("bubbleTitle");
+    const $bubbleSubtitle = document.getElementById("bubbleSubtitle");
+    const $bubbleDesc = document.getElementById("bubbleDesc");
+    const $bubbleOwned = document.getElementById("bubbleOwned");
+    const $bubbleCost = document.getElementById("bubbleCost");
+    const $bubbleBuyBtn = document.getElementById("bubbleBuyBtn");
+    const $bubbleLockNote = document.getElementById("bubbleLockNote");
+
+    let bubbleContext = null; // "assistant" | "tools" | "proc" | "auto"
+    let bubbleAnchorEl = null;
 
     function totalOwned(){
       return (state.owned.assistant||0) + (state.owned.tools||0) + (state.owned.proc||0) + (state.owned.auto||0);
@@ -785,6 +929,127 @@
         btnEl.textContent = canBuy ? "Buy" : "Need more cash";
         noteEl.textContent = noteText;
         rowEl.classList.toggle("canBuy", canBuy);
+      }
+    }
+
+    function renderPeople(){
+      // show up to 12 assistants as little sprites; first sprite acts like "you"
+      const count = Math.min(12, state.owned.assistant || 0);
+      $peopleRow.innerHTML = "";
+      for(let i=0;i<count;i++){
+        const p = document.createElement("div");
+        p.className = "person";
+        // subtle variation: shift shirt tint using CSS variable via inline style (still theme-consistent)
+        const t = 0.10 + (i % 4) * 0.03; // 0.10..0.19
+        p.style.setProperty("--t", t);
+        // slight stagger height vibe
+        p.style.transform = `translateY(${(i%3)*2}px)`;
+        $peopleRow.appendChild(p);
+      }
+      // small tweak: make first person feel like "manager" if exists
+      if (count > 0){
+        const first = $peopleRow.firstElementChild;
+        if (first){
+          first.style.height = "36px";
+          first.style.opacity = "1";
+        }
+      }
+    }
+
+    function positionBubble(){
+      if(!bubbleAnchorEl) return;
+      const anchor = bubbleAnchorEl.getBoundingClientRect();
+      const bubble = $bubble.getBoundingClientRect();
+      const padding = 12;
+
+      // place bubble above the building, centered-ish
+      let left = anchor.left + anchor.width * 0.5 - bubble.width * 0.5;
+      left = Math.max(padding, Math.min(window.innerWidth - bubble.width - padding, left));
+
+      let top = anchor.top - bubble.height - 10;
+      // if not enough room above, place below
+      if (top < 70) top = anchor.bottom + 10;
+
+      $bubble.style.left = left + "px";
+      $bubble.style.top = top + "px";
+
+      // set tail X toward anchor center
+      const anchorCenterX = anchor.left + anchor.width * 0.5;
+      const tailX = clamp(anchorCenterX - left, 18, bubble.width - 18);
+      $bubble.style.setProperty("--tailX", tailX + "px");
+    }
+
+    function openBubble(kind, anchorEl){
+      bubbleContext = kind;
+      bubbleAnchorEl = anchorEl;
+      $bubble.style.display = "block";
+      $bubbleCatcher.style.display = "block";
+      renderBubbleCurrent();
+      // wait a frame for bubble size, then position
+      requestAnimationFrame(() => {
+        positionBubble();
+      });
+    }
+
+    function closeBubble(){
+      $bubble.style.display = "none";
+      $bubbleCatcher.style.display = "none";
+      bubbleContext = null;
+      bubbleAnchorEl = null;
+    }
+
+    function renderBubbleCurrent(){
+      const cash = state.cash || 0;
+
+      if (bubbleContext === "assistant"){
+        $bubbleTitle.textContent = "Office";
+        $bubbleSubtitle.textContent = "Hiring & staffing";
+        $bubbleDesc.textContent = "Hire assistants to generate steady income per second.";
+        $bubbleOwned.textContent = "Owned: " + (state.owned.assistant||0);
+        $bubbleCost.textContent = "Cost: " + money(state.assistantCost);
+        const can = cash >= state.assistantCost;
+        $bubbleBuyBtn.disabled = !can;
+        $bubbleBuyBtn.textContent = can ? "Hire Assistant" : "Need more cash";
+        $bubbleLockNote.textContent = "Unlock: available immediately.";
+      }
+
+      if (bubbleContext === "tools"){
+        $bubbleTitle.textContent = "Warehouse";
+        $bubbleSubtitle.textContent = "Equipment & output";
+        $bubbleDesc.textContent = "Better tools multiply income. Unlocks after hiring 1 assistant.";
+        $bubbleOwned.textContent = "Owned: " + (state.owned.tools||0);
+        $bubbleCost.textContent = "Cost: " + money(state.toolsCost);
+        const unlocked = unlockedTools();
+        const can = unlocked && cash >= state.toolsCost;
+        $bubbleBuyBtn.disabled = !can;
+        $bubbleBuyBtn.textContent = !unlocked ? "Locked" : (can ? "Buy Tools" : "Need more cash");
+        $bubbleLockNote.textContent = unlocked ? "Unlocked." : "Locked until: 1 assistant.";
+      }
+
+      if (bubbleContext === "proc"){
+        $bubbleTitle.textContent = "Garage";
+        $bubbleSubtitle.textContent = "Systems & workflow";
+        $bubbleDesc.textContent = "Standardize processes multiply income. Unlocks after buying 1 tools.";
+        $bubbleOwned.textContent = "Owned: " + (state.owned.proc||0);
+        $bubbleCost.textContent = "Cost: " + money(state.procCost);
+        const unlocked = unlockedProc();
+        const can = unlocked && cash >= state.procCost;
+        $bubbleBuyBtn.disabled = !can;
+        $bubbleBuyBtn.textContent = !unlocked ? "Locked" : (can ? "Standardize" : "Need more cash");
+        $bubbleLockNote.textContent = unlocked ? "Unlocked." : "Locked until: 1 tools.";
+      }
+
+      if (bubbleContext === "auto"){
+        $bubbleTitle.textContent = "Shop";
+        $bubbleSubtitle.textContent = "Automation & scaling";
+        $bubbleDesc.textContent = "Automation multiplies income hard. Unlocks after buying 1 process.";
+        $bubbleOwned.textContent = "Owned: " + (state.owned.auto||0);
+        $bubbleCost.textContent = "Cost: " + money(state.autoCost);
+        const unlocked = unlockedAuto();
+        const can = unlocked && cash >= state.autoCost;
+        $bubbleBuyBtn.disabled = !can;
+        $bubbleBuyBtn.textContent = !unlocked ? "Locked" : (can ? "Install Automation" : "Need more cash");
+        $bubbleLockNote.textContent = unlocked ? "Unlocked." : "Locked until: 1 process.";
       }
     }
 
@@ -821,9 +1086,8 @@
       const ok = canPrestige();
       $prestigeBtn.disabled = !ok;
       $prestigeBtn.textContent = ok ? `Prestige (+${epGainIfPrestigeNow()} EP)` : "Prestige (Locked)";
-      $prestHint.textContent = ok
-        ? "Ready. Prestige resets your run but permanently boosts income."
-        : `Prestige unlocks at ${money(PRESTIGE_GOAL)} cash.`;
+      $prestHint.textContent = ok ? "Ready. Prestige resets your run but permanently boosts income."
+                                 : `Prestige unlocks at ${money(PRESTIGE_GOAL)} cash.`;
 
       const ops = opsMultiplier();
       const pm = prestigeMultiplier();
@@ -849,14 +1113,19 @@
       const q = document.getElementById("quickHireBtn");
       q.classList.toggle("canBuy", canBuyA);
 
-      // hotspot glow states (affordable + unlocked)
-      $hsOffice.classList.toggle("canBuy", canBuyA);
-      $hsWarehouse.classList.toggle("canBuy", unlockedTools() && cash >= state.toolsCost);
-      $hsGarage.classList.toggle("canBuy", unlockedProc() && cash >= state.procCost);
-      $hsShop.classList.toggle("canBuy", unlockedAuto() && cash >= state.autoCost);
+      // building glow states (affordable + unlocked)
+      $bOffice.classList.toggle("canBuy", canBuyA);
+      $bWarehouse.classList.toggle("canBuy", unlockedTools() && cash >= state.toolsCost);
+      $bGarage.classList.toggle("canBuy", unlockedProc() && cash >= state.procCost);
+      $bShop.classList.toggle("canBuy", unlockedAuto() && cash >= state.autoCost);
 
-      // keep modal content current while open
-      if ($modalBackdrop.style.display === "flex") renderModalCurrent();
+      renderPeople();
+
+      // keep bubble fresh
+      if ($bubble.style.display === "block"){
+        renderBubbleCurrent();
+        positionBubble();
+      }
     }
 
     function tick(){
@@ -882,147 +1151,74 @@
       return true;
     }
 
-    // ====== Hotspot Modal Logic ======
-    let modalContext = null; // "assistant" | "tools" | "proc" | "auto"
-
-    function openModal(kind){
-      modalContext = kind;
-      $modalBackdrop.style.display = "flex";
-      $modalBackdrop.setAttribute("aria-hidden", "false");
-      renderModalCurrent();
-    }
-
-    function closeModal(){
-      $modalBackdrop.style.display = "none";
-      $modalBackdrop.setAttribute("aria-hidden", "true");
-      modalContext = null;
-    }
-
-    function renderModalCurrent(){
-      const cash = state.cash || 0;
-
-      if (modalContext === "assistant") {
-        $modalTitle.textContent = "Office";
-        $modalSubtitle.textContent = "Hiring & staffing";
-        $modalDesc.textContent = "Hire assistants to generate steady income per second.";
-        $modalOwned.textContent = "Owned: " + (state.owned.assistant || 0);
-        $modalCost.textContent = "Cost: " + money(state.assistantCost);
-
-        const can = cash >= state.assistantCost;
-        $modalBuyBtn.disabled = !can;
-        $modalBuyBtn.textContent = can ? "Hire Assistant" : "Need more cash";
-        $modalLockNote.textContent = "Unlock: available immediately.";
-      }
-
-      if (modalContext === "tools") {
-        $modalTitle.textContent = "Warehouse";
-        $modalSubtitle.textContent = "Equipment & output";
-        $modalDesc.textContent = "Better tools multiply your income. Unlocks after hiring 1 assistant.";
-        $modalOwned.textContent = "Owned: " + (state.owned.tools || 0);
-        $modalCost.textContent = "Cost: " + money(state.toolsCost);
-
-        const unlocked = unlockedTools();
-        const can = unlocked && cash >= state.toolsCost;
-        $modalBuyBtn.disabled = !can;
-        $modalBuyBtn.textContent = !unlocked ? "Locked" : (can ? "Buy Tools" : "Need more cash");
-        $modalLockNote.textContent = unlocked ? "Unlocked." : "Locked until: 1 assistant.";
-      }
-
-      if (modalContext === "proc") {
-        $modalTitle.textContent = "Garage";
-        $modalSubtitle.textContent = "Systems & workflow";
-        $modalDesc.textContent = "Standardized processes multiply income. Unlocks after buying 1 tools.";
-        $modalOwned.textContent = "Owned: " + (state.owned.proc || 0);
-        $modalCost.textContent = "Cost: " + money(state.procCost);
-
-        const unlocked = unlockedProc();
-        const can = unlocked && cash >= state.procCost;
-        $modalBuyBtn.disabled = !can;
-        $modalBuyBtn.textContent = !unlocked ? "Locked" : (can ? "Standardize" : "Need more cash");
-        $modalLockNote.textContent = unlocked ? "Unlocked." : "Locked until: 1 tools.";
-      }
-
-      if (modalContext === "auto") {
-        $modalTitle.textContent = "Shop";
-        $modalSubtitle.textContent = "Automation & scaling";
-        $modalDesc.textContent = "Automation multiplies income hard. Unlocks after buying 1 process.";
-        $modalOwned.textContent = "Owned: " + (state.owned.auto || 0);
-        $modalCost.textContent = "Cost: " + money(state.autoCost);
-
-        const unlocked = unlockedAuto();
-        const can = unlocked && cash >= state.autoCost;
-        $modalBuyBtn.disabled = !can;
-        $modalBuyBtn.textContent = !unlocked ? "Locked" : (can ? "Install Automation" : "Need more cash");
-        $modalLockNote.textContent = unlocked ? "Unlocked." : "Locked until: 1 process.";
-      }
-    }
-
-    $modalClose.addEventListener("click", closeModal);
-    $modalBackdrop.addEventListener("click", (e) => {
-      if (e.target === $modalBackdrop) closeModal();
-    });
+    // bubble interactions
+    $bubbleClose.addEventListener("click", closeBubble);
+    $bubbleCatcher.addEventListener("click", closeBubble);
     window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && $modalBackdrop.style.display === "flex") closeModal();
+      if (e.key === "Escape" && $bubble.style.display === "block") closeBubble();
+    });
+    window.addEventListener("resize", () => {
+      if ($bubble.style.display === "block") positionBubble();
     });
 
-    $modalBuyBtn.addEventListener("click", () => {
-      if (!modalContext) return;
+    $bubbleBuyBtn.addEventListener("click", (e) => {
+      if(!bubbleContext) return;
 
-      if (modalContext === "assistant") {
+      if (bubbleContext === "assistant"){
         const ok = tryBuy(state.assistantCost, () => {
           state.owned.assistant = (state.owned.assistant||0) + 1;
           state.assistantCost = Math.ceil(state.assistantCost * 1.35);
           setStatus("Assistant hired");
-        });
-        if (ok) render();
+        }, e);
+        if(ok) render();
         return;
       }
 
-      if (modalContext === "tools") {
-        if (!unlockedTools()) return;
+      if (bubbleContext === "tools"){
+        if(!unlockedTools()) return;
         const ok = tryBuy(state.toolsCost, () => {
           state.owned.tools = (state.owned.tools||0) + 1;
           state.toolsCost = Math.ceil(state.toolsCost * 1.45);
           setStatus("Tools upgraded");
-        });
-        if (ok) render();
+        }, e);
+        if(ok) render();
         return;
       }
 
-      if (modalContext === "proc") {
-        if (!unlockedProc()) return;
+      if (bubbleContext === "proc"){
+        if(!unlockedProc()) return;
         const ok = tryBuy(state.procCost, () => {
           state.owned.proc = (state.owned.proc||0) + 1;
           state.procCost = Math.ceil(state.procCost * 1.55);
           setStatus("Processes standardized");
-        });
-        if (ok) render();
+        }, e);
+        if(ok) render();
         return;
       }
 
-      if (modalContext === "auto") {
-        if (!unlockedAuto()) return;
+      if (bubbleContext === "auto"){
+        if(!unlockedAuto()) return;
         const ok = tryBuy(state.autoCost, () => {
           state.owned.auto = (state.owned.auto||0) + 1;
           state.autoCost = Math.ceil(state.autoCost * 1.70);
           setStatus("Automation installed");
-        });
-        if (ok) render();
+        }, e);
+        if(ok) render();
         return;
       }
     });
 
-    // Hotspot clicks
-    function bindHotspot(el, kind){
-      el.addEventListener("click", () => openModal(kind));
+    // building binds
+    function bindBuilding(el, kind){
+      el.addEventListener("click", () => openBubble(kind, el));
       el.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(kind); }
+        if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openBubble(kind, el); }
       });
     }
-    bindHotspot($hsOffice, "assistant");
-    bindHotspot($hsWarehouse, "tools");
-    bindHotspot($hsGarage, "proc");
-    bindHotspot($hsShop, "auto");
+    bindBuilding($bOffice, "assistant");
+    bindBuilding($bWarehouse, "tools");
+    bindBuilding($bGarage, "proc");
+    bindBuilding($bShop, "auto");
 
     // events
     document.getElementById("workBtn").addEventListener("click", (e) => {
@@ -1045,41 +1241,11 @@
     document.getElementById("resetBtn").addEventListener("click", hardReset);
     document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
 
-    $buyAssistantBtn.addEventListener("click", (e) => {
-      tryBuy(state.assistantCost, () => {
-        state.owned.assistant = (state.owned.assistant||0) + 1;
-        state.assistantCost = Math.ceil(state.assistantCost * 1.35);
-        setStatus("Assistant hired");
-      }, e);
-      render();
-    });
-    $buyToolsBtn.addEventListener("click", (e) => {
-      if(!unlockedTools()) return;
-      tryBuy(state.toolsCost, () => {
-        state.owned.tools = (state.owned.tools||0) + 1;
-        state.toolsCost = Math.ceil(state.toolsCost * 1.45);
-        setStatus("Tools upgraded");
-      }, e);
-      render();
-    });
-    $buyProcBtn.addEventListener("click", (e) => {
-      if(!unlockedProc()) return;
-      tryBuy(state.procCost, () => {
-        state.owned.proc = (state.owned.proc||0) + 1;
-        state.procCost = Math.ceil(state.procCost * 1.55);
-        setStatus("Processes standardized");
-      }, e);
-      render();
-    });
-    $buyAutoBtn.addEventListener("click", (e) => {
-      if(!unlockedAuto()) return;
-      tryBuy(state.autoCost, () => {
-        state.owned.auto = (state.owned.auto||0) + 1;
-        state.autoCost = Math.ceil(state.autoCost * 1.70);
-        setStatus("Automation installed");
-      }, e);
-      render();
-    });
+    // upgrades tab buttons (kept for debugging + redundancy)
+    $buyAssistantBtn.addEventListener("click", (e) => { openBubble("assistant", $bOffice); });
+    $buyToolsBtn.addEventListener("click", (e) => { openBubble("tools", $bWarehouse); });
+    $buyProcBtn.addEventListener("click", (e) => { openBubble("proc", $bGarage); });
+    $buyAutoBtn.addEventListener("click", (e) => { openBubble("auto", $bShop); });
 
     // tabs + bottom nav
     const tabWorld = document.getElementById("tabWorld");
@@ -1110,9 +1276,10 @@
       navUp.classList.toggle("active", isU);
       navPr.classList.toggle("active", isP);
 
-      // optional: hide hotspots when not in World
-      document.querySelector(".hotspots").style.display = isW ? "block" : "none";
-      if (!isW && $modalBackdrop.style.display === "flex") closeModal();
+      // show buildings+people only on world screen
+      document.querySelector(".buildings").style.display = isW ? "block" : "none";
+      document.getElementById("peopleRow").style.display = isW ? "flex" : "none";
+      if (!isW) closeBubble();
     }
 
     tabWorld.addEventListener("click", () => setActive("world"));
