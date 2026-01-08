@@ -53,6 +53,14 @@
     .item { display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.08); }
     .itemTop { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
     .pill { font-size: 11px; opacity: .75; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); }
+    .locked {
+      opacity: .55;
+      filter: saturate(.6);
+    }
+    .lockNote {
+      font-size: 12px;
+      opacity: .75;
+    }
     footer { margin-top: 18px; opacity: .65; font-size: 11px; }
   </style>
 </head>
@@ -61,7 +69,7 @@
     <div class="top">
       <div>
         <h1>Compound</h1>
-        <div class="sub">Idle empire MVP — upgrades + save/offline + prestige</div>
+        <div class="sub">Idle empire MVP — upgrades + prestige + gating</div>
       </div>
       <div class="sub" id="status">Loading…</div>
     </div>
@@ -125,8 +133,7 @@
         <div class="hr"></div>
 
         <div class="small">
-          This is intentionally simple: Prestige gives EP based on lifetime earned, and EP boosts all future income.
-          Next: we can gate upgrades and add visuals once the loop feels right.
+          Upgrade unlock order is now enforced so the game teaches itself.
         </div>
       </div>
 
@@ -134,13 +141,14 @@
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
           <div>
             <div style="font-weight:750;">Upgrades</div>
-            <div class="sub">Small set, strong impact</div>
+            <div class="sub">Unlock in order (less overwhelm)</div>
           </div>
           <div class="pill mono" id="ownedPill">Owned: 0</div>
         </div>
 
         <div class="list">
-          <div class="item">
+          <!-- Assistant (always available) -->
+          <div class="item" id="rowAssistant">
             <div class="itemTop">
               <div style="font-weight:700;">Hire an Assistant</div>
               <div class="pill mono" id="assistantCost">$25</div>
@@ -149,31 +157,37 @@
             <button id="buyAssistantBtn">Buy</button>
           </div>
 
-          <div class="item">
+          <!-- Tools (requires 1 assistant) -->
+          <div class="item locked" id="rowTools">
             <div class="itemTop">
               <div style="font-weight:700;">Buy Better Tools</div>
               <div class="pill mono" id="toolsCost">$60</div>
             </div>
             <div class="small">Multiply income by ×1.25 per purchase. Price grows each time.</div>
-            <button id="buyToolsBtn">Buy</button>
+            <div class="lockNote" id="toolsLockNote">Locked: hire 1 assistant</div>
+            <button id="buyToolsBtn" disabled>Locked</button>
           </div>
 
-          <div class="item">
+          <!-- Processes (requires 2 tools) -->
+          <div class="item locked" id="rowProc">
             <div class="itemTop">
               <div style="font-weight:700;">Standardize Processes</div>
               <div class="pill mono" id="procCost">$150</div>
             </div>
             <div class="small">Multiply income by ×1.40 per purchase. Price grows each time.</div>
-            <button id="buyProcBtn">Buy</button>
+            <div class="lockNote" id="procLockNote">Locked: buy 2 tools</div>
+            <button id="buyProcBtn" disabled>Locked</button>
           </div>
 
-          <div class="item">
+          <!-- Automation (requires 1 process) -->
+          <div class="item locked" id="rowAuto">
             <div class="itemTop">
               <div style="font-weight:700;">Basic Automation</div>
               <div class="pill mono" id="autoCost">$400</div>
             </div>
             <div class="small">Multiply income by ×2.00 per purchase. Price grows each time.</div>
-            <button id="buyAutoBtn">Buy</button>
+            <div class="lockNote" id="autoLockNote">Locked: buy 1 process</div>
+            <button id="buyAutoBtn" disabled>Locked</button>
           </div>
         </div>
 
@@ -185,36 +199,32 @@
     </div>
 
     <footer>
-      Single-file GitHub Pages MVP. Prestige is now live.
+      Single-file GitHub Pages MVP. Next: tiny visual panel (office grows) if you want.
     </footer>
   </div>
 
   <script>
-    // ---------- Compound v0.2 (single-file) ----------
-    const KEY = "compound_idle_v0_2";
+    // ---------- Compound v0.3 (single-file) ----------
+    const KEY = "compound_idle_v0_3";
 
     const state = {
-      // run
       cash: 0,
       lastTickMs: Date.now(),
       lastSaveMs: Date.now(),
       lifetimeEarned: 0,
 
-      // prestige
-      ep: 0,                // Equity Points
+      ep: 0,
       prestigeCount: 0,
 
-      // upgrades owned
       owned: { assistant: 0, tools: 0, proc: 0, auto: 0 },
 
-      // costs
       assistantCost: 25,
       toolsCost: 60,
       procCost: 150,
       autoCost: 400
     };
 
-    // --- helpers ---
+    // helpers
     function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
     function money(n) {
@@ -236,7 +246,7 @@
       }, 1200);
     }
 
-    function safeOwnedMerge() {
+    function safeMerge() {
       state.owned = Object.assign({ assistant:0, tools:0, proc:0, auto:0 }, state.owned || {});
       if (typeof state.ep !== "number") state.ep = 0;
       if (typeof state.prestigeCount !== "number") state.prestigeCount = 0;
@@ -254,7 +264,7 @@
       try {
         const data = JSON.parse(raw);
         Object.assign(state, data);
-        safeOwnedMerge();
+        safeMerge();
         return true;
       } catch {
         return false;
@@ -266,7 +276,7 @@
       location.reload();
     }
 
-    // --- economics ---
+    // economics
     function opsMultiplier() {
       const toolsMult = Math.pow(1.25, state.owned.tools || 0);
       const procMult  = Math.pow(1.40, state.owned.proc  || 0);
@@ -275,7 +285,6 @@
     }
 
     function prestigeMultiplier() {
-      // EP adds +20% per point: x(1.2^EP)
       return Math.pow(1.2, state.ep || 0);
     }
 
@@ -287,18 +296,19 @@
       return baseIncomePerSecond() * opsMultiplier() * prestigeMultiplier();
     }
 
-    // Prestige gate: keep it reachable fast for dopamine
-    const PRESTIGE_GOAL = 10000; // $10K cash requirement
+    // gating rules
+    function unlockedTools() { return (state.owned.assistant || 0) >= 1; }
+    function unlockedProc()  { return (state.owned.tools || 0) >= 2; }
+    function unlockedAuto()  { return (state.owned.proc || 0) >= 1; }
+
+    // Prestige
+    const PRESTIGE_GOAL = 10000;
+
+    function canPrestige() { return (state.cash || 0) >= PRESTIGE_GOAL; }
 
     function epGainIfPrestigeNow() {
-      // Simple: EP gained based on log10(lifetimeEarned + 1)
-      // Example: $10,000 lifetime -> 4 EP (log10 10001 ~ 4.0)
       const le = Math.max(0, state.lifetimeEarned || 0) + 1;
       return Math.max(1, Math.floor(Math.log10(le)));
-    }
-
-    function canPrestige() {
-      return (state.cash || 0) >= PRESTIGE_GOAL;
     }
 
     function doPrestige() {
@@ -308,7 +318,7 @@
       state.ep = (state.ep || 0) + gain;
       state.prestigeCount = (state.prestigeCount || 0) + 1;
 
-      // Reset run state, keep prestige
+      // reset run (keep EP)
       state.cash = 0;
       state.lastTickMs = Date.now();
       state.lastSaveMs = Date.now();
@@ -325,7 +335,6 @@
       render();
     }
 
-    // --- offline progress ---
     function applyOfflineProgress() {
       const now = Date.now();
       const secondsAway = (now - (state.lastTickMs || now)) / 1000;
@@ -342,7 +351,7 @@
       state.lastTickMs = now;
     }
 
-    // --- UI refs ---
+    // UI refs
     const $cash = document.getElementById("cash");
     const $ips = document.getElementById("ips");
     const $opsMult = document.getElementById("opsMult");
@@ -361,12 +370,35 @@
     const $buyProcBtn = document.getElementById("buyProcBtn");
     const $buyAutoBtn = document.getElementById("buyAutoBtn");
 
+    const $rowTools = document.getElementById("rowTools");
+    const $rowProc = document.getElementById("rowProc");
+    const $rowAuto = document.getElementById("rowAuto");
+
+    const $toolsLockNote = document.getElementById("toolsLockNote");
+    const $procLockNote = document.getElementById("procLockNote");
+    const $autoLockNote = document.getElementById("autoLockNote");
+
     const $prestigeBtn = document.getElementById("prestigeBtn");
     const $prestReq = document.getElementById("prestReq");
     const $prestHint = document.getElementById("prestHint");
 
     function totalOwned() {
       return (state.owned.assistant||0) + (state.owned.tools||0) + (state.owned.proc||0) + (state.owned.auto||0);
+    }
+
+    function setRowLocked(rowEl, btnEl, noteEl, locked, noteText, canBuy) {
+      if (locked) {
+        rowEl.classList.add("locked");
+        btnEl.disabled = true;
+        btnEl.textContent = "Locked";
+        noteEl.textContent = noteText;
+        noteEl.style.display = "block";
+      } else {
+        rowEl.classList.remove("locked");
+        noteEl.style.display = "none";
+        btnEl.disabled = !canBuy;
+        btnEl.textContent = canBuy ? "Buy" : "Need more cash";
+      }
     }
 
     function render() {
@@ -383,15 +415,35 @@
       $procCost.textContent = money(state.procCost);
       $autoCost.textContent = money(state.autoCost);
 
+      // Assistant always available
       $buyAssistantBtn.disabled = (state.cash || 0) < state.assistantCost;
-      $buyToolsBtn.disabled = (state.cash || 0) < state.toolsCost;
-      $buyProcBtn.disabled = (state.cash || 0) < state.procCost;
-      $buyAutoBtn.disabled = (state.cash || 0) < state.autoCost;
-
       $buyAssistantBtn.textContent = ((state.cash || 0) < state.assistantCost) ? "Need more cash" : "Buy";
-      $buyToolsBtn.textContent = ((state.cash || 0) < state.toolsCost) ? "Need more cash" : "Buy";
-      $buyProcBtn.textContent = ((state.cash || 0) < state.procCost) ? "Need more cash" : "Buy";
-      $buyAutoBtn.textContent = ((state.cash || 0) < state.autoCost) ? "Need more cash" : "Buy";
+
+      // Gated upgrades
+      const toolsUnlocked = unlockedTools();
+      const procUnlocked = unlockedProc();
+      const autoUnlocked = unlockedAuto();
+
+      setRowLocked(
+        $rowTools, $buyToolsBtn, $toolsLockNote,
+        !toolsUnlocked,
+        "Locked: hire 1 assistant",
+        (state.cash || 0) >= state.toolsCost
+      );
+
+      setRowLocked(
+        $rowProc, $buyProcBtn, $procLockNote,
+        !procUnlocked,
+        "Locked: buy 2 tools",
+        (state.cash || 0) >= state.procCost
+      );
+
+      setRowLocked(
+        $rowAuto, $buyAutoBtn, $autoLockNote,
+        !autoUnlocked,
+        "Locked: buy 1 process",
+        (state.cash || 0) >= state.autoCost
+      );
 
       // Prestige UI
       $prestReq.textContent = money(PRESTIGE_GOAL) + " goal";
@@ -418,7 +470,7 @@
       render();
     }
 
-    // --- actions ---
+    // actions
     document.getElementById("workBtn").addEventListener("click", () => {
       state.cash += 1;
       state.lifetimeEarned += 1;
@@ -427,7 +479,7 @@
 
     document.getElementById("saveBtn").addEventListener("click", () => save(false));
     document.getElementById("resetBtn").addEventListener("click", hardReset);
-    $prestigeBtn.addEventListener("click", doPrestige);
+    document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
 
     $buyAssistantBtn.addEventListener("click", () => {
       if ((state.cash || 0) < state.assistantCost) return;
@@ -439,6 +491,7 @@
     });
 
     $buyToolsBtn.addEventListener("click", () => {
+      if (!unlockedTools()) return;
       if ((state.cash || 0) < state.toolsCost) return;
       state.cash -= state.toolsCost;
       state.owned.tools = (state.owned.tools || 0) + 1;
@@ -448,6 +501,7 @@
     });
 
     $buyProcBtn.addEventListener("click", () => {
+      if (!unlockedProc()) return;
       if ((state.cash || 0) < state.procCost) return;
       state.cash -= state.procCost;
       state.owned.proc = (state.owned.proc || 0) + 1;
@@ -457,6 +511,7 @@
     });
 
     $buyAutoBtn.addEventListener("click", () => {
+      if (!unlockedAuto()) return;
       if ((state.cash || 0) < state.autoCost) return;
       state.cash -= state.autoCost;
       state.owned.auto = (state.owned.auto || 0) + 1;
@@ -465,9 +520,9 @@
       render();
     });
 
-    // --- boot ---
+    // boot
     const hadSave = load();
-    safeOwnedMerge();
+    safeMerge();
     applyOfflineProgress();
     render();
     setStatus(hadSave ? "Loaded" : "New run");
