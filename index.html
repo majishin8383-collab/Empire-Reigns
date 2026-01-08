@@ -195,14 +195,13 @@
     <div class="top">
       <div>
         <h1>Compound</h1>
-        <div class="sub">Idle empire MVP — visuals (tiny office) + upgrades + prestige</div>
+        <div class="sub">Idle empire MVP — New Run (keeps EP) + visuals + upgrades + prestige</div>
       </div>
       <div class="sub" id="status">Loading…</div>
     </div>
 
     <div class="grid">
       <div class="card">
-        <!-- Visual Scene + Stats -->
         <div class="sceneWrap">
           <div class="scene">
             <div class="sceneTitle">
@@ -268,7 +267,8 @@
             <div class="btnRow">
               <button class="primary" id="workBtn">Do Work (+$1)</button>
               <button id="saveBtn">Save</button>
-              <button class="danger" id="resetBtn">Hard Reset</button>
+              <button id="newRunBtn" title="Resets cash and upgrades but keeps EP">New Run</button>
+              <button class="danger" id="resetBtn" title="Wipes everything including EP">Hard Reset</button>
             </div>
           </div>
         </div>
@@ -288,7 +288,7 @@
 
         <div class="hr"></div>
         <div class="small">
-          Visuals are intentionally minimal (CSS-only) so we can ship fast. Next we can add more “office growth” states.
+          New Run is your safe test-reset. Hard Reset is the nuke.
         </div>
       </div>
 
@@ -296,13 +296,12 @@
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
           <div>
             <div style="font-weight:750;">Upgrades</div>
-            <div class="sub">Unlock in order</div>
+            <div class="sub">Unlock in order (1 unlocks next)</div>
           </div>
           <div class="pill mono" id="ownedPill">Owned: 0</div>
         </div>
 
         <div class="list">
-          <!-- Assistant always available -->
           <div class="item" id="rowAssistant">
             <div class="itemTop">
               <div style="font-weight:700;">Hire an Assistant</div>
@@ -312,7 +311,6 @@
             <button id="buyAssistantBtn">Buy</button>
           </div>
 
-          <!-- Tools requires 1 assistant -->
           <div class="item locked" id="rowTools">
             <div class="itemTop">
               <div style="font-weight:700;">Buy Better Tools</div>
@@ -323,7 +321,6 @@
             <button id="buyToolsBtn" disabled>Locked</button>
           </div>
 
-          <!-- Processes requires 1 tool -->
           <div class="item locked" id="rowProc">
             <div class="itemTop">
               <div style="font-weight:700;">Standardize Processes</div>
@@ -334,7 +331,6 @@
             <button id="buyProcBtn" disabled>Locked</button>
           </div>
 
-          <!-- Automation requires 1 process -->
           <div class="item locked" id="rowAuto">
             <div class="itemTop">
               <div style="font-weight:700;">Basic Automation</div>
@@ -354,12 +350,12 @@
     </div>
 
     <footer>
-      Single-file GitHub Pages MVP. Visual layer added.
+      Single-file GitHub Pages MVP. New Run added.
     </footer>
   </div>
 
   <script>
-    const KEY = "compound_idle_v0_4";
+    const KEY = "compound_idle_v0_5";
 
     const state = {
       cash: 0,
@@ -379,7 +375,6 @@
     };
 
     function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-
     function money(n) {
       const abs = Math.abs(n);
       if (abs >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
@@ -387,7 +382,6 @@
       if (abs >= 1e3) return "$" + (n/1e3).toFixed(2) + "K";
       return "$" + n.toFixed(2);
     }
-
     function fmtX(n) { return "x" + n.toFixed(2); }
 
     function setStatus(msg) {
@@ -429,7 +423,7 @@
       location.reload();
     }
 
-    // economics
+    // --- economics ---
     function opsMultiplier() {
       const toolsMult = Math.pow(1.25, state.owned.tools || 0);
       const procMult  = Math.pow(1.40, state.owned.proc  || 0);
@@ -453,21 +447,14 @@
 
     // prestige
     const PRESTIGE_GOAL = 10000;
-
     function canPrestige() { return (state.cash || 0) >= PRESTIGE_GOAL; }
-
     function epGainIfPrestigeNow() {
       const le = Math.max(0, state.lifetimeEarned || 0) + 1;
       return Math.max(1, Math.floor(Math.log10(le)));
     }
 
-    function doPrestige() {
-      if (!canPrestige()) return;
-
-      const gain = epGainIfPrestigeNow();
-      state.ep = (state.ep || 0) + gain;
-      state.prestigeCount = (state.prestigeCount || 0) + 1;
-
+    function resetRunKeepEP() {
+      // Keep EP + prestigeCount, reset everything else
       state.cash = 0;
       state.lastTickMs = Date.now();
       state.lastSaveMs = Date.now();
@@ -480,8 +467,17 @@
       state.autoCost = 400;
 
       save(true);
-      setStatus(`Prestiged: +${gain} EP`);
+      setStatus("New run started");
       render();
+    }
+
+    function doPrestige() {
+      if (!canPrestige()) return;
+      const gain = epGainIfPrestigeNow();
+      state.ep = (state.ep || 0) + gain;
+      state.prestigeCount = (state.prestigeCount || 0) + 1;
+      resetRunKeepEP();
+      setStatus(`Prestiged: +${gain} EP`);
     }
 
     function applyOfflineProgress() {
@@ -500,7 +496,7 @@
       state.lastTickMs = now;
     }
 
-    // UI refs
+    // --- UI refs ---
     const $cash = document.getElementById("cash");
     const $ips = document.getElementById("ips");
     const $opsMult = document.getElementById("opsMult");
@@ -642,7 +638,8 @@
       render();
     });
     document.getElementById("saveBtn").addEventListener("click", () => save(false));
-    document.getElementById("resetBtn").addEventListener("click", () => { localStorage.removeItem(KEY); location.reload(); });
+    document.getElementById("newRunBtn").addEventListener("click", resetRunKeepEP);
+    document.getElementById("resetBtn").addEventListener("click", hardReset);
     document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
 
     $buyAssistantBtn.addEventListener("click", () => {
@@ -653,7 +650,6 @@
       setStatus("Assistant hired");
       render();
     });
-
     $buyToolsBtn.addEventListener("click", () => {
       if (!unlockedTools()) return;
       if ((state.cash || 0) < state.toolsCost) return;
@@ -663,7 +659,6 @@
       setStatus("Tools upgraded");
       render();
     });
-
     $buyProcBtn.addEventListener("click", () => {
       if (!unlockedProc()) return;
       if ((state.cash || 0) < state.procCost) return;
@@ -673,7 +668,6 @@
       setStatus("Processes standardized");
       render();
     });
-
     $buyAutoBtn.addEventListener("click", () => {
       if (!unlockedAuto()) return;
       if ((state.cash || 0) < state.autoCost) return;
