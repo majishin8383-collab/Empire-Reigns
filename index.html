@@ -6,26 +6,131 @@
   <title>Compound — Idle Empire</title>
   <style>
     :root { color-scheme: dark; }
-    body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:#0b0f14; color:#e8eef7;
-    }
-    .wrap{ max-width:1120px; margin:0 auto; padding:18px; }
+    body { margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#070a0f; color:#e8eef7; }
 
-    /* ---------- HUD ---------- */
-    .hud{
-      position: sticky; top: 0; z-index: 20;
-      background: rgba(11,15,20,.78);
+    /* ====== WORLD LAYER (cartoon-ish CSS scene) ====== */
+    .world {
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(900px 420px at 18% 18%, rgba(255,255,255,.08), transparent 55%),
+                  linear-gradient(180deg, #0c1320 0%, #0a0f18 18%, #081018 100%);
+    }
+    .layer { position:absolute; left:0; right:0; }
+    .sky {
+      top:0; height: 56vh;
+      background:
+        radial-gradient(260px 220px at 18% 22%, rgba(255,210,120,.26), transparent 60%),
+        radial-gradient(140px 140px at 20% 24%, rgba(255,210,120,.22), transparent 62%),
+        radial-gradient(900px 360px at 50% 0%, rgba(120,180,255,.16), transparent 62%),
+        linear-gradient(180deg, rgba(120,180,255,.06), transparent 50%);
+      filter: saturate(1.05);
+    }
+    .clouds {
+      top: 8vh; height: 22vh; opacity:.85;
+      background:
+        radial-gradient(70px 38px at 18% 50%, rgba(255,255,255,.14), transparent 65%),
+        radial-gradient(110px 50px at 22% 54%, rgba(255,255,255,.10), transparent 68%),
+        radial-gradient(90px 40px at 55% 44%, rgba(255,255,255,.10), transparent 68%),
+        radial-gradient(140px 60px at 60% 50%, rgba(255,255,255,.08), transparent 70%),
+        radial-gradient(80px 38px at 78% 48%, rgba(255,255,255,.10), transparent 70%);
+      mix-blend-mode: screen;
+    }
+    .hillsBack {
+      top: 30vh; height: 30vh;
+      background:
+        radial-gradient(520px 220px at 18% 100%, rgba(60,120,95,.38), transparent 70%),
+        radial-gradient(600px 260px at 55% 100%, rgba(50,105,90,.36), transparent 70%),
+        radial-gradient(520px 220px at 88% 100%, rgba(55,120,95,.34), transparent 70%);
+      filter: blur(.2px);
+    }
+    .hillsFront {
+      top: 38vh; height: 30vh;
+      background:
+        radial-gradient(560px 240px at 22% 100%, rgba(65,155,105,.28), transparent 72%),
+        radial-gradient(660px 280px at 60% 100%, rgba(55,140,100,.26), transparent 72%),
+        radial-gradient(540px 240px at 92% 100%, rgba(60,150,105,.24), transparent 72%);
+    }
+
+    .town {
+      top: 54vh; height: 18vh;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.12)),
+        linear-gradient(90deg,
+          rgba(255,255,255,.08) 0 6%,
+          rgba(255,255,255,.04) 6% 12%,
+          rgba(255,255,255,.09) 12% 18%,
+          rgba(255,255,255,.05) 18% 26%,
+          rgba(255,255,255,.10) 26% 33%,
+          rgba(255,255,255,.05) 33% 40%,
+          rgba(255,255,255,.09) 40% 48%,
+          rgba(255,255,255,.05) 48% 55%,
+          rgba(255,255,255,.10) 55% 63%,
+          rgba(255,255,255,.05) 63% 72%,
+          rgba(255,255,255,.09) 72% 80%,
+          rgba(255,255,255,.05) 80% 88%,
+          rgba(255,255,255,.10) 88% 100%
+        );
+      opacity: .55;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,1) 30%, rgba(0,0,0,1));
+    }
+    .ground {
+      top: 62vh; bottom: 0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.55)),
+        radial-gradient(900px 220px at 50% 0%, rgba(255,255,255,.06), transparent 62%),
+        linear-gradient(180deg, rgba(25,60,45,.70), rgba(10,20,15,.95));
+    }
+    .road {
+      position:absolute; left: 50%; transform: translateX(-50%);
+      bottom: 18vh;
+      width: min(540px, 90vw);
+      height: 140px;
+      border-radius: 26px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.22)),
+        linear-gradient(90deg, rgba(0,0,0,.45), rgba(0,0,0,.25));
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 30px 80px rgba(0,0,0,.35);
+    }
+    .road:before {
+      content:"";
+      position:absolute; left: 12%; right: 12%; top: 50%;
+      height: 6px; transform: translateY(-50%);
+      background: repeating-linear-gradient(90deg, rgba(255,210,120,.25) 0 18px, transparent 18px 34px);
+      opacity: .7;
+      border-radius: 999px;
+    }
+    .neonSign {
+      position:absolute;
+      left: 18px; bottom: calc(18vh + 92px);
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.28);
+      box-shadow: 0 0 0 1px rgba(120,180,255,.18), 0 0 26px rgba(120,180,255,.10);
+      font-weight: 900;
+      letter-spacing: .3px;
+      font-size: 12px;
+    }
+    .neonSign span { opacity:.75; font-weight:700; margin-left:6px; }
+
+    /* ====== UI OVERLAY ====== */
+    .hud {
+      position: sticky; top: 0; z-index: 30;
+      background: rgba(7,10,15,.70);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(255,255,255,.10);
-      padding: 10px 0;
-      margin: -18px 0 14px;
     }
-    .hudInner{ max-width:1120px; margin:0 auto; padding:0 18px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
-    .brand{ display:flex; gap:10px; align-items:baseline; }
-    .brand h1{ font-size:16px; margin:0; letter-spacing:.35px; }
-    .brand .sub{ font-size:12px; opacity:.75; }
-    .hudStats{ display:flex; gap:10px; flex-wrap:wrap; }
+    .hudInner {
+      max-width: 1120px; margin: 0 auto; padding: 10px 18px;
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    }
+    .brand { display:flex; gap:10px; align-items:baseline; }
+    .brand h1 { font-size: 16px; margin:0; letter-spacing:.35px; }
+    .brand .sub { font-size:12px; opacity:.75; }
+
+    .hudStats { display:flex; gap:10px; flex-wrap:wrap; }
     .hudPill{
       display:flex; flex-direction:column; gap:2px;
       padding: 8px 10px; border-radius: 12px;
@@ -33,35 +138,26 @@
       background: rgba(255,255,255,.04);
       min-width: 110px;
     }
-    .hudPill .k{ font-size:10px; opacity:.7; }
-    .hudPill .v{ font-size:14px; font-weight:800; font-variant-numeric: tabular-nums; }
+    .hudPill .k { font-size:10px; opacity:.7; }
+    .hudPill .v { font-size:14px; font-weight:900; font-variant-numeric: tabular-nums; }
 
-    /* ---------- Layout ---------- */
-    .grid{ display:grid; gap:12px; grid-template-columns: 1fr; }
-    @media (min-width: 960px){ .grid{ grid-template-columns: 1.15fr .85fr; } }
-
-    .card{
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    .wrap{ max-width:1120px; margin:0 auto; padding:18px; position: relative; z-index: 20; }
+    .panel {
+      background: rgba(0,0,0,.30);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      overflow: hidden;
     }
-
-    .row2{ display:grid; grid-template-columns: 1fr; gap:12px; }
-    @media (min-width: 720px){ .row2{ grid-template-columns: 1fr 1fr; } }
+    .panelInner { padding: 14px; }
+    .grid { display:grid; gap:12px; grid-template-columns: 1fr; }
+    @media (min-width: 960px){ .grid{ grid-template-columns: 1.2fr .8fr; } }
 
     .hr{ height:1px; background: rgba(255,255,255,.10); margin: 12px 0; }
+    .small{ font-size:12px; opacity:.85; line-height:1.35; }
     .mono{ font-variant-numeric: tabular-nums; }
-    .small{ font-size:12px; opacity:.82; line-height:1.35; }
-    .pill{
-      font-size:11px; opacity:.75;
-      padding: 4px 8px; border-radius: 999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-    }
 
-    /* ---------- Buttons ---------- */
+    /* Buttons */
     .btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
     button{
       appearance:none;
@@ -69,71 +165,69 @@
       background: rgba(255,255,255,.06);
       color:#e8eef7;
       padding: 10px 12px;
-      border-radius: 12px;
+      border-radius: 14px;
       cursor:pointer;
-      font-weight:750;
-      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+      font-weight: 850;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
       user-select: none;
     }
     button:hover{ background: rgba(255,255,255,.10); }
     button:active{ transform: translateY(1px); }
     button:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
 
-    button.primary{
-      background: rgba(120,180,255,.18);
-      border-color: rgba(120,180,255,.35);
-    }
-    button.gold{
-      background: rgba(255,210,120,.14);
-      border-color: rgba(255,210,120,.30);
-    }
-    button.danger{
-      background: rgba(255,100,120,.14);
-      border-color: rgba(255,100,120,.28);
-    }
+    button.primary{ background: rgba(120,180,255,.18); border-color: rgba(120,180,255,.35); }
+    button.gold{ background: rgba(255,210,120,.14); border-color: rgba(255,210,120,.30); }
+    button.danger{ background: rgba(255,100,120,.14); border-color: rgba(255,100,120,.28); }
 
-    /* primary action area */
-    .actionCard{
-      display:flex; flex-direction:column; gap:10px;
-      border-radius: 16px;
-      padding: 12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.20);
-      position: relative;
-      overflow: hidden;
-    }
-    .actionTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:baseline; }
-    .actionTop strong{ font-size: 13px; letter-spacing:.2px; }
-    .actionTop span{ font-size: 11px; opacity: .75; }
-    .bigRow{ display:flex; gap:10px; flex-wrap:wrap; }
-    .bigBtn{
-      padding: 12px 14px;
-      border-radius: 14px;
-      font-size: 14px;
-      min-width: 160px;
-    }
-
-    /* affordability glow */
     .canBuy{
-      box-shadow: 0 0 0 1px rgba(120,180,255,.25), 0 0 18px rgba(120,180,255,.14);
+      box-shadow: 0 0 0 1px rgba(120,180,255,.22), 0 0 18px rgba(120,180,255,.12);
       border-color: rgba(120,180,255,.40) !important;
     }
 
-    /* subtle shake feedback */
-    @keyframes shake { 0%{transform:translateX(0)} 20%{transform:translateX(-3px)} 40%{transform:translateX(3px)} 60%{transform:translateX(-2px)} 80%{transform:translateX(2px)} 100%{transform:translateX(0)} }
-    .shake{ animation: shake .18s linear; }
-
-    /* +$ floater */
-    .floater{
-      position: fixed;
-      pointer-events:none;
-      font-weight: 800;
+    /* Tabs */
+    .tabs {
+      display:flex; gap:8px; flex-wrap:wrap;
+      padding: 10px;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .tabBtn{
+      padding: 8px 10px;
+      border-radius: 999px;
       font-size: 12px;
-      opacity: .9;
+      font-weight: 900;
+    }
+    .tabBtn.active{
+      background: rgba(120,180,255,.18);
+      border-color: rgba(120,180,255,.35);
+      box-shadow: 0 0 0 1px rgba(120,180,255,.18);
+    }
+
+    /* Upgrade cards */
+    .list{ display:grid; gap:10px; }
+    .item{
+      display:grid; gap:6px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .itemTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
+    .pill{
+      font-size:11px; opacity:.75;
+      padding: 4px 8px; border-radius: 999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+    }
+    .locked{ opacity:.62; filter:saturate(.7); }
+
+    /* Floater */
+    .floater{
+      position: fixed; pointer-events:none; z-index: 999;
+      font-weight: 900; font-size: 12px; opacity: .92;
       transform: translate(-50%, -50%);
       animation: floatUp .55s ease forwards;
-      z-index: 999;
-      text-shadow: 0 6px 18px rgba(0,0,0,.55);
+      text-shadow: 0 8px 22px rgba(0,0,0,.6);
       font-variant-numeric: tabular-nums;
     }
     @keyframes floatUp{
@@ -141,315 +235,238 @@
       to{ opacity:0; transform: translate(-50%, -50%) translateY(-26px); }
     }
 
-    /* ---------- Visual scene ---------- */
-    .scene{
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18));
-      padding: 12px;
-      position: relative;
-      overflow: hidden;
-      min-height: 180px;
+    /* Bottom Nav */
+    .bottomNav{
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      background: rgba(7,10,15,.78);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255,255,255,.10);
     }
-    .sceneTitle{ display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
-    .sceneTitle strong{ font-size: 13px; letter-spacing: .2px; }
-    .sceneTitle span{ font-size: 11px; opacity: .75; }
+    .bottomInner{
+      max-width: 1120px; margin: 0 auto; padding: 10px 14px;
+      display:flex; gap:10px; justify-content:space-between; align-items:center;
+    }
+    .navBtn{
+      flex:1;
+      display:flex; flex-direction:column; gap:2px;
+      align-items:center; justify-content:center;
+      padding: 10px 8px;
+      border-radius: 14px;
+      font-size: 12px;
+    }
+    .navBtn .k{ font-size:10px; opacity:.7; font-weight:800; }
+    .navBtn.active{ background: rgba(120,180,255,.16); border-color: rgba(120,180,255,.35); }
 
-    .room{
-      margin-top: 10px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background:
-        radial-gradient(1200px 240px at 50% 0%, rgba(120,180,255,.14), transparent 60%),
-        linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.35));
-      height: 120px;
-      position: relative;
-    }
-    .desk{
-      position:absolute; left:16px; bottom:14px;
-      width: 104px; height: 28px;
-      border-radius: 12px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.14);
-    }
-    .desk:before{
-      content:"";
-      position:absolute; left:12px; top:-12px;
-      width: 40px; height: 20px;
-      border-radius: 10px;
-      background: rgba(120,180,255,.20);
-      border: 1px solid rgba(120,180,255,.28);
-    }
-    .avatar{
-      position:absolute; left:140px; bottom:18px;
-      width: 22px; height: 22px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.18);
-      display:none;
-    }
-    .avatar:after{
-      content:"";
-      position:absolute; left:4px; top:22px;
-      width:14px; height:16px;
-      border-radius: 10px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
-    }
-    .toolrack{
-      position:absolute; right:14px; bottom:14px;
-      width:56px; height:48px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.12);
-      display:none;
-    }
-    .toolrack:before{
-      content:"";
-      position:absolute; left:10px; top:10px;
-      width:36px; height:6px;
-      border-radius: 999px;
-      background: rgba(255,210,120,.18);
-      border: 1px solid rgba(255,210,120,.26);
-    }
-    .clipboard{
-      position:absolute; right:86px; bottom:22px;
-      width:26px; height:36px;
-      border-radius: 10px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
-      display:none;
-      transform: rotate(-6deg);
-    }
-    .clipboard:before{
-      content:"";
-      position:absolute; left:6px; top:6px;
-      width:14px; height:6px;
-      border-radius: 999px;
-      background: rgba(120,180,255,.16);
-      border: 1px solid rgba(120,180,255,.22);
-    }
-    .automation{
-      position:absolute; right:26px; top:10px;
-      width:36px; height:36px;
-      border-radius: 14px;
-      background: rgba(120,180,255,.10);
-      border: 1px solid rgba(120,180,255,.18);
-      display:none;
-    }
-    .automation:before,.automation:after{
-      content:"";
-      position:absolute;
-      inset:8px;
-      border-radius: 999px;
-      border: 2px solid rgba(255,255,255,.18);
-    }
-    .automation:after{
-      inset:14px;
-      border-color: rgba(255,255,255,.12);
-    }
-    .sceneLegend{ margin-top: 10px; display:flex; flex-wrap:wrap; gap:8px; }
-    .tag{
-      font-size: 11px; opacity:.78;
-      padding: 4px 8px; border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-      display:none;
-    }
+    /* spacing so bottom nav doesn't cover content */
+    .padBottom{ height: 86px; }
 
-    /* ---------- Upgrade list ---------- */
-    .list{ display:grid; gap:10px; margin-top: 12px; }
-    .item{
-      display:grid; gap:6px;
-      padding: 10px;
-      border-radius: 14px;
-      background: rgba(0,0,0,.22);
-      border: 1px solid rgba(255,255,255,.08);
-    }
-    .itemTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
-    .itemTitle{ font-weight:800; }
-    footer{ margin-top: 18px; opacity:.65; font-size:11px; }
   </style>
 </head>
 <body>
-  <div class="hud">
-    <div class="hudInner">
-      <div class="brand">
-        <h1>Compound</h1>
-        <div class="sub" id="status">Ready</div>
-      </div>
-      <div class="hudStats">
-        <div class="hudPill">
-          <div class="k">Cash</div>
-          <div class="v mono" id="hudCash">$0</div>
+  <div class="world">
+    <div class="layer sky"></div>
+    <div class="layer clouds"></div>
+    <div class="layer hillsBack"></div>
+    <div class="layer hillsFront"></div>
+    <div class="layer town"></div>
+    <div class="layer ground">
+      <div class="road"></div>
+      <div class="neonSign">COMPOUND<span id="sceneNote">starting out</span></div>
+    </div>
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hudInner">
+        <div class="brand">
+          <h1>Compound</h1>
+          <div class="sub" id="status">Ready</div>
         </div>
-        <div class="hudPill">
-          <div class="k">Income / sec</div>
-          <div class="v mono" id="hudIps">$0/s</div>
-        </div>
-        <div class="hudPill">
-          <div class="k">EP</div>
-          <div class="v mono" id="hudEp">0</div>
+        <div class="hudStats">
+          <div class="hudPill">
+            <div class="k">Cash</div>
+            <div class="v mono" id="hudCash">$0</div>
+          </div>
+          <div class="hudPill">
+            <div class="k">Income / sec</div>
+            <div class="v mono" id="hudIps">$0/s</div>
+          </div>
+          <div class="hudPill">
+            <div class="k">EP</div>
+            <div class="v mono" id="hudEp">0</div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="wrap">
-    <div class="grid">
-      <div class="card">
-        <div class="row2">
-          <div class="scene">
-            <div class="sceneTitle">
-              <strong>Office</strong>
-              <span id="sceneNote">Starting out</span>
-            </div>
-            <div class="room" aria-label="Office scene">
-              <div class="desk" title="Desk"></div>
-              <div class="avatar" id="vizAssistant" title="Assistant"></div>
-              <div class="clipboard" id="vizProc" title="Processes"></div>
-              <div class="toolrack" id="vizTools" title="Tools"></div>
-              <div class="automation" id="vizAuto" title="Automation"></div>
-            </div>
-            <div class="sceneLegend">
-              <div class="tag" id="tagA">Assistant</div>
-              <div class="tag" id="tagT">Tools</div>
-              <div class="tag" id="tagP">Processes</div>
-              <div class="tag" id="tagX">Automation</div>
-            </div>
-          </div>
-
-          <div class="actionCard">
-            <div class="actionTop">
-              <strong>Actions</strong>
-              <span class="mono" id="ownedPill">Owned: 0</span>
-            </div>
-
-            <div class="bigRow">
-              <button class="primary bigBtn" id="workBtn">Do Work</button>
-              <button class="bigBtn" id="quickHireBtn" title="Same as buying Assistant">Hire (Quick)</button>
-            </div>
-
-            <div class="small">
-              Quick Hire becomes useful once you can afford assistants — it’s a “game-feel” shortcut.
-            </div>
-
-            <div class="hr"></div>
-
-            <div class="btnRow">
-              <button id="saveBtn">Save</button>
-              <button id="newRunBtn" title="Resets cash + upgrades, keeps EP">New Run</button>
-              <button class="gold" id="prestigeBtn" disabled>Prestige</button>
-              <button class="danger" id="resetBtn" title="Wipes everything including EP">Hard Reset</button>
-            </div>
-
-            <div class="small" id="prestHint" style="margin-top:6px;">
-              Reach $10.00K cash to unlock Prestige.
-            </div>
-          </div>
+    <!-- UI Panels -->
+    <div class="wrap">
+      <div class="panel">
+        <div class="tabs">
+          <button class="tabBtn active" id="tabWorld">World</button>
+          <button class="tabBtn" id="tabUpgrades">Upgrades</button>
+          <button class="tabBtn" id="tabPrestige">Prestige</button>
         </div>
 
-        <div class="hr"></div>
+        <div class="panelInner">
+          <div class="grid">
+            <!-- LEFT: main -->
+            <div>
+              <!-- WORLD SCREEN -->
+              <div id="screenWorld">
+                <div class="item">
+                  <div class="itemTop">
+                    <div style="font-weight:900;">Actions</div>
+                    <div class="pill mono" id="ownedPill">Owned: 0</div>
+                  </div>
+                  <div class="btnRow" style="margin-top:10px;">
+                    <button class="primary canBuy" id="workBtn" style="min-width:160px;">Do Work (+$1)</button>
+                    <button id="quickHireBtn" style="min-width:160px;">Hire (Quick)</button>
+                  </div>
+                  <div class="small" style="margin-top:8px;">
+                    Tip: Upgrades glow when affordable. New Run keeps EP. Hard Reset wipes everything.
+                  </div>
+                  <div class="hr"></div>
+                  <div class="btnRow">
+                    <button id="saveBtn">Save</button>
+                    <button id="newRunBtn" title="Resets cash + upgrades, keeps EP">New Run</button>
+                    <button class="danger" id="resetBtn" title="Wipes everything including EP">Hard Reset</button>
+                  </div>
+                </div>
 
-        <div class="row2">
-          <div class="card" style="padding:12px;">
-            <div class="itemTop">
-              <div class="itemTitle">Multipliers</div>
-              <div class="pill mono" id="multSummary">x1.00 total</div>
+                <div class="item" style="margin-top:12px;">
+                  <div class="itemTop">
+                    <div style="font-weight:900;">Multipliers</div>
+                    <div class="pill mono" id="multSummary">x1.00 total</div>
+                  </div>
+                  <div class="small mono" id="multDetails" style="margin-top:6px;">Ops x1.00 · Prestige x1.00</div>
+                </div>
+              </div>
+
+              <!-- UPGRADES SCREEN -->
+              <div id="screenUpgrades" style="display:none;">
+                <div class="itemTop" style="margin-bottom:10px;">
+                  <div>
+                    <div style="font-weight:900;">Upgrades</div>
+                    <div class="small">Unlock in order (1 unlocks next).</div>
+                  </div>
+                  <div class="pill mono" id="epPill">EP: 0</div>
+                </div>
+
+                <div class="list">
+                  <div class="item" id="rowAssistant">
+                    <div class="itemTop">
+                      <div style="font-weight:900;">Hire an Assistant</div>
+                      <div class="pill mono" id="assistantCost">$25</div>
+                    </div>
+                    <div class="small">+ $1.00 base income/sec per purchase. Price grows each time.</div>
+                    <button id="buyAssistantBtn">Buy</button>
+                  </div>
+
+                  <div class="item locked" id="rowTools">
+                    <div class="itemTop">
+                      <div style="font-weight:900;">Buy Better Tools</div>
+                      <div class="pill mono" id="toolsCost">$60</div>
+                    </div>
+                    <div class="small">Multiply income by ×1.25 per purchase. Price grows each time.</div>
+                    <div class="small" id="toolsLockNote">Unlocks after: 1 assistant</div>
+                    <button id="buyToolsBtn" disabled>Locked</button>
+                  </div>
+
+                  <div class="item locked" id="rowProc">
+                    <div class="itemTop">
+                      <div style="font-weight:900;">Standardize Processes</div>
+                      <div class="pill mono" id="procCost">$150</div>
+                    </div>
+                    <div class="small">Multiply income by ×1.40 per purchase. Price grows each time.</div>
+                    <div class="small" id="procLockNote">Unlocks after: 1 tools</div>
+                    <button id="buyProcBtn" disabled>Locked</button>
+                  </div>
+
+                  <div class="item locked" id="rowAuto">
+                    <div class="itemTop">
+                      <div style="font-weight:900;">Basic Automation</div>
+                      <div class="pill mono" id="autoCost">$400</div>
+                    </div>
+                    <div class="small">Multiply income by ×2.00 per purchase. Price grows each time.</div>
+                    <div class="small" id="autoLockNote">Unlocks after: 1 process</div>
+                    <button id="buyAutoBtn" disabled>Locked</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PRESTIGE SCREEN -->
+              <div id="screenPrestige" style="display:none;">
+                <div class="item">
+                  <div class="itemTop">
+                    <div style="font-weight:900;">Prestige</div>
+                    <div class="pill mono" id="prestReq">$10.00K goal</div>
+                  </div>
+                  <div class="small" id="prestHint" style="margin-top:8px;">
+                    Reach the goal to unlock Prestige.
+                  </div>
+                  <div class="btnRow" style="margin-top:10px;">
+                    <button class="gold" id="prestigeBtn" disabled>Prestige (Locked)</button>
+                  </div>
+                  <div class="hr"></div>
+                  <div class="small">
+                    Prestige resets your run but increases your permanent multiplier (EP).
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="small mono" id="multDetails" style="margin-top:6px;">
-              Ops x1.00 · Prestige x1.00
+
+            <!-- RIGHT: stats -->
+            <div>
+              <div class="item">
+                <div class="itemTop">
+                  <div style="font-weight:900;">Stats</div>
+                  <div class="pill mono" id="lifetime">$0</div>
+                </div>
+                <div class="small" style="margin-top:8px;">
+                  Lifetime earned (resets on New Run / Prestige): <span class="mono" id="lifetime2">$0</span>
+                </div>
+                <div class="hr"></div>
+                <div class="small mono" id="statsLine">$0/s · Ops x1.00 · Prestige x1.00</div>
+              </div>
+
+              <div class="item" style="margin-top:12px;">
+                <div class="itemTop">
+                  <div style="font-weight:900;">System</div>
+                  <div class="pill mono" id="verPill">v0.7</div>
+                </div>
+                <div class="small" style="margin-top:8px;">
+                  Cartoon-style background is now active. Next step is swapping in real art assets (SVG/PNGs) and adding character/location buttons.
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="card" style="padding:12px;">
-            <div class="itemTop">
-              <div class="itemTitle">Progress</div>
-              <div class="pill mono" id="lifetime">$0</div>
-            </div>
-            <div class="small" style="margin-top:6px;">
-              Lifetime earned (resets on New Run / Prestige): <span class="mono" id="lifetime2">$0</span>
-            </div>
-          </div>
+          <div class="padBottom"></div>
         </div>
-
-        <footer>
-          UI polish pass: sticky HUD, primary actions, affordability glow, micro feedback.
-        </footer>
       </div>
+    </div>
 
-      <div class="card">
-        <div class="itemTop">
-          <div>
-            <div class="itemTitle">Upgrades</div>
-            <div class="small">Unlock in order (1 unlocks next). Buy buttons explain why.</div>
-          </div>
-          <div class="pill mono" id="epPill">EP: 0</div>
-        </div>
-
-        <div class="list">
-          <div class="item" id="rowAssistant">
-            <div class="itemTop">
-              <div class="itemTitle">Hire an Assistant</div>
-              <div class="pill mono" id="assistantCost">$25</div>
-            </div>
-            <div class="small">+ $1.00 base income/sec per purchase. Price grows each time.</div>
-            <button id="buyAssistantBtn">Buy</button>
-          </div>
-
-          <div class="item locked" id="rowTools">
-            <div class="itemTop">
-              <div class="itemTitle">Buy Better Tools</div>
-              <div class="pill mono" id="toolsCost">$60</div>
-            </div>
-            <div class="small">Multiply income by ×1.25 per purchase. Price grows each time.</div>
-            <div class="lockNote" id="toolsLockNote">Unlocks after: 1 assistant</div>
-            <button id="buyToolsBtn" disabled>Locked</button>
-          </div>
-
-          <div class="item locked" id="rowProc">
-            <div class="itemTop">
-              <div class="itemTitle">Standardize Processes</div>
-              <div class="pill mono" id="procCost">$150</div>
-            </div>
-            <div class="small">Multiply income by ×1.40 per purchase. Price grows each time.</div>
-            <div class="lockNote" id="procLockNote">Unlocks after: 1 tools</div>
-            <button id="buyProcBtn" disabled>Locked</button>
-          </div>
-
-          <div class="item locked" id="rowAuto">
-            <div class="itemTop">
-              <div class="itemTitle">Basic Automation</div>
-              <div class="pill mono" id="autoCost">$400</div>
-            </div>
-            <div class="small">Multiply income by ×2.00 per purchase. Price grows each time.</div>
-            <div class="lockNote" id="autoLockNote">Unlocks after: 1 process</div>
-            <button id="buyAutoBtn" disabled>Locked</button>
-          </div>
-        </div>
-
-        <div class="hr"></div>
-        <div class="small">
-          Offline gains are capped at 6 hours. Saves automatically every ~10s.
-        </div>
+    <!-- Bottom Nav -->
+    <div class="bottomNav">
+      <div class="bottomInner">
+        <button class="navBtn active" id="navWorld"><div>World</div><div class="k">Tap + build</div></button>
+        <button class="navBtn" id="navUp"><div>Upgrades</div><div class="k">Spend wisely</div></button>
+        <button class="navBtn" id="navPr"><div>Prestige</div><div class="k">Reset → grow</div></button>
       </div>
     </div>
   </div>
 
   <script>
-    const KEY = "compound_idle_v0_6";
+    const KEY = "compound_idle_v0_7";
 
     const state = {
       cash: 0,
       lastTickMs: Date.now(),
       lastSaveMs: Date.now(),
       lifetimeEarned: 0,
-
       ep: 0,
       prestigeCount: 0,
-
       owned: { assistant: 0, tools: 0, proc: 0, auto: 0 },
-
       assistantCost: 25,
       toolsCost: 60,
       procCost: 150,
@@ -487,21 +504,13 @@
       localStorage.setItem(KEY, JSON.stringify(state));
       if(!silent) setStatus("Saved");
     }
-
     function load(){
       const raw = localStorage.getItem(KEY);
       if(!raw) return false;
-      try{
-        Object.assign(state, JSON.parse(raw));
-        safeMerge();
-        return true;
-      }catch{ return false; }
+      try { Object.assign(state, JSON.parse(raw)); safeMerge(); return true; }
+      catch { return false; }
     }
-
-    function hardReset(){
-      localStorage.removeItem(KEY);
-      location.reload();
-    }
+    function hardReset(){ localStorage.removeItem(KEY); location.reload(); }
 
     // economics
     function opsMultiplier(){
@@ -510,15 +519,9 @@
       const autoMult  = Math.pow(2.00, state.owned.auto  || 0);
       return toolsMult * procMult * autoMult;
     }
-    function prestigeMultiplier(){
-      return Math.pow(1.2, state.ep || 0);
-    }
-    function baseIncomePerSecond(){
-      return (state.owned.assistant || 0) * 1.0;
-    }
-    function incomePerSecond(){
-      return baseIncomePerSecond() * opsMultiplier() * prestigeMultiplier();
-    }
+    function prestigeMultiplier(){ return Math.pow(1.2, state.ep || 0); }
+    function baseIncomePerSecond(){ return (state.owned.assistant || 0) * 1.0; }
+    function incomePerSecond(){ return baseIncomePerSecond() * opsMultiplier() * prestigeMultiplier(); }
 
     // gating (1 unlocks next)
     function unlockedTools(){ return (state.owned.assistant||0) >= 1; }
@@ -532,24 +535,20 @@
       const le = Math.max(0, state.lifetimeEarned || 0) + 1;
       return Math.max(1, Math.floor(Math.log10(le)));
     }
-
     function resetRunKeepEP(){
       state.cash = 0;
       state.lastTickMs = Date.now();
       state.lastSaveMs = Date.now();
       state.lifetimeEarned = 0;
-
       state.owned = { assistant:0, tools:0, proc:0, auto:0 };
       state.assistantCost = 25;
       state.toolsCost = 60;
       state.procCost = 150;
       state.autoCost = 400;
-
       save(true);
       setStatus("New run started");
       render();
     }
-
     function doPrestige(){
       if(!canPrestige()) return;
       const gain = epGainIfPrestigeNow();
@@ -569,13 +568,11 @@
         state.cash += earned;
         state.lifetimeEarned += earned;
         setStatus(`Offline: +${money(earned)}`);
-      }else{
-        setStatus("Ready");
-      }
+      } else setStatus("Ready");
       state.lastTickMs = now;
     }
 
-    // micro feedback
+    // floater
     function floatText(text, x, y){
       const d = document.createElement("div");
       d.className = "floater";
@@ -585,18 +582,11 @@
       document.body.appendChild(d);
       setTimeout(() => d.remove(), 650);
     }
-    function shake(el){
-      el.classList.remove("shake");
-      void el.offsetWidth;
-      el.classList.add("shake");
-      setTimeout(() => el.classList.remove("shake"), 220);
-    }
 
     // UI refs
     const $hudCash = document.getElementById("hudCash");
     const $hudIps = document.getElementById("hudIps");
     const $hudEp = document.getElementById("hudEp");
-
     const $ownedPill = document.getElementById("ownedPill");
     const $epPill = document.getElementById("epPill");
 
@@ -620,67 +610,35 @@
     const $autoLockNote = document.getElementById("autoLockNote");
 
     const $prestigeBtn = document.getElementById("prestigeBtn");
+    const $prestReq = document.getElementById("prestReq");
     const $prestHint = document.getElementById("prestHint");
 
     const $multSummary = document.getElementById("multSummary");
     const $multDetails = document.getElementById("multDetails");
     const $lifetime = document.getElementById("lifetime");
     const $lifetime2 = document.getElementById("lifetime2");
+    const $statsLine = document.getElementById("statsLine");
 
-    // visuals
     const $sceneNote = document.getElementById("sceneNote");
-    const $vizAssistant = document.getElementById("vizAssistant");
-    const $vizTools = document.getElementById("vizTools");
-    const $vizProc = document.getElementById("vizProc");
-    const $vizAuto = document.getElementById("vizAuto");
-    const $tagA = document.getElementById("tagA");
-    const $tagT = document.getElementById("tagT");
-    const $tagP = document.getElementById("tagP");
-    const $tagX = document.getElementById("tagX");
 
     function totalOwned(){
       return (state.owned.assistant||0) + (state.owned.tools||0) + (state.owned.proc||0) + (state.owned.auto||0);
     }
 
-    function setRowLocked(rowEl, btnEl, noteEl, locked, noteText, canBuy){
+    function setRow(rowEl, btnEl, noteEl, locked, noteText, canBuy){
       if(locked){
         rowEl.classList.add("locked");
         btnEl.disabled = true;
         btnEl.textContent = "Locked";
         noteEl.textContent = noteText;
-        noteEl.style.display = "block";
         rowEl.classList.remove("canBuy");
-      }else{
+      } else {
         rowEl.classList.remove("locked");
-        noteEl.style.display = "block"; // keep explanation visible even when unlocked
-        noteEl.textContent = noteText;
         btnEl.disabled = !canBuy;
         btnEl.textContent = canBuy ? "Buy" : "Need more cash";
+        noteEl.textContent = noteText;
         rowEl.classList.toggle("canBuy", canBuy);
       }
-    }
-
-    function renderVisuals(){
-      const a = (state.owned.assistant||0) > 0;
-      const t = (state.owned.tools||0) > 0;
-      const p = (state.owned.proc||0) > 0;
-      const x = (state.owned.auto||0) > 0;
-
-      $vizAssistant.style.display = a ? "block" : "none";
-      $vizTools.style.display = t ? "block" : "none";
-      $vizProc.style.display = p ? "block" : "none";
-      $vizAuto.style.display = x ? "block" : "none";
-
-      $tagA.style.display = a ? "inline-flex" : "none";
-      $tagT.style.display = t ? "inline-flex" : "none";
-      $tagP.style.display = p ? "inline-flex" : "none";
-      $tagX.style.display = x ? "inline-flex" : "none";
-
-      if (!a && !t && !p && !x) $sceneNote.textContent = "Starting out";
-      else if (a && !t) $sceneNote.textContent = "You hired help";
-      else if (t && !p) $sceneNote.textContent = "Tools improve output";
-      else if (p && !x) $sceneNote.textContent = "Processes stabilize growth";
-      else $sceneNote.textContent = "Automation is online";
     }
 
     function render(){
@@ -692,8 +650,8 @@
       $hudIps.textContent = money(ips) + "/s";
       $hudEp.textContent = String(ep);
 
-      $epPill.textContent = "EP: " + ep;
       $ownedPill.textContent = "Owned: " + totalOwned();
+      $epPill.textContent = "EP: " + ep;
 
       $assistantCost.textContent = money(state.assistantCost);
       $toolsCost.textContent = money(state.toolsCost);
@@ -706,12 +664,13 @@
       $buyAssistantBtn.textContent = canBuyA ? "Buy" : "Need more cash";
       $rowAssistant.classList.toggle("canBuy", canBuyA);
 
-      // gated rows
-      setRowLocked($rowTools, $buyToolsBtn, $toolsLockNote, !unlockedTools(), "Unlocks after: 1 assistant", cash >= state.toolsCost);
-      setRowLocked($rowProc,  $buyProcBtn,  $procLockNote,  !unlockedProc(),  "Unlocks after: 1 tools",    cash >= state.procCost);
-      setRowLocked($rowAuto,  $buyAutoBtn,  $autoLockNote,  !unlockedAuto(),  "Unlocks after: 1 process",  cash >= state.autoCost);
+      // gated
+      setRow($rowTools, $buyToolsBtn, $toolsLockNote, !unlockedTools(), "Unlocks after: 1 assistant", cash >= state.toolsCost);
+      setRow($rowProc,  $buyProcBtn,  $procLockNote,  !unlockedProc(),  "Unlocks after: 1 tools",    cash >= state.procCost);
+      setRow($rowAuto,  $buyAutoBtn,  $autoLockNote,  !unlockedAuto(),  "Unlocks after: 1 process",  cash >= state.autoCost);
 
-      // Prestige
+      // prestige
+      $prestReq.textContent = money(PRESTIGE_GOAL) + " goal";
       const ok = canPrestige();
       $prestigeBtn.disabled = !ok;
       $prestigeBtn.textContent = ok ? `Prestige (+${epGainIfPrestigeNow()} EP)` : "Prestige (Locked)";
@@ -719,7 +678,6 @@
         ? "Ready. Prestige resets your run but permanently boosts income."
         : `Prestige unlocks at ${money(PRESTIGE_GOAL)} cash.`;
 
-      // multipliers
       const ops = opsMultiplier();
       const pm = prestigeMultiplier();
       $multSummary.textContent = fmtX(ops * pm) + " total";
@@ -727,34 +685,40 @@
 
       $lifetime.textContent = money(state.lifetimeEarned||0);
       $lifetime2.textContent = money(state.lifetimeEarned||0);
+      $statsLine.textContent = `${money(ips)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
 
-      // quick hire button glow
+      // scene note
+      const a = (state.owned.assistant||0) > 0;
+      const t = (state.owned.tools||0) > 0;
+      const p = (state.owned.proc||0) > 0;
+      const x = (state.owned.auto||0) > 0;
+      if (!a && !t && !p && !x) $sceneNote.textContent = "starting out";
+      else if (a && !t) $sceneNote.textContent = "hired help";
+      else if (t && !p) $sceneNote.textContent = "better tools";
+      else if (p && !x) $sceneNote.textContent = "systems in place";
+      else $sceneNote.textContent = "automation online";
+
+      // quick hire glow
       const q = document.getElementById("quickHireBtn");
       q.classList.toggle("canBuy", canBuyA);
-
-      renderVisuals();
     }
 
     function tick(){
       const now = Date.now();
       const dt = (now - state.lastTickMs) / 1000;
       state.lastTickMs = now;
-
       const earned = incomePerSecond() * dt;
       if(earned > 0){
         state.cash += earned;
         state.lifetimeEarned += earned;
       }
-
       if(now - state.lastSaveMs > 10000) save(true);
       render();
     }
 
-    // purchases with feedback
-    function tryBuy(cost, onSuccess, buttonEl, event){
+    function tryBuy(cost, onSuccess, event){
       if((state.cash||0) < cost){
-        shake(buttonEl);
-        if(event) floatText("Need $" + (cost - state.cash).toFixed(0), event.clientX, event.clientY);
+        if(event) floatText("Need " + money(cost - state.cash), event.clientX, event.clientY);
         return false;
       }
       state.cash -= cost;
@@ -762,67 +726,100 @@
       return true;
     }
 
-    // actions
+    // events
     document.getElementById("workBtn").addEventListener("click", (e) => {
-      state.cash += 1;
-      state.lifetimeEarned += 1;
+      state.cash += 1; state.lifetimeEarned += 1;
       floatText("+$1", e.clientX, e.clientY);
       render();
     });
 
     document.getElementById("quickHireBtn").addEventListener("click", (e) => {
-      // same as assistant buy
       tryBuy(state.assistantCost, () => {
         state.owned.assistant = (state.owned.assistant||0) + 1;
         state.assistantCost = Math.ceil(state.assistantCost * 1.35);
         setStatus("Assistant hired");
-      }, document.getElementById("quickHireBtn"), e);
+      }, e);
       render();
     });
 
     document.getElementById("saveBtn").addEventListener("click", () => save(false));
     document.getElementById("newRunBtn").addEventListener("click", resetRunKeepEP);
-    document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
     document.getElementById("resetBtn").addEventListener("click", hardReset);
+    document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
 
     $buyAssistantBtn.addEventListener("click", (e) => {
       tryBuy(state.assistantCost, () => {
         state.owned.assistant = (state.owned.assistant||0) + 1;
         state.assistantCost = Math.ceil(state.assistantCost * 1.35);
         setStatus("Assistant hired");
-      }, $buyAssistantBtn, e);
+      }, e);
       render();
     });
-
     $buyToolsBtn.addEventListener("click", (e) => {
-      if(!unlockedTools()) { shake($buyToolsBtn); return; }
+      if(!unlockedTools()) return;
       tryBuy(state.toolsCost, () => {
         state.owned.tools = (state.owned.tools||0) + 1;
         state.toolsCost = Math.ceil(state.toolsCost * 1.45);
         setStatus("Tools upgraded");
-      }, $buyToolsBtn, e);
+      }, e);
       render();
     });
-
     $buyProcBtn.addEventListener("click", (e) => {
-      if(!unlockedProc()) { shake($buyProcBtn); return; }
+      if(!unlockedProc()) return;
       tryBuy(state.procCost, () => {
         state.owned.proc = (state.owned.proc||0) + 1;
         state.procCost = Math.ceil(state.procCost * 1.55);
         setStatus("Processes standardized");
-      }, $buyProcBtn, e);
+      }, e);
       render();
     });
-
     $buyAutoBtn.addEventListener("click", (e) => {
-      if(!unlockedAuto()) { shake($buyAutoBtn); return; }
+      if(!unlockedAuto()) return;
       tryBuy(state.autoCost, () => {
         state.owned.auto = (state.owned.auto||0) + 1;
         state.autoCost = Math.ceil(state.autoCost * 1.70);
         setStatus("Automation installed");
-      }, $buyAutoBtn, e);
+      }, e);
       render();
     });
+
+    // tabs + bottom nav
+    const tabWorld = document.getElementById("tabWorld");
+    const tabUp = document.getElementById("tabUpgrades");
+    const tabPr = document.getElementById("tabPrestige");
+    const sWorld = document.getElementById("screenWorld");
+    const sUp = document.getElementById("screenUpgrades");
+    const sPr = document.getElementById("screenPrestige");
+
+    const navWorld = document.getElementById("navWorld");
+    const navUp = document.getElementById("navUp");
+    const navPr = document.getElementById("navPr");
+
+    function setActive(which){
+      const isW = which === "world";
+      const isU = which === "up";
+      const isP = which === "pr";
+
+      sWorld.style.display = isW ? "block" : "none";
+      sUp.style.display = isU ? "block" : "none";
+      sPr.style.display = isP ? "block" : "none";
+
+      tabWorld.classList.toggle("active", isW);
+      tabUp.classList.toggle("active", isU);
+      tabPr.classList.toggle("active", isP);
+
+      navWorld.classList.toggle("active", isW);
+      navUp.classList.toggle("active", isU);
+      navPr.classList.toggle("active", isP);
+    }
+
+    tabWorld.addEventListener("click", () => setActive("world"));
+    tabUp.addEventListener("click", () => setActive("up"));
+    tabPr.addEventListener("click", () => setActive("pr"));
+
+    navWorld.addEventListener("click", () => setActive("world"));
+    navUp.addEventListener("click", () => setActive("up"));
+    navPr.addEventListener("click", () => setActive("pr"));
 
     // boot
     const hadSave = load();
