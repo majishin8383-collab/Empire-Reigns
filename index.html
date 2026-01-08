@@ -48,12 +48,11 @@
     button:disabled { opacity: .5; cursor: not-allowed; }
     .small { font-size: 12px; opacity: .8; line-height: 1.35; }
     .hr { height: 1px; background: rgba(255,255,255,.10); margin: 12px 0; }
-    .list { display: grid; gap: 10px; }
+    .list { display: grid; gap: 10px; margin-top: 12px; }
     .item { display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.08); }
-    .itemTop { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .itemTop { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
     .pill { font-size: 11px; opacity: .75; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); }
     footer { margin-top: 18px; opacity: .65; font-size: 11px; }
-    a { color: inherit; }
   </style>
 </head>
 <body>
@@ -79,6 +78,17 @@
           </div>
         </div>
 
+        <div class="statRow" style="margin-top:10px;">
+          <div class="stat">
+            <div class="label">Operations Multiplier</div>
+            <div class="value mono" id="mult">x1.00</div>
+          </div>
+          <div class="stat">
+            <div class="label">Lifetime Earned</div>
+            <div class="value mono" id="lifetime">$0</div>
+          </div>
+        </div>
+
         <div class="btnRow">
           <button class="primary" id="workBtn">Do Work (+$1)</button>
           <button id="saveBtn">Save</button>
@@ -88,8 +98,7 @@
         <div class="hr"></div>
 
         <div class="small">
-          Goal: get the loop running on GitHub Pages. Next we’ll add a real upgrade tree + prestige.
-          For now: buy the one upgrade, feel the numbers move.
+          Today’s win: 4 upgrades total. Next we can add prestige (locked until a goal).
         </div>
       </div>
 
@@ -97,52 +106,91 @@
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
           <div>
             <div style="font-weight:750;">Upgrades</div>
-            <div class="sub">Simple on purpose (v0)</div>
+            <div class="sub">Small set, strong impact</div>
           </div>
           <div class="pill mono" id="ownedPill">Owned: 0</div>
         </div>
 
-        <div class="list" style="margin-top:12px;">
+        <div class="list">
+          <!-- 1) Assistant -->
           <div class="item">
             <div class="itemTop">
               <div style="font-weight:700;">Hire an Assistant</div>
               <div class="pill mono" id="assistantCost">$25</div>
             </div>
-            <div class="small">+ $1.0 income/sec (stacks each purchase). Price grows each time.</div>
+            <div class="small">+ $1.00 base income/sec per purchase. Price grows each time.</div>
             <button id="buyAssistantBtn">Buy</button>
+          </div>
+
+          <!-- 2) Tools -->
+          <div class="item">
+            <div class="itemTop">
+              <div style="font-weight:700;">Buy Better Tools</div>
+              <div class="pill mono" id="toolsCost">$60</div>
+            </div>
+            <div class="small">Multiply all income by ×1.25 per purchase. Price grows each time.</div>
+            <button id="buyToolsBtn">Buy</button>
+          </div>
+
+          <!-- 3) Processes -->
+          <div class="item">
+            <div class="itemTop">
+              <div style="font-weight:700;">Standardize Processes</div>
+              <div class="pill mono" id="procCost">$150</div>
+            </div>
+            <div class="small">Multiply all income by ×1.40 per purchase. Price grows each time.</div>
+            <button id="buyProcBtn">Buy</button>
+          </div>
+
+          <!-- 4) Automation -->
+          <div class="item">
+            <div class="itemTop">
+              <div style="font-weight:700;">Basic Automation</div>
+              <div class="pill mono" id="autoCost">$400</div>
+            </div>
+            <div class="small">Multiply all income by ×2.00 per purchase. Price grows each time.</div>
+            <button id="buyAutoBtn">Buy</button>
           </div>
         </div>
 
         <div class="hr"></div>
         <div class="small">
-          Offline gains: when you come back, you’ll get earnings for time away (capped).
+          Offline gains are capped at 6 hours (v0). Everything saves automatically.
         </div>
       </div>
     </div>
 
     <footer>
-      Built as a single-file deployable MVP. Next step: prestige + store scaffolding.
+      Single-file GitHub Pages MVP. We are intentionally keeping this tight.
     </footer>
   </div>
 
   <script>
-    // ---------- Minimal Idle MVP (single-file, GitHub Pages friendly) ----------
-    const KEY = "compound_idle_v0";
+    // ---------- Compound v0 (single-file, GitHub Pages friendly) ----------
+    const KEY = "compound_idle_v0_1";
 
     const state = {
       cash: 0,
-      incomePerSecond: 0,
-      owned: { assistant: 0 },
-      assistantCost: 25,
       lastTickMs: Date.now(),
       lastSaveMs: Date.now(),
-      lifetimeEarned: 0
+      lifetimeEarned: 0,
+
+      owned: { assistant: 0, tools: 0, proc: 0, auto: 0 },
+
+      // costs
+      assistantCost: 25,
+      toolsCost: 60,
+      procCost: 150,
+      autoCost: 400,
+
+      // derived
+      baseIncomePerSecond: 0,
+      mult: 1
     };
 
     function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
     function money(n) {
-      // Simple formatter (fast + readable)
       const abs = Math.abs(n);
       if (abs >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
       if (abs >= 1e6) return "$" + (n/1e6).toFixed(2) + "M";
@@ -150,10 +198,21 @@
       return "$" + n.toFixed(2);
     }
 
-    function save() {
+    function fmtX(n) { return "x" + n.toFixed(2); }
+
+    function setStatus(msg) {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      clearTimeout(setStatus._t);
+      setStatus._t = setTimeout(() => {
+        if (el.textContent === msg) el.textContent = "Ready";
+      }, 1200);
+    }
+
+    function save(silent=false) {
       state.lastSaveMs = Date.now();
       localStorage.setItem(KEY, JSON.stringify(state));
-      setStatus("Saved");
+      if (!silent) setStatus("Saved");
     }
 
     function load() {
@@ -161,8 +220,9 @@
       if (!raw) return false;
       try {
         const data = JSON.parse(raw);
-        // shallow merge (keep defaults)
         Object.assign(state, data);
+        // ensure new keys exist if older save
+        state.owned = Object.assign({ assistant:0, tools:0, proc:0, auto:0 }, state.owned || {});
         return true;
       } catch {
         return false;
@@ -174,17 +234,27 @@
       location.reload();
     }
 
-    function computeIncome() {
-      // Assistant: +1/sec per owned
-      state.incomePerSecond = state.owned.assistant * 1.0;
+    function computeDerived() {
+      // Base income from assistants
+      state.baseIncomePerSecond = (state.owned.assistant || 0) * 1.0;
+
+      // Multipliers stack multiplicatively
+      const toolsMult = Math.pow(1.25, state.owned.tools || 0);
+      const procMult  = Math.pow(1.40, state.owned.proc  || 0);
+      const autoMult  = Math.pow(2.00, state.owned.auto  || 0);
+      state.mult = toolsMult * procMult * autoMult;
+    }
+
+    function incomePerSecond() {
+      return state.baseIncomePerSecond * state.mult;
     }
 
     function applyOfflineProgress() {
+      computeDerived();
       const now = Date.now();
       const secondsAway = (now - (state.lastTickMs || now)) / 1000;
-      // cap offline to 6 hours to avoid insanity in v0
       const capped = clamp(secondsAway, 0, 6 * 3600);
-      const earned = state.incomePerSecond * capped;
+      const earned = incomePerSecond() * capped;
 
       if (earned > 0.01) {
         state.cash += earned;
@@ -196,31 +266,50 @@
       state.lastTickMs = now;
     }
 
-    // UI
+    // UI refs
     const $cash = document.getElementById("cash");
     const $ips = document.getElementById("ips");
-    const $status = document.getElementById("status");
+    const $mult = document.getElementById("mult");
+    const $lifetime = document.getElementById("lifetime");
     const $ownedPill = document.getElementById("ownedPill");
-    const $assistantCost = document.getElementById("assistantCost");
-    const $buyAssistantBtn = document.getElementById("buyAssistantBtn");
 
-    function setStatus(msg) {
-      $status.textContent = msg;
-      // fade back to Ready after a moment
-      clearTimeout(setStatus._t);
-      setStatus._t = setTimeout(() => {
-        if ($status.textContent === msg) $status.textContent = "Ready";
-      }, 1200);
+    const $assistantCost = document.getElementById("assistantCost");
+    const $toolsCost = document.getElementById("toolsCost");
+    const $procCost = document.getElementById("procCost");
+    const $autoCost = document.getElementById("autoCost");
+
+    const $buyAssistantBtn = document.getElementById("buyAssistantBtn");
+    const $buyToolsBtn = document.getElementById("buyToolsBtn");
+    const $buyProcBtn = document.getElementById("buyProcBtn");
+    const $buyAutoBtn = document.getElementById("buyAutoBtn");
+
+    function totalOwned() {
+      return (state.owned.assistant||0) + (state.owned.tools||0) + (state.owned.proc||0) + (state.owned.auto||0);
     }
 
     function render() {
+      computeDerived();
+
       $cash.textContent = money(state.cash);
-      $ips.textContent = money(state.incomePerSecond) + "/s";
-      $ownedPill.textContent = "Owned: " + (state.owned.assistant || 0);
+      $ips.textContent = money(incomePerSecond()) + "/s";
+      $mult.textContent = fmtX(state.mult);
+      $lifetime.textContent = money(state.lifetimeEarned);
+      $ownedPill.textContent = "Owned: " + totalOwned();
+
       $assistantCost.textContent = money(state.assistantCost);
+      $toolsCost.textContent = money(state.toolsCost);
+      $procCost.textContent = money(state.procCost);
+      $autoCost.textContent = money(state.autoCost);
 
       $buyAssistantBtn.disabled = state.cash < state.assistantCost;
+      $buyToolsBtn.disabled = state.cash < state.toolsCost;
+      $buyProcBtn.disabled = state.cash < state.procCost;
+      $buyAutoBtn.disabled = state.cash < state.autoCost;
+
       $buyAssistantBtn.textContent = state.cash < state.assistantCost ? "Need more cash" : "Buy";
+      $buyToolsBtn.textContent = state.cash < state.toolsCost ? "Need more cash" : "Buy";
+      $buyProcBtn.textContent = state.cash < state.procCost ? "Need more cash" : "Buy";
+      $buyAutoBtn.textContent = state.cash < state.autoCost ? "Need more cash" : "Buy";
     }
 
     function tick() {
@@ -228,14 +317,13 @@
       const dt = (now - state.lastTickMs) / 1000;
       state.lastTickMs = now;
 
-      const earned = state.incomePerSecond * dt;
+      const earned = incomePerSecond() * dt;
       if (earned > 0) {
         state.cash += earned;
         state.lifetimeEarned += earned;
       }
 
-      // autosave every ~10s
-      if (now - state.lastSaveMs > 10000) save();
+      if (now - state.lastSaveMs > 10000) save(true);
 
       render();
     }
@@ -247,30 +335,51 @@
       render();
     });
 
-    document.getElementById("saveBtn").addEventListener("click", save);
+    document.getElementById("saveBtn").addEventListener("click", () => save(false));
     document.getElementById("resetBtn").addEventListener("click", resetAll);
 
     $buyAssistantBtn.addEventListener("click", () => {
       if (state.cash < state.assistantCost) return;
       state.cash -= state.assistantCost;
       state.owned.assistant = (state.owned.assistant || 0) + 1;
-
-      // price curve: grows ~35% each buy, rounded
       state.assistantCost = Math.ceil(state.assistantCost * 1.35);
-
-      computeIncome();
       render();
       setStatus("Assistant hired");
     });
 
+    $buyToolsBtn.addEventListener("click", () => {
+      if (state.cash < state.toolsCost) return;
+      state.cash -= state.toolsCost;
+      state.owned.tools = (state.owned.tools || 0) + 1;
+      state.toolsCost = Math.ceil(state.toolsCost * 1.45);
+      render();
+      setStatus("Tools upgraded");
+    });
+
+    $buyProcBtn.addEventListener("click", () => {
+      if (state.cash < state.procCost) return;
+      state.cash -= state.procCost;
+      state.owned.proc = (state.owned.proc || 0) + 1;
+      state.procCost = Math.ceil(state.procCost * 1.55);
+      render();
+      setStatus("Processes standardized");
+    });
+
+    $buyAutoBtn.addEventListener("click", () => {
+      if (state.cash < state.autoCost) return;
+      state.cash -= state.autoCost;
+      state.owned.auto = (state.owned.auto || 0) + 1;
+      state.autoCost = Math.ceil(state.autoCost * 1.70);
+      render();
+      setStatus("Automation installed");
+    });
+
     // Boot
     const hadSave = load();
-    computeIncome();
+    computeDerived();
     applyOfflineProgress();
     render();
     setStatus(hadSave ? "Loaded" : "New run");
-
-    // 10 FPS tick (smooth enough, cheap)
     setInterval(tick, 100);
   </script>
 </body>
