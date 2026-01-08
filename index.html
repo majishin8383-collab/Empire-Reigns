@@ -1,14 +1,277 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Compound</title>
+  <title>Compound — Idle Empire</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #0b0f14; color: #e8eef7;
+    }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 18px; }
+    .top {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: 12px; margin-bottom: 14px;
+    }
+    h1 { font-size: 18px; margin: 0; letter-spacing: .4px; }
+    .sub { opacity: .75; font-size: 12px; }
+    .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    @media (min-width: 760px) { .grid { grid-template-columns: 1.2fr .8fr; } }
+    .card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .statRow { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+    .stat {
+      padding: 12px; border-radius: 12px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .label { font-size: 11px; opacity: .7; margin-bottom: 6px; }
+    .value { font-size: 18px; font-weight: 700; }
+    .mono { font-variant-numeric: tabular-nums; }
+    .btnRow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    button {
+      appearance: none; border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06); color: #e8eef7;
+      padding: 10px 12px; border-radius: 12px; cursor: pointer;
+      font-weight: 650;
+    }
+    button:hover { background: rgba(255,255,255,.10); }
+    button.primary { background: rgba(120,180,255,.18); border-color: rgba(120,180,255,.35); }
+    button.danger { background: rgba(255,100,120,.14); border-color: rgba(255,100,120,.28); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .small { font-size: 12px; opacity: .8; line-height: 1.35; }
+    .hr { height: 1px; background: rgba(255,255,255,.10); margin: 12px 0; }
+    .list { display: grid; gap: 10px; }
+    .item { display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.08); }
+    .itemTop { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .pill { font-size: 11px; opacity: .75; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); }
+    footer { margin-top: 18px; opacity: .65; font-size: 11px; }
+    a { color: inherit; }
+  </style>
 </head>
 <body>
-  <h1>Compound</h1>
-  <p>Open the console.</p>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Compound</h1>
+        <div class="sub">Idle empire MVP — ticks, upgrades, saves, offline progress</div>
+      </div>
+      <div class="sub" id="status">Loading…</div>
+    </div>
 
-  <script src="./game.js"></script>
+    <div class="grid">
+      <div class="card">
+        <div class="statRow">
+          <div class="stat">
+            <div class="label">Cash</div>
+            <div class="value mono" id="cash">$0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Income / sec</div>
+            <div class="value mono" id="ips">$0</div>
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button class="primary" id="workBtn">Do Work (+$1)</button>
+          <button id="saveBtn">Save</button>
+          <button class="danger" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="small">
+          Goal: get the loop running on GitHub Pages. Next we’ll add a real upgrade tree + prestige.
+          For now: buy the one upgrade, feel the numbers move.
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:750;">Upgrades</div>
+            <div class="sub">Simple on purpose (v0)</div>
+          </div>
+          <div class="pill mono" id="ownedPill">Owned: 0</div>
+        </div>
+
+        <div class="list" style="margin-top:12px;">
+          <div class="item">
+            <div class="itemTop">
+              <div style="font-weight:700;">Hire an Assistant</div>
+              <div class="pill mono" id="assistantCost">$25</div>
+            </div>
+            <div class="small">+ $1.0 income/sec (stacks each purchase). Price grows each time.</div>
+            <button id="buyAssistantBtn">Buy</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <div class="small">
+          Offline gains: when you come back, you’ll get earnings for time away (capped).
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Built as a single-file deployable MVP. Next step: prestige + store scaffolding.
+    </footer>
+  </div>
+
+  <script>
+    // ---------- Minimal Idle MVP (single-file, GitHub Pages friendly) ----------
+    const KEY = "compound_idle_v0";
+
+    const state = {
+      cash: 0,
+      incomePerSecond: 0,
+      owned: { assistant: 0 },
+      assistantCost: 25,
+      lastTickMs: Date.now(),
+      lastSaveMs: Date.now(),
+      lifetimeEarned: 0
+    };
+
+    function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+    function money(n) {
+      // Simple formatter (fast + readable)
+      const abs = Math.abs(n);
+      if (abs >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
+      if (abs >= 1e6) return "$" + (n/1e6).toFixed(2) + "M";
+      if (abs >= 1e3) return "$" + (n/1e3).toFixed(2) + "K";
+      return "$" + n.toFixed(2);
+    }
+
+    function save() {
+      state.lastSaveMs = Date.now();
+      localStorage.setItem(KEY, JSON.stringify(state));
+      setStatus("Saved");
+    }
+
+    function load() {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return false;
+      try {
+        const data = JSON.parse(raw);
+        // shallow merge (keep defaults)
+        Object.assign(state, data);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function resetAll() {
+      localStorage.removeItem(KEY);
+      location.reload();
+    }
+
+    function computeIncome() {
+      // Assistant: +1/sec per owned
+      state.incomePerSecond = state.owned.assistant * 1.0;
+    }
+
+    function applyOfflineProgress() {
+      const now = Date.now();
+      const secondsAway = (now - (state.lastTickMs || now)) / 1000;
+      // cap offline to 6 hours to avoid insanity in v0
+      const capped = clamp(secondsAway, 0, 6 * 3600);
+      const earned = state.incomePerSecond * capped;
+
+      if (earned > 0.01) {
+        state.cash += earned;
+        state.lifetimeEarned += earned;
+        setStatus(`Offline: +${money(earned)}`);
+      } else {
+        setStatus("Ready");
+      }
+      state.lastTickMs = now;
+    }
+
+    // UI
+    const $cash = document.getElementById("cash");
+    const $ips = document.getElementById("ips");
+    const $status = document.getElementById("status");
+    const $ownedPill = document.getElementById("ownedPill");
+    const $assistantCost = document.getElementById("assistantCost");
+    const $buyAssistantBtn = document.getElementById("buyAssistantBtn");
+
+    function setStatus(msg) {
+      $status.textContent = msg;
+      // fade back to Ready after a moment
+      clearTimeout(setStatus._t);
+      setStatus._t = setTimeout(() => {
+        if ($status.textContent === msg) $status.textContent = "Ready";
+      }, 1200);
+    }
+
+    function render() {
+      $cash.textContent = money(state.cash);
+      $ips.textContent = money(state.incomePerSecond) + "/s";
+      $ownedPill.textContent = "Owned: " + (state.owned.assistant || 0);
+      $assistantCost.textContent = money(state.assistantCost);
+
+      $buyAssistantBtn.disabled = state.cash < state.assistantCost;
+      $buyAssistantBtn.textContent = state.cash < state.assistantCost ? "Need more cash" : "Buy";
+    }
+
+    function tick() {
+      const now = Date.now();
+      const dt = (now - state.lastTickMs) / 1000;
+      state.lastTickMs = now;
+
+      const earned = state.incomePerSecond * dt;
+      if (earned > 0) {
+        state.cash += earned;
+        state.lifetimeEarned += earned;
+      }
+
+      // autosave every ~10s
+      if (now - state.lastSaveMs > 10000) save();
+
+      render();
+    }
+
+    // Actions
+    document.getElementById("workBtn").addEventListener("click", () => {
+      state.cash += 1;
+      state.lifetimeEarned += 1;
+      render();
+    });
+
+    document.getElementById("saveBtn").addEventListener("click", save);
+    document.getElementById("resetBtn").addEventListener("click", resetAll);
+
+    $buyAssistantBtn.addEventListener("click", () => {
+      if (state.cash < state.assistantCost) return;
+      state.cash -= state.assistantCost;
+      state.owned.assistant = (state.owned.assistant || 0) + 1;
+
+      // price curve: grows ~35% each buy, rounded
+      state.assistantCost = Math.ceil(state.assistantCost * 1.35);
+
+      computeIncome();
+      render();
+      setStatus("Assistant hired");
+    });
+
+    // Boot
+    const hadSave = load();
+    computeIncome();
+    applyOfflineProgress();
+    render();
+    setStatus(hadSave ? "Loaded" : "New run");
+
+    // 10 FPS tick (smooth enough, cheap)
+    setInterval(tick, 100);
+  </script>
 </body>
 </html>
