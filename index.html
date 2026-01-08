@@ -3,287 +3,340 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Compound — Idle Empire</title>
+  <title>Empire Reigns — Cozy Idle</title>
   <style>
-    :root { color-scheme: dark; }
-    body { margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#070a0f; color:#e8eef7; }
+    :root{
+      color-scheme: dark;
+      --ink: #f3f1ea;
+      --muted: rgba(243,241,234,.78);
+      --line: rgba(255,255,255,.14);
+      --panel: rgba(12,10,14,.44);
+      --panel2: rgba(12,10,14,.34);
+      --glass: blur(10px);
 
-    /* ====== WORLD LAYER (cartoon-ish CSS scene) ====== */
-    .world {
-      min-height: 100vh;
-      position: relative;
-      overflow: hidden;
-      background:
-        radial-gradient(900px 420px at 18% 18%, rgba(255,255,255,.08), transparent 55%),
-        linear-gradient(180deg, #0c1320 0%, #0a0f18 18%, #081018 100%);
+      /* cozy accents */
+      --cream: rgba(255,245,220,.16);
+      --gold: rgba(255,210,120,.18);
+      --sky: rgba(120,180,255,.14);
+      --mint: rgba(120,220,180,.14);
+      --pink: rgba(255,140,170,.14);
+      --shadow: rgba(0,0,0,.48);
     }
-    .layer { position:absolute; left:0; right:0; }
-    .sky {
-      top:0; height: 56vh;
-      background:
-        radial-gradient(260px 220px at 18% 22%, rgba(255,210,120,.26), transparent 60%),
-        radial-gradient(140px 140px at 20% 24%, rgba(255,210,120,.22), transparent 62%),
-        radial-gradient(900px 360px at 50% 0%, rgba(120,180,255,.16), transparent 62%),
-        linear-gradient(180deg, rgba(120,180,255,.06), transparent 50%);
-      filter: saturate(1.05);
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background: #07080c;
+      color: var(--ink);
+      overflow-x: hidden;
     }
-    .clouds {
-      top: 8vh; height: 22vh; opacity:.85;
+
+    /* ===== WORLD ===== */
+    .world{
+      min-height:100vh;
+      position:relative;
+      overflow:hidden;
       background:
-        radial-gradient(70px 38px at 18% 50%, rgba(255,255,255,.14), transparent 65%),
-        radial-gradient(110px 50px at 22% 54%, rgba(255,255,255,.10), transparent 68%),
-        radial-gradient(90px 40px at 55% 44%, rgba(255,255,255,.10), transparent 68%),
-        radial-gradient(140px 60px at 60% 50%, rgba(255,255,255,.08), transparent 70%),
-        radial-gradient(80px 38px at 78% 48%, rgba(255,255,255,.10), transparent 70%);
-      mix-blend-mode: screen;
+        radial-gradient(900px 520px at 20% 10%, rgba(255,235,190,.12), transparent 60%),
+        radial-gradient(840px 520px at 80% 15%, rgba(160,210,255,.14), transparent 62%),
+        linear-gradient(180deg, rgba(10,12,18,1) 0%, rgba(8,10,14,1) 45%, rgba(6,8,10,1) 100%);
     }
-    .hillsBack {
-      top: 30vh; height: 30vh;
+
+    /* Cozy vignette + grain */
+    .vignette{
+      pointer-events:none;
+      position:absolute; inset:-2px;
       background:
-        radial-gradient(520px 220px at 18% 100%, rgba(60,120,95,.38), transparent 70%),
-        radial-gradient(600px 260px at 55% 100%, rgba(50,105,90,.36), transparent 70%),
-        radial-gradient(520px 220px at 88% 100%, rgba(55,120,95,.34), transparent 70%);
+        radial-gradient(1200px 780px at 50% 35%, transparent 55%, rgba(0,0,0,.55) 100%);
+      opacity:.7;
+      z-index: 9;
+      mix-blend-mode: multiply;
+    }
+    .grain{
+      pointer-events:none;
+      position:absolute; inset:-2px;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E");
+      opacity:.18;
+      z-index: 10;
+      mix-blend-mode: overlay;
+    }
+
+    .layer{ position:absolute; left:0; right:0; }
+
+    /* SVG scene container */
+    .scene{
+      position:absolute;
+      left:50%;
+      top:0;
+      width:min(1400px, 140vw);
+      transform: translateX(-50%);
+      height: 72vh;
+      z-index: 4;
+      pointer-events:none;
+      filter: drop-shadow(0 30px 70px rgba(0,0,0,.35));
+    }
+
+    /* Ground band (where interactive town sits) */
+    .groundBand{
+      position:absolute;
+      left:0; right:0;
+      top: 60vh;
+      bottom: 0;
+      z-index: 5;
+      background:
+        radial-gradient(900px 220px at 50% 0%, rgba(255,255,255,.06), transparent 62%),
+        linear-gradient(180deg, rgba(35,50,38,.55), rgba(12,18,14,.92));
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    .road{
+      position:absolute;
+      left:50%;
+      transform: translateX(-50%);
+      top: 64vh;
+      width:min(680px, 92vw);
+      height: 160px;
+      border-radius: 30px;
+      z-index: 6;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.28)),
+        linear-gradient(90deg, rgba(0,0,0,.58), rgba(0,0,0,.28));
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 30px 90px rgba(0,0,0,.45);
+    }
+    .road:before{
+      content:"";
+      position:absolute; left: 10%; right: 10%; top: 52%;
+      height: 7px; transform: translateY(-50%);
+      background: repeating-linear-gradient(90deg, rgba(255,225,155,.25) 0 18px, transparent 18px 38px);
+      opacity: .75;
+      border-radius: 999px;
       filter: blur(.2px);
     }
-    .hillsFront {
-      top: 38vh; height: 30vh;
-      background:
-        radial-gradient(560px 240px at 22% 100%, rgba(65,155,105,.28), transparent 72%),
-        radial-gradient(660px 280px at 60% 100%, rgba(55,140,100,.26), transparent 72%),
-        radial-gradient(540px 240px at 92% 100%, rgba(60,150,105,.24), transparent 72%);
-    }
-    .town {
-      top: 54vh; height: 18vh;
-      background:
-        linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.12)),
-        linear-gradient(90deg,
-          rgba(255,255,255,.08) 0 6%,
-          rgba(255,255,255,.04) 6% 12%,
-          rgba(255,255,255,.09) 12% 18%,
-          rgba(255,255,255,.05) 18% 26%,
-          rgba(255,255,255,.10) 26% 33%,
-          rgba(255,255,255,.05) 33% 40%,
-          rgba(255,255,255,.09) 40% 48%,
-          rgba(255,255,255,.05) 48% 55%,
-          rgba(255,255,255,.10) 55% 63%,
-          rgba(255,255,255,.05) 63% 72%,
-          rgba(255,255,255,.09) 72% 80%,
-          rgba(255,255,255,.05) 80% 88%,
-          rgba(255,255,255,.10) 88% 100%
-        );
-      opacity: .55;
-      mask-image: linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,1) 30%, rgba(0,0,0,1));
-    }
-    .ground {
-      top: 62vh; bottom: 0;
-      background:
-        linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.55)),
-        radial-gradient(900px 220px at 50% 0%, rgba(255,255,255,.06), transparent 62%),
-        linear-gradient(180deg, rgba(25,60,45,.70), rgba(10,20,15,.95));
-    }
-    .road {
-      position:absolute; left: 50%; transform: translateX(-50%);
-      bottom: 18vh;
-      width: min(540px, 90vw);
-      height: 140px;
-      border-radius: 26px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.22)),
-        linear-gradient(90deg, rgba(0,0,0,.45), rgba(0,0,0,.25));
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 30px 80px rgba(0,0,0,.35);
-    }
-    .road:before {
-      content:"";
-      position:absolute; left: 12%; right: 12%; top: 50%;
-      height: 6px; transform: translateY(-50%);
-      background: repeating-linear-gradient(90deg, rgba(255,210,120,.25) 0 18px, transparent 18px 34px);
-      opacity: .7;
-      border-radius: 999px;
-    }
-    .neonSign {
-      position:absolute;
-      left: 18px; bottom: calc(18vh + 92px);
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.28);
-      box-shadow: 0 0 0 1px rgba(120,180,255,.18), 0 0 26px rgba(120,180,255,.10);
-      font-weight: 900;
-      letter-spacing: .3px;
-      font-size: 12px;
-      z-index: 15;
-    }
-    .neonSign span { opacity:.75; font-weight:700; margin-left:6px; }
 
-    /* ====== STREETLIGHTS (tiny blink) ====== */
-    .streetlights{
-      position:absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: calc(18vh + 138px);
-      width: min(560px, 92vw);
-      height: 0;
-      z-index: 14;
-      pointer-events:none;
-    }
-    .streetlights .light{
-      position:absolute;
-      width: 6px; height: 6px;
-      border-radius: 999px;
-      background: rgba(255,210,120,.22);
-      box-shadow: 0 0 10px rgba(255,210,120,.10);
-      opacity: .55;
-      animation: lightBlink 2.9s steps(1,end) infinite;
-    }
-    .streetlights .light::after{
-      content:"";
-      position:absolute;
-      left:50%; top:50%;
-      width: 18px; height: 10px;
-      transform: translate(-50%,-50%);
-      border-radius: 999px;
-      background: radial-gradient(circle, rgba(255,210,120,.14), transparent 70%);
-      filter: blur(2px);
-      opacity: .7;
-      pointer-events:none;
-    }
-    @keyframes lightBlink{
-      0%, 100% { opacity: .45; }
-      55% { opacity: .95; }
-      62% { opacity: .55; }
-      80% { opacity: .85; }
-    }
-
-    /* ====== HUD ====== */
-    .hud {
-      position: sticky; top: 0; z-index: 30;
-      background: rgba(7,10,15,.70);
-      backdrop-filter: blur(10px);
+    /* ===== HUD ===== */
+    .hud{
+      position: sticky;
+      top:0;
+      z-index: 60;
+      background: rgba(10,10,14,.62);
+      backdrop-filter: var(--glass);
       border-bottom: 1px solid rgba(255,255,255,.10);
     }
-    .hudInner {
-      max-width: 1120px; margin: 0 auto; padding: 10px 18px;
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    .hudInner{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
     }
-    .brand { display:flex; gap:10px; align-items:baseline; }
-    .brand h1 { font-size: 16px; margin:0; letter-spacing:.35px; }
-    .brand .sub { font-size:12px; opacity:.75; }
-    .hudStats { display:flex; gap:10px; flex-wrap:wrap; }
-    .hudPill{
-      display:flex; flex-direction:column; gap:2px;
-      padding: 8px 10px; border-radius: 12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      min-width: 110px;
-    }
-    .hudPill .k { font-size:10px; opacity:.7; }
-    .hudPill .v { font-size:14px; font-weight:900; font-variant-numeric: tabular-nums; }
 
-    /* ====== UI PANELS ====== */
-    .wrap{ max-width:1120px; margin:0 auto; padding:18px; position: relative; z-index: 20; }
-    .panel {
-      background: rgba(0,0,0,.30);
+    .brand{
+      display:flex;
+      align-items:baseline;
+      gap: 10px;
+    }
+    .brand h1{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.4px;
+    }
+    .brand .sub{
+      font-size: 12px;
+      opacity:.78;
+    }
+
+    .hudStats{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .pillHud{
+      padding: 8px 10px;
+      border-radius: 14px;
       border: 1px solid rgba(255,255,255,.12);
-      border-radius: 18px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.35);
-      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      min-width: 120px;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
     }
-    .panelInner { padding: 14px; }
-    .grid { display:grid; gap:12px; grid-template-columns: 1fr; }
-    @media (min-width: 960px){ .grid{ grid-template-columns: 1.2fr .8fr; } }
+    .pillHud .k{ font-size:10px; opacity:.75; }
+    .pillHud .v{ font-size:14px; font-weight: 950; font-variant-numeric: tabular-nums; }
 
-    .hr{ height:1px; background: rgba(255,255,255,.10); margin: 12px 0; }
-    .small{ font-size:12px; opacity:.85; line-height:1.35; }
+    /* ===== PANELS ===== */
+    .wrap{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px;
+      position: relative;
+      z-index: 40;
+    }
+
+    .panel{
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(10,10,14,.50);
+      backdrop-filter: var(--glass);
+      box-shadow: 0 30px 110px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+
+    .tabs{
+      display:flex;
+      gap: 8px;
+      flex-wrap:wrap;
+      padding: 10px;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+
+    .tabBtn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: var(--ink);
+      padding: 9px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-weight: 950;
+      font-size: 12px;
+      letter-spacing:.2px;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+    }
+    .tabBtn:hover{ background: rgba(255,255,255,.08); }
+    .tabBtn:active{ transform: translateY(1px); }
+    .tabBtn.active{
+      background: linear-gradient(180deg, rgba(255,210,120,.16), rgba(120,180,255,.10));
+      border-color: rgba(255,210,120,.26);
+      box-shadow: 0 0 0 1px rgba(255,210,120,.10), 0 0 18px rgba(255,210,120,.10);
+    }
+
+    .panelInner{ padding: 14px; }
+    .grid{
+      display:grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 960px){
+      .grid{ grid-template-columns: 1.2fr .8fr; }
+    }
+
+    .item{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.18));
+      padding: 12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .itemTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+
+    .hr{
+      height:1px;
+      background: rgba(255,255,255,.10);
+      margin: 12px 0;
+    }
+
+    .small{ font-size: 12px; opacity:.85; line-height:1.35; }
     .mono{ font-variant-numeric: tabular-nums; }
+
+    .pill{
+      font-size: 11px;
+      opacity:.8;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
 
     /* Buttons */
     .btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
     button{
       appearance:none;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      color:#e8eef7;
+      border: 1px solid rgba(255,255,255,.14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
+      color: var(--ink);
       padding: 10px 12px;
-      border-radius: 14px;
+      border-radius: 16px;
       cursor:pointer;
-      font-weight: 850;
-      transition: transform .06s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+      font-weight: 950;
+      letter-spacing:.1px;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease, filter .12s ease;
       user-select: none;
     }
-    button:hover{ background: rgba(255,255,255,.10); }
+    button:hover{
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.09), rgba(0,0,0,.18));
+    }
     button:active{ transform: translateY(1px); }
     button:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
 
-    button.primary{ background: rgba(120,180,255,.18); border-color: rgba(120,180,255,.35); }
-    button.gold{ background: rgba(255,210,120,.14); border-color: rgba(255,210,120,.30); }
-    button.danger{ background: rgba(255,100,120,.14); border-color: rgba(255,100,120,.28); }
+    button.primary{
+      background: linear-gradient(180deg, rgba(120,180,255,.22), rgba(0,0,0,.18));
+      border-color: rgba(120,180,255,.30);
+      box-shadow: 0 0 0 1px rgba(120,180,255,.10), 0 12px 30px rgba(0,0,0,.18);
+    }
+    button.gold{
+      background: linear-gradient(180deg, rgba(255,210,120,.20), rgba(0,0,0,.18));
+      border-color: rgba(255,210,120,.28);
+      box-shadow: 0 0 0 1px rgba(255,210,120,.10), 0 12px 30px rgba(0,0,0,.18);
+    }
+    button.danger{
+      background: linear-gradient(180deg, rgba(255,140,170,.18), rgba(0,0,0,.18));
+      border-color: rgba(255,140,170,.26);
+    }
 
     .canBuy{
-      box-shadow: 0 0 0 1px rgba(120,180,255,.22), 0 0 18px rgba(120,180,255,.12);
-      border-color: rgba(120,180,255,.40) !important;
+      box-shadow: 0 0 0 1px rgba(255,210,120,.12), 0 0 22px rgba(255,210,120,.10);
+      border-color: rgba(255,210,120,.30) !important;
+      filter: saturate(1.04);
     }
 
-    /* Tabs */
-    .tabs {
-      display:flex; gap:8px; flex-wrap:wrap;
-      padding: 10px;
-      background: rgba(255,255,255,.03);
-      border-bottom: 1px solid rgba(255,255,255,.10);
-    }
-    .tabBtn{
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-    }
-    .tabBtn.active{
-      background: rgba(120,180,255,.18);
-      border-color: rgba(120,180,255,.35);
-      box-shadow: 0 0 0 1px rgba(120,180,255,.18);
-    }
-
-    /* Cards */
-    .list{ display:grid; gap:10px; }
-    .item{
-      display:grid; gap:6px;
-      padding: 10px;
-      border-radius: 16px;
-      background: rgba(0,0,0,.22);
-      border: 1px solid rgba(255,255,255,.10);
-    }
-    .itemTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
-    .pill{
-      font-size:11px; opacity:.75;
-      padding: 4px 8px; border-radius: 999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-    }
-    .locked{ opacity:.62; filter:saturate(.7); }
+    .locked{ opacity:.64; filter:saturate(.8); }
 
     /* Floater */
     .floater{
       position: fixed; pointer-events:none; z-index: 999;
-      font-weight: 900; font-size: 12px; opacity: .92;
+      font-weight: 950; font-size: 12px; opacity: .95;
       transform: translate(-50%, -50%);
       animation: floatUp .55s ease forwards;
-      text-shadow: 0 8px 22px rgba(0,0,0,.6);
+      text-shadow: 0 10px 26px rgba(0,0,0,.65);
       font-variant-numeric: tabular-nums;
     }
     @keyframes floatUp{
-      from{ opacity:.95; transform: translate(-50%, -50%) translateY(0); }
+      from{ opacity:.98; transform: translate(-50%, -50%) translateY(0); }
       to{ opacity:0; transform: translate(-50%, -50%) translateY(-26px); }
     }
 
-    /* Bottom Nav */
+    /* ===== BOTTOM NAV ===== */
     .bottomNav{
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-      background: rgba(7,10,15,.78);
-      backdrop-filter: blur(10px);
+      position: fixed; left: 0; right: 0; bottom: 0;
+      z-index: 70;
+      background: rgba(10,10,14,.70);
+      backdrop-filter: var(--glass);
       border-top: 1px solid rgba(255,255,255,.10);
     }
     .bottomInner{
-      max-width: 1120px; margin: 0 auto; padding: 10px 14px;
+      max-width: 1120px; margin: 0 auto; padding: 10px 12px;
       display:flex; gap:10px; justify-content:space-between; align-items:center;
     }
     .navBtn{
@@ -291,134 +344,127 @@
       display:flex; flex-direction:column; gap:2px;
       align-items:center; justify-content:center;
       padding: 10px 8px;
-      border-radius: 14px;
+      border-radius: 16px;
       font-size: 12px;
     }
-    .navBtn .k{ font-size:10px; opacity:.7; font-weight:800; }
-    .navBtn.active{ background: rgba(120,180,255,.16); border-color: rgba(120,180,255,.35); }
-    .padBottom{ height: 86px; }
-
-    /* ====== BUILDINGS (SVG hotspots) ====== */
-    .buildings {
-      position:absolute; left:0; right:0; top:0; bottom:0;
-      z-index: 16;
-      pointer-events: none;
+    .navBtn .k{ font-size:10px; opacity:.7; font-weight:850; }
+    .navBtn.active{
+      background: linear-gradient(180deg, rgba(255,210,120,.14), rgba(120,180,255,.10));
+      border-color: rgba(255,210,120,.26);
+      box-shadow: 0 0 0 1px rgba(255,210,120,.10);
     }
-    .building {
-      pointer-events: auto;
+    .padBottom{ height: 90px; }
+
+    /* ===== INTERACTIVE BUILDINGS (now: “illustrated” SVG style) ===== */
+    .buildings{
+      position:absolute; left:0; right:0; top:0; bottom:0;
+      z-index: 55;
+      pointer-events:none;
+    }
+    .building{
+      pointer-events:auto;
       position:absolute;
-      width: 160px; height: 130px;
-      cursor: pointer;
-      user-select: none;
+      width: 190px; height: 160px;
+      cursor:pointer;
+      user-select:none;
       transform-origin: center bottom;
       transition: transform .08s ease, filter .12s ease;
-      filter: drop-shadow(0 14px 18px rgba(0,0,0,.25));
+      filter: drop-shadow(0 18px 26px rgba(0,0,0,.34));
     }
-    .building:hover { transform: translateY(-1px) scale(1.01); }
-    .building:active { transform: translateY(0px) scale(.99); }
+    .building:hover{ transform: translateY(-2px) scale(1.01); }
+    .building:active{ transform: translateY(0px) scale(.99); }
 
-    .b-office    { left: 8vw;  bottom: calc(18vh + 42px); }
-    .b-warehouse { left: 30vw; bottom: calc(18vh + 20px); }
-    .b-garage    { left: 54vw; bottom: calc(18vh + 24px); }
-    .b-shop      { left: 76vw; bottom: calc(18vh + 50px); }
+    /* positions */
+    .b-office    { left: 7vw;  top: 56vh; }
+    .b-warehouse { left: 30vw; top: 58vh; }
+    .b-garage    { left: 54vw; top: 58vh; }
+    .b-shop      { left: 77vw; top: 56vh; }
 
-    @media (max-width: 540px){
-      .building{ width: 138px; height: 116px; }
-      .b-office    { left: 2vw;  }
-      .b-warehouse { left: 25vw; }
-      .b-garage    { left: 50vw; }
-      .b-shop      { left: 72vw; }
-    }
-
-    @keyframes glowPulse {
-      0% { filter: drop-shadow(0 14px 18px rgba(0,0,0,.25)) drop-shadow(0 0 0 rgba(120,180,255,0)); }
-      70% { filter: drop-shadow(0 14px 18px rgba(0,0,0,.25)) drop-shadow(0 0 18px rgba(120,180,255,.18)); }
-      100% { filter: drop-shadow(0 14px 18px rgba(0,0,0,.25)) drop-shadow(0 0 0 rgba(120,180,255,0)); }
-    }
-    .building.canBuy { animation: glowPulse 1.25s ease-in-out infinite; }
-
-    /* ====== BUILDING LEVEL VISIBILITY ====== */
-    .lvl2, .lvl3, .lvl4 { display: none; }
-    .building[data-lvl="2"] .lvl2 { display: block; }
-    .building[data-lvl="3"] .lvl2, .building[data-lvl="3"] .lvl3 { display: block; }
-    .building[data-lvl="4"] .lvl2, .building[data-lvl="4"] .lvl3, .building[data-lvl="4"] .lvl4 { display: block; }
-
-    .lvlBadge {
-      font-weight: 950;
-      letter-spacing: .3px;
-      fill: rgba(255,255,255,.88);
-    }
-    .lvlGlow {
-      filter: drop-shadow(0 0 10px rgba(255,210,120,.14));
-    }
-    .building[data-lvl="4"] .lvlGlow {
-      filter: drop-shadow(0 0 16px rgba(120,180,255,.18)) drop-shadow(0 0 10px rgba(255,210,120,.12));
+    @media (max-width: 560px){
+      .building{ width: 150px; height: 132px; }
+      .b-office{ left: 2vw; }
+      .b-warehouse{ left: 26vw; }
+      .b-garage{ left: 50vw; }
+      .b-shop{ left: 72vw; }
     }
 
-    /* ====== PEOPLE (sprites near office) ====== */
-    .people {
+    @keyframes glowPulse{
+      0% { filter: drop-shadow(0 18px 26px rgba(0,0,0,.34)) drop-shadow(0 0 0 rgba(255,210,120,0)); }
+      70%{ filter: drop-shadow(0 18px 26px rgba(0,0,0,.34)) drop-shadow(0 0 22px rgba(255,210,120,.16)); }
+      100%{ filter: drop-shadow(0 18px 26px rgba(0,0,0,.34)) drop-shadow(0 0 0 rgba(255,210,120,0)); }
+    }
+    .building.canBuy{ animation: glowPulse 1.35s ease-in-out infinite; }
+
+    /* level visibility */
+    .lvl2, .lvl3, .lvl4{ display:none; }
+    .building[data-lvl="2"] .lvl2{ display:block; }
+    .building[data-lvl="3"] .lvl2, .building[data-lvl="3"] .lvl3{ display:block; }
+    .building[data-lvl="4"] .lvl2, .building[data-lvl="4"] .lvl3, .building[data-lvl="4"] .lvl4{ display:block; }
+
+    /* ===== PEOPLE (cuter) ===== */
+    .people{
       position:absolute;
-      left: 10vw;
-      bottom: calc(18vh + 6px);
-      width: 220px;
-      height: 70px;
-      z-index: 17;
+      left: 7vw;
+      top: 67vh;
+      width: 250px;
+      height: 80px;
+      z-index: 56;
       pointer-events:none;
       display:flex;
       gap: 6px;
       align-items:flex-end;
       flex-wrap:wrap;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.32));
     }
-    @media (max-width:540px){
-      .people{ left: 4vw; width: 180px; }
+    @media (max-width:560px){
+      .people{ left: 2vw; width: 200px; top: 68vh; }
     }
-    .person {
-      width: 18px; height: 34px;
+    .person{
+      width: 18px; height: 36px;
       border-radius: 999px;
       position: relative;
-      opacity: .95;
-      filter: drop-shadow(0 8px 10px rgba(0,0,0,.25));
+      opacity: .98;
       animation: personBob 1.9s ease-in-out infinite;
       will-change: transform;
     }
-    .person:nth-child(2n){ animation-delay: .25s; }
-    .person:nth-child(3n){ animation-delay: .55s; }
-    .person:nth-child(5n){ animation-delay: .85s; }
-
-    @keyframes personBob{
-      0%,100%{ transform: translateY(0); }
-      50%{ transform: translateY(-2px); }
-    }
+    .person:nth-child(2n){ animation-delay:.25s; }
+    .person:nth-child(3n){ animation-delay:.55s; }
+    .person:nth-child(5n){ animation-delay:.85s; }
+    @keyframes personBob{ 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-2px);} }
 
     .person:before{
       content:"";
-      position:absolute; left:50%; top:2px;
+      position:absolute;
+      left:50%; top:1px;
       width: 14px; height: 14px;
       transform: translateX(-50%);
       border-radius: 999px;
-      background: rgba(255,255,255,.16);
-      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,245,220,.14);
+      border: 1px solid rgba(255,245,220,.22);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
     }
     .person:after{
       content:"";
-      position:absolute; left:50%; bottom:0;
+      position:absolute;
+      left:50%; bottom:0;
       width: 18px; height: 22px;
       transform: translateX(-50%);
       border-radius: 10px;
-      background: rgba(120,180,255,.12);
-      border: 1px solid rgba(120,180,255,.18);
+      background: linear-gradient(180deg, rgba(120,180,255,.18), rgba(0,0,0,.10));
+      border: 1px solid rgba(120,180,255,.22);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
     }
 
-    /* ====== SPEECH BUBBLE PANEL (anchored) ====== */
-    .bubble {
+    /* ===== Speech bubble ===== */
+    .bubble{
       position:absolute;
-      z-index: 50;
-      width: min(340px, 86vw);
-      border-radius: 18px;
+      z-index: 90;
+      width: min(360px, 88vw);
+      border-radius: 20px;
       border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 30px 90px rgba(0,0,0,.55);
+      background: rgba(12,10,14,.62);
+      backdrop-filter: var(--glass);
+      box-shadow: 0 40px 120px rgba(0,0,0,.65);
       display:none;
       overflow:hidden;
     }
@@ -426,7 +472,7 @@
       content:"";
       position:absolute;
       width: 14px; height: 14px;
-      background: rgba(0,0,0,.55);
+      background: rgba(12,10,14,.62);
       border-left: 1px solid rgba(255,255,255,.14);
       border-bottom: 1px solid rgba(255,255,255,.14);
       transform: rotate(45deg);
@@ -435,349 +481,386 @@
     }
     .bubbleHeader{
       padding: 10px 12px;
-      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
       border-bottom: 1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
     }
-    .bubbleHeader .title{ font-weight: 950; letter-spacing: .2px; }
-    .bubbleBody{ padding: 12px; display:grid; gap:10px; }
+    .bubbleHeader .title{ font-weight: 950; letter-spacing:.2px; }
+    .bubbleBody{ padding: 12px; display:grid; gap: 10px; }
     .bubbleRow{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
-    .bubbleClose{
-      padding: 8px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 950;
-    }
+    .bubbleClose{ padding: 8px 10px; border-radius: 14px; font-size: 12px; font-weight: 950; }
+
     .backdropClickCatcher{
       position:absolute;
       inset:0;
-      z-index: 45;
+      z-index: 80;
       display:none;
       background: transparent;
     }
 
-    /* ====== LEVEL-UP FX ====== */
-    .fxBurst {
-      position: fixed;
-      left: 0; top: 0;
-      width: 0; height: 0;
-      pointer-events: none;
-      z-index: 2000;
-    }
-    .fxParticle {
-      position: absolute;
-      width: 6px; height: 6px;
-      border-radius: 999px;
-      background: rgba(255,210,120,.85);
-      box-shadow: 0 0 10px rgba(255,210,120,.22);
+    /* ===== Level-up FX (keep) ===== */
+    .fxBurst{ position: fixed; left:0; top:0; width:0; height:0; pointer-events:none; z-index: 2000; }
+    .fxParticle{
+      position:absolute; width: 6px; height: 6px; border-radius: 999px;
+      background: rgba(255,210,120,.88);
+      box-shadow: 0 0 12px rgba(255,210,120,.20);
       transform: translate(-50%, -50%);
       animation: fxPop .65s ease-out forwards;
     }
-    .fxParticle.blue {
-      background: rgba(120,180,255,.85);
-      box-shadow: 0 0 10px rgba(120,180,255,.22);
+    .fxParticle.blue{
+      background: rgba(120,180,255,.88);
+      box-shadow: 0 0 12px rgba(120,180,255,.20);
     }
-    @keyframes fxPop {
-      from { opacity: 1; transform: translate(-50%, -50%) translate(0,0) scale(1); }
-      to   { opacity: 0; transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(.6); }
+    @keyframes fxPop{
+      from{ opacity: 1; transform: translate(-50%, -50%) translate(0,0) scale(1); }
+      to{ opacity: 0; transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(.6); }
     }
-
-    .fxBadge {
+    .fxBadge{
       position: fixed;
       z-index: 2001;
-      pointer-events: none;
+      pointer-events:none;
       transform: translate(-50%, -50%);
       padding: 8px 10px;
-      border-radius: 14px;
+      border-radius: 16px;
       border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
+      background: rgba(12,10,14,.62);
+      backdrop-filter: var(--glass);
       font-weight: 950;
       letter-spacing: .3px;
       font-size: 12px;
-      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      box-shadow: 0 30px 90px rgba(0,0,0,.65);
       animation: fxBadge .9s ease-out forwards;
-      text-shadow: 0 10px 26px rgba(0,0,0,.55);
+      text-shadow: 0 10px 26px rgba(0,0,0,.60);
     }
-    @keyframes fxBadge {
-      0%   { opacity: 0; transform: translate(-50%, -50%) translateY(10px) scale(.96); }
-      15%  { opacity: 1; transform: translate(-50%, -50%) translateY(0px) scale(1.02); }
-      100% { opacity: 0; transform: translate(-50%, -50%) translateY(-26px) scale(1.0); }
-    }
-
-    /* ====== TINY IDLE ANIMATIONS ====== */
-    @keyframes signPulse {
-      0%, 100% { transform: translateZ(0) scale(1); opacity: .92; }
-      50% { transform: translateZ(0) scale(1.01); opacity: 1; }
-    }
-    .neonSign {
-      animation: signPulse 2.4s ease-in-out infinite;
-    }
-    .neonSign::before{
-      content:"";
-      position:absolute; inset:-8px;
-      border-radius: 18px;
-      background: radial-gradient(closest-side, rgba(120,180,255,.18), transparent 70%);
-      opacity: .55;
-      filter: blur(10px);
-      animation: signPulse 2.4s ease-in-out infinite;
-      pointer-events:none;
+    @keyframes fxBadge{
+      0%{ opacity:0; transform: translate(-50%, -50%) translateY(10px) scale(.96); }
+      15%{ opacity:1; transform: translate(-50%, -50%) translateY(0px) scale(1.02); }
+      100%{ opacity:0; transform: translate(-50%, -50%) translateY(-26px) scale(1.0); }
     }
 
-    @keyframes windowFlicker {
-      0%, 100% { opacity: .85; }
-      45% { opacity: .55; }
-      55% { opacity: .95; }
-      70% { opacity: .62; }
-    }
-    .window {
-      animation: windowFlicker 3.6s steps(1, end) infinite;
-      transform-origin: center;
-    }
-    .window.w2 { animation-delay: .6s; }
-    .window.w3 { animation-delay: 1.3s; }
-    .window.w4 { animation-delay: 2.1s; }
-
-    @keyframes smokeRise {
-      0%   { opacity: 0; transform: translate(-50%, 0) scale(.8); }
-      12%  { opacity: .35; }
-      60%  { opacity: .18; }
-      100% { opacity: 0; transform: translate(-50%, -34px) scale(1.25); }
-    }
-    .smoke {
+    /* ===== tiny idle props ===== */
+    .sign{
       position:absolute;
-      width: 0; height: 0;
-      pointer-events:none;
-      z-index: 18;
+      left: 18px;
+      top: 66vh;
+      z-index: 58;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(12,10,14,.42);
+      backdrop-filter: var(--glass);
+      box-shadow: 0 0 0 1px rgba(255,210,120,.08), 0 0 26px rgba(255,210,120,.08);
+      font-weight: 950;
+      letter-spacing:.3px;
+      font-size: 12px;
+      animation: signPulse 2.6s ease-in-out infinite;
     }
-    .smoke::before,
-    .smoke::after {
-      content:"";
-      position:absolute;
-      left:0; top:0;
-      width: 16px; height: 16px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.16), rgba(255,255,255,.06) 55%, transparent 72%);
-      filter: blur(.2px);
-      animation: smokeRise 2.2s ease-in-out infinite;
-    }
-    .smoke::after {
-      width: 12px; height: 12px;
-      opacity: .9;
-      animation-duration: 2.6s;
-      animation-delay: 1.1s;
-    }
-    .smoke.garage {
-      left: calc(54vw + 118px);
-      bottom: calc(18vh + 118px);
-    }
-    @media (max-width: 540px){
-      .smoke.garage { left: calc(50vw + 102px); bottom: calc(18vh + 108px); }
-    }
+    .sign span{ opacity:.75; font-weight:800; margin-left:6px; }
+    @keyframes signPulse{ 0%,100%{ transform: scale(1); opacity:.92; } 50%{ transform: scale(1.01); opacity:1; } }
+
   </style>
 </head>
+
 <body>
   <div class="world">
-    <div class="layer sky"></div>
-    <div class="layer clouds"></div>
-    <div class="layer hillsBack"></div>
-    <div class="layer hillsFront"></div>
-    <div class="layer town"></div>
+    <!-- Cozy illustrated background as one SVG (feels like “real art” even though it’s vector) -->
+    <svg class="scene" viewBox="0 0 1400 720" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#101a2a"/>
+          <stop offset=".55" stop-color="#0b101b"/>
+          <stop offset="1" stop-color="#07080c"/>
+        </linearGradient>
 
-    <div class="layer ground">
-      <div class="road"></div>
+        <radialGradient id="sunGlow" cx="20%" cy="18%" r="40%">
+          <stop offset="0" stop-color="rgba(255,230,170,.30)"/>
+          <stop offset=".55" stop-color="rgba(255,230,170,.14)"/>
+          <stop offset="1" stop-color="rgba(255,230,170,0)"/>
+        </radialGradient>
 
-      <!-- streetlight dots -->
-      <div class="streetlights" aria-hidden="true">
-        <span class="light" style="left: 10%; animation-delay: .2s;"></span>
-        <span class="light" style="left: 22%; animation-delay: 1.4s;"></span>
-        <span class="light" style="left: 34%; animation-delay: .8s;"></span>
-        <span class="light" style="left: 48%; animation-delay: 2.1s;"></span>
-        <span class="light" style="left: 62%; animation-delay: .5s;"></span>
-        <span class="light" style="left: 74%; animation-delay: 1.9s;"></span>
-        <span class="light" style="left: 88%; animation-delay: 1.1s;"></span>
-      </div>
+        <radialGradient id="moonGlow" cx="78%" cy="18%" r="42%">
+          <stop offset="0" stop-color="rgba(170,220,255,.22)"/>
+          <stop offset=".55" stop-color="rgba(170,220,255,.10)"/>
+          <stop offset="1" stop-color="rgba(170,220,255,0)"/>
+        </radialGradient>
 
-      <div class="neonSign">COMPOUND<span id="sceneNote">starting out</span></div>
-    </div>
+        <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="1.1"/>
+        </filter>
+
+        <linearGradient id="hillBack" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="rgba(85,145,125,.32)"/>
+          <stop offset="1" stop-color="rgba(20,40,32,.40)"/>
+        </linearGradient>
+        <linearGradient id="hillFront" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="rgba(120,200,155,.22)"/>
+          <stop offset="1" stop-color="rgba(20,35,28,.46)"/>
+        </linearGradient>
+
+        <linearGradient id="townGlow" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="rgba(255,245,220,.10)"/>
+          <stop offset="1" stop-color="rgba(255,245,220,0)"/>
+        </linearGradient>
+      </defs>
+
+      <!-- sky -->
+      <rect x="0" y="0" width="1400" height="720" fill="url(#skyGrad)"/>
+      <rect x="0" y="0" width="1400" height="420" fill="url(#sunGlow)"/>
+      <rect x="0" y="0" width="1400" height="420" fill="url(#moonGlow)"/>
+
+      <!-- stars -->
+      <g opacity=".55">
+        <circle cx="140" cy="90" r="1.4" fill="rgba(255,255,255,.35)"/>
+        <circle cx="240" cy="140" r="1.0" fill="rgba(255,255,255,.28)"/>
+        <circle cx="360" cy="80" r="1.2" fill="rgba(255,255,255,.26)"/>
+        <circle cx="520" cy="120" r="1.1" fill="rgba(255,255,255,.22)"/>
+        <circle cx="690" cy="90" r="1.0" fill="rgba(255,255,255,.24)"/>
+        <circle cx="880" cy="130" r="1.2" fill="rgba(255,255,255,.25)"/>
+        <circle cx="1010" cy="85" r="1.1" fill="rgba(255,255,255,.22)"/>
+        <circle cx="1180" cy="150" r="1.2" fill="rgba(255,255,255,.24)"/>
+        <circle cx="1260" cy="90" r="1.0" fill="rgba(255,255,255,.20)"/>
+      </g>
+
+      <!-- clouds (soft shapes) -->
+      <g opacity=".22" filter="url(#soft)">
+        <path d="M140 170c40-28 120-34 160 0 30-20 70-18 94 2 40 34-20 88-110 78-30 22-120 20-160-18-38-35-30-50 16-62z" fill="rgba(255,255,255,.55)"/>
+        <path d="M860 160c55-34 150-38 205 3 44-22 92-14 112 12 28 38-28 88-140 76-34 26-126 26-176-10-44-32-34-58 -1-81z" fill="rgba(255,255,255,.45)"/>
+      </g>
+
+      <!-- hills back -->
+      <path d="M-20 420
+               C 120 300, 300 340, 420 410
+               C 540 480, 720 470, 860 395
+               C 1040 300, 1180 320, 1420 440
+               L 1420 720 L -20 720 Z"
+            fill="url(#hillBack)" opacity=".95"/>
+
+      <!-- hills front -->
+      <path d="M-20 470
+               C 110 380, 320 420, 460 500
+               C 610 585, 770 560, 930 485
+               C 1100 410, 1240 430, 1420 520
+               L 1420 720 L -20 720 Z"
+            fill="url(#hillFront)" opacity=".95"/>
+
+      <!-- tiny town silhouette -->
+      <g opacity=".45">
+        <rect x="190" y="460" width="40" height="38" rx="8" fill="rgba(255,255,255,.10)"/>
+        <rect x="240" y="444" width="50" height="54" rx="10" fill="rgba(255,255,255,.08)"/>
+        <rect x="304" y="470" width="34" height="28" rx="8" fill="rgba(255,255,255,.10)"/>
+        <rect x="360" y="452" width="52" height="46" rx="10" fill="rgba(255,255,255,.08)"/>
+        <rect x="442" y="470" width="30" height="28" rx="8" fill="rgba(255,255,255,.10)"/>
+
+        <rect x="870" y="460" width="44" height="40" rx="9" fill="rgba(255,255,255,.09)"/>
+        <rect x="922" y="444" width="56" height="56" rx="11" fill="rgba(255,255,255,.08)"/>
+        <rect x="990" y="470" width="34" height="30" rx="8" fill="rgba(255,255,255,.10)"/>
+        <rect x="1042" y="452" width="56" height="48" rx="10" fill="rgba(255,255,255,.08)"/>
+        <rect x="1124" y="470" width="30" height="28" rx="8" fill="rgba(255,255,255,.10)"/>
+
+        <rect x="0" y="508" width="1400" height="120" fill="url(#townGlow)"/>
+      </g>
+    </svg>
+
+    <div class="groundBand"></div>
+    <div class="road"></div>
+
+    <div class="sign">EMPIRE REIGNS<span id="sceneNote">starting out</span></div>
 
     <!-- BUILDINGS -->
     <div class="buildings" aria-label="World buildings">
-      <!-- Office -->
+      <!-- OFFICE (Cozy Cottage Office) -->
       <div class="building b-office" id="bOffice" role="button" tabindex="0" aria-label="Office" data-lvl="1">
-        <svg viewBox="0 0 180 150" width="100%" height="100%">
-          <defs>
-            <linearGradient id="roofA" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="rgba(255,210,120,.20)"/>
-              <stop offset="1" stop-color="rgba(0,0,0,.20)"/>
-            </linearGradient>
-          </defs>
+        <svg viewBox="0 0 220 190" width="100%" height="100%">
+          <!-- soft shadow base -->
+          <ellipse cx="112" cy="170" rx="76" ry="12" fill="rgba(0,0,0,.25)"/>
+          <!-- roof -->
+          <path d="M40 85 L110 35 L182 85 L170 96 L110 55 L52 96 Z"
+                fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.28)" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M56 92 L110 58 L166 92" stroke="rgba(0,0,0,.18)" stroke-width="4" stroke-linecap="round" opacity=".35"/>
 
-          <path d="M18 56 L90 18 L162 56 L152 62 L90 30 L28 62 Z" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.16)" stroke-width="2"/>
-          <rect x="26" y="58" width="128" height="78" rx="14" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.16)" stroke-width="2"/>
-          <rect x="26" y="58" width="128" height="78" rx="14" fill="url(#roofA)" opacity=".55"/>
+          <!-- house body -->
+          <rect x="52" y="88" width="116" height="78" rx="20"
+                fill="rgba(255,245,220,.08)" stroke="rgba(255,245,220,.26)" stroke-width="3"/>
+          <rect x="58" y="94" width="104" height="66" rx="18"
+                fill="rgba(0,0,0,.10)" opacity=".55"/>
 
-          <rect x="44" y="46" width="92" height="20" rx="10" class="lvlGlow" fill="rgba(120,180,255,.16)" stroke="rgba(120,180,255,.24)" stroke-width="2"/>
-          <text x="90" y="60" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,255,255,.85)">OFFICE</text>
-          <text x="90" y="72" text-anchor="middle" font-size="9" class="lvlBadge" id="officeLvlText">LV1</text>
+          <!-- porch -->
+          <rect x="70" y="150" width="80" height="16" rx="10"
+                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
 
-          <rect x="80" y="86" width="24" height="48" rx="10" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <circle cx="98" cy="110" r="2" fill="rgba(255,210,120,.35)"/>
+          <!-- door -->
+          <rect x="98" y="118" width="28" height="48" rx="12"
+                fill="rgba(0,0,0,.25)" stroke="rgba(255,245,220,.22)" stroke-width="3"/>
+          <circle cx="121" cy="143" r="2.3" fill="rgba(255,210,120,.35)"/>
 
-          <g opacity=".9">
-            <rect class="window w2" x="44" y="78" width="20" height="16" rx="6" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.20)" stroke-width="2"/>
-            <rect class="window w3" x="116" y="78" width="20" height="16" rx="6" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.20)" stroke-width="2"/>
+          <!-- windows (warm cozy) -->
+          <g opacity=".95">
+            <rect x="68" y="110" width="28" height="22" rx="10"
+                  fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+            <path d="M82 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
+            <path d="M68 121 H96" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
+
+            <rect x="136" y="110" width="28" height="22" rx="10"
+                  fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+            <path d="M150 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
+            <path d="M136 121 H164" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
           </g>
 
-          <g class="lvl2" opacity=".9">
-            <rect x="44" y="104" width="20" height="16" rx="6" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
-            <rect x="116" y="104" width="20" height="16" rx="6" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
+          <!-- level details -->
+          <g class="lvl2" opacity=".95">
+            <rect x="64" y="138" width="26" height="18" rx="9"
+                  fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+            <rect x="140" y="138" width="26" height="18" rx="9"
+                  fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
           </g>
-
           <g class="lvl3" opacity=".95">
-            <circle cx="34" cy="92" r="6" fill="rgba(255,210,120,.18)" stroke="rgba(255,210,120,.22)" stroke-width="2"/>
-            <rect x="18" y="108" width="18" height="22" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
-            <path d="M22 116 H32" stroke="rgba(255,255,255,.22)" stroke-width="2" stroke-linecap="round"/>
-            <path d="M22 122 H30" stroke="rgba(255,255,255,.18)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="56" cy="132" r="10" fill="rgba(120,220,180,.10)" stroke="rgba(120,220,180,.20)" stroke-width="3"/>
+            <path d="M56 125 V139" stroke="rgba(255,245,220,.18)" stroke-width="3"/>
+            <path d="M49 132 H63" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
           </g>
-
           <g class="lvl4" opacity=".95">
-            <rect x="34" y="132" width="112" height="10" rx="6" fill="rgba(120,180,255,.12)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
-            <rect x="42" y="135" width="96" height="4" rx="3" fill="rgba(255,210,120,.10)"/>
+            <path d="M74 86 C92 70, 128 70, 146 86" fill="none" stroke="rgba(255,210,120,.20)" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="110" cy="72" r="4" fill="rgba(255,210,120,.26)"/>
           </g>
 
-          <rect x="34" y="140" width="112" height="6" rx="6" fill="rgba(0,0,0,.24)" opacity=".65"/>
+          <!-- sign plaque -->
+          <rect x="62" y="78" width="96" height="22" rx="11"
+                fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+          <text x="110" y="93" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">OFFICE</text>
+          <text x="110" y="106" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" id="officeLvlText">LV1</text>
         </svg>
       </div>
 
-      <!-- Warehouse -->
+      <!-- WAREHOUSE (Cozy Barn) -->
       <div class="building b-warehouse" id="bWarehouse" role="button" tabindex="0" aria-label="Warehouse" data-lvl="1">
-        <svg viewBox="0 0 180 150" width="100%" height="100%">
-          <rect x="26" y="40" width="128" height="22" rx="12" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <rect x="22" y="56" width="136" height="84" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-
-          <rect x="40" y="46" width="100" height="18" rx="9" class="lvlGlow" fill="rgba(255,210,120,.14)" stroke="rgba(255,210,120,.22)" stroke-width="2"/>
-          <text x="90" y="59" text-anchor="middle" font-size="9" font-weight="900" fill="rgba(255,255,255,.85)">WAREHOUSE</text>
-          <text x="90" y="72" text-anchor="middle" font-size="9" class="lvlBadge" id="whLvlText">LV1</text>
-
-          <g opacity=".55">
-            <rect x="30" y="66" width="120" height="10" rx="6" fill="rgba(255,210,120,.10)"/>
-            <rect x="30" y="82" width="120" height="10" rx="6" fill="rgba(120,180,255,.10)"/>
+        <svg viewBox="0 0 220 190" width="100%" height="100%">
+          <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
+          <path d="M56 72 L110 36 L164 72 L164 86 L56 86 Z"
+                fill="rgba(255,140,170,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
+          <rect x="52" y="84" width="116" height="84" rx="22"
+                fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
+          <rect x="64" y="108" width="92" height="60" rx="18"
+                fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+          <path d="M110 108 V168" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+          <g opacity=".9">
+            <rect x="70" y="92" width="22" height="16" rx="8"
+                  fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+            <rect x="128" y="92" width="22" height="16" rx="8"
+                  fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
           </g>
-
-          <rect x="58" y="78" width="64" height="60" rx="14" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
-          <path d="M90 78 V138" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
 
           <g class="lvl2" opacity=".95">
-            <rect x="28" y="120" width="22" height="16" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
-            <rect x="132" y="120" width="22" height="16" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+            <rect x="42" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+            <rect x="160" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
           </g>
-
           <g class="lvl3" opacity=".95">
-            <rect x="18" y="126" width="18" height="10" rx="4" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
-            <circle cx="22" cy="138" r="3" fill="rgba(0,0,0,.30)"/>
-            <circle cx="32" cy="138" r="3" fill="rgba(0,0,0,.30)"/>
-            <path d="M34 126 V116 H42" stroke="rgba(255,255,255,.16)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M40 138 H70" stroke="rgba(120,220,180,.18)" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="40" cy="138" r="5" fill="rgba(120,220,180,.18)"/>
+          </g>
+          <g class="lvl4" opacity=".95">
+            <path d="M178 120 C190 110, 196 122, 188 134" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="188" cy="136" r="5" fill="rgba(255,210,120,.18)"/>
           </g>
 
-          <g class="lvl4" opacity=".9">
-            <rect x="36" y="98" width="16" height="12" rx="5" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.16)" stroke-width="2"/>
-            <rect x="128" y="98" width="16" height="12" rx="5" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.16)" stroke-width="2"/>
-          </g>
+          <rect x="62" y="64" width="96" height="22" rx="11"
+                fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+          <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WAREHOUSE</text>
+          <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" id="whLvlText">LV1</text>
         </svg>
       </div>
 
-      <!-- Garage -->
+      <!-- GARAGE (Workshop) -->
       <div class="building b-garage" id="bGarage" role="button" tabindex="0" aria-label="Garage" data-lvl="1">
-        <svg viewBox="0 0 180 150" width="100%" height="100%">
-          <path d="M30 62 L90 28 L150 62 L140 70 L90 40 L40 70 Z" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <rect x="30" y="64" width="120" height="76" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+        <svg viewBox="0 0 220 190" width="100%" height="100%">
+          <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
+          <path d="M54 78 L110 42 L166 78 L154 90 L110 62 L66 90 Z"
+                fill="rgba(120,220,180,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
+          <rect x="52" y="88" width="116" height="80" rx="22"
+                fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
 
-          <rect x="54" y="52" width="72" height="18" rx="9" class="lvlGlow" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.22)" stroke-width="2"/>
-          <text x="90" y="65" text-anchor="middle" font-size="9" font-weight="900" fill="rgba(255,255,255,.85)">GARAGE</text>
-          <text x="90" y="78" text-anchor="middle" font-size="9" class="lvlBadge" id="garLvlText">LV1</text>
-
-          <rect x="52" y="86" width="76" height="54" rx="14" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
-          <g opacity=".7">
-            <path d="M56 98 H124" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
-            <path d="M56 110 H124" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
-            <path d="M56 122 H124" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+          <rect x="74" y="110" width="72" height="58" rx="18"
+                fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+          <g opacity=".65">
+            <path d="M80 122 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+            <path d="M80 134 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+            <path d="M80 146 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
           </g>
 
-          <circle cx="46" cy="96" r="12" fill="rgba(120,180,255,.12)" stroke="rgba(120,180,255,.20)" stroke-width="2"/>
-          <path d="M42 96 L50 104" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round"/>
-          <path d="M50 90 L56 96" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="68" cy="120" r="12" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+          <path d="M64 120 L72 128" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
+          <path d="M72 114 L78 120" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
 
           <g class="lvl2" opacity=".95">
-            <rect x="18" y="124" width="22" height="12" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
-            <rect x="20" y="118" width="18" height="6" rx="4" fill="rgba(255,210,120,.10)"/>
+            <rect x="40" y="148" width="22" height="14" rx="7"
+                  fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
           </g>
-
           <g class="lvl3" opacity=".95">
-            <path d="M140 68 V82" stroke="rgba(255,255,255,.14)" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="140" cy="88" r="8" fill="rgba(255,210,120,.14)" stroke="rgba(255,210,120,.20)" stroke-width="2"/>
+            <path d="M170 92 V116" stroke="rgba(255,245,220,.14)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="170" cy="124" r="10" fill="rgba(255,210,120,.12)" stroke="rgba(255,210,120,.20)" stroke-width="3"/>
+          </g>
+          <g class="lvl4" opacity=".95">
+            <path d="M152 68 C162 54, 176 54, 186 68" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="169" cy="52" r="4" fill="rgba(255,210,120,.20)"/>
           </g>
 
-          <g class="lvl4" opacity=".95">
-            <rect x="156" y="64" width="6" height="6" rx="2" fill="rgba(255,255,255,.06)"/>
-            <circle cx="164" cy="58" r="8" fill="rgba(255,255,255,.05)"/>
-            <circle cx="154" cy="54" r="5" fill="rgba(255,255,255,.04)"/>
-          </g>
+          <rect x="62" y="80" width="96" height="22" rx="11"
+                fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+          <text x="110" y="95" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WORKSHOP</text>
+          <text x="110" y="108" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" id="garLvlText">LV1</text>
         </svg>
       </div>
 
-      <!-- Shop -->
+      <!-- SHOP (Market Stand) -->
       <div class="building b-shop" id="bShop" role="button" tabindex="0" aria-label="Shop" data-lvl="1">
-        <svg viewBox="0 0 180 150" width="100%" height="100%">
-          <path d="M28 60 H152 L146 80 H34 Z" fill="rgba(255,210,120,.16)" stroke="rgba(255,210,120,.22)" stroke-width="2"/>
-          <g opacity=".45">
-            <path d="M40 60 L36 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
-            <path d="M56 60 L52 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
-            <path d="M72 60 L68 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
-            <path d="M88 60 L84 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
-            <path d="M104 60 L100 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
-            <path d="M120 60 L116 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
-            <path d="M136 60 L132 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+        <svg viewBox="0 0 220 190" width="100%" height="100%">
+          <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
+          <path d="M58 80 H162 L154 104 H66 Z"
+                fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
+          <g opacity=".42">
+            <path d="M72 80 L68 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+            <path d="M92 80 L88 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+            <path d="M112 80 L108 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+            <path d="M132 80 L128 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+            <path d="M152 80 L148 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
           </g>
 
-          <rect x="30" y="78" width="120" height="62" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <rect class="window w4" x="44" y="92" width="48" height="30" rx="12" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
-          <rect x="104" y="92" width="32" height="48" rx="12" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
-          <circle cx="128" cy="118" r="2" fill="rgba(255,210,120,.35)"/>
-
-          <rect x="52" y="44" width="76" height="20" rx="10" class="lvlGlow" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <text x="90" y="58" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,255,255,.85)">SHOP</text>
-          <text x="90" y="72" text-anchor="middle" font-size="9" class="lvlBadge" id="shopLvlText">LV1</text>
+          <rect x="60" y="102" width="104" height="66" rx="22"
+                fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
+          <rect x="76" y="120" width="50" height="30" rx="14"
+                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+          <rect x="134" y="118" width="22" height="50" rx="14"
+                fill="rgba(0,0,0,.22)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+          <circle cx="150" cy="144" r="2.3" fill="rgba(255,210,120,.35)"/>
 
           <g class="lvl2" opacity=".95">
-            <rect x="54" y="86" width="24" height="10" rx="5" fill="rgba(255,210,120,.12)" stroke="rgba(255,210,120,.18)" stroke-width="2"/>
-            <text x="66" y="94" text-anchor="middle" font-size="7" font-weight="900" fill="rgba(255,255,255,.80)">OPEN</text>
+            <rect x="78" y="112" width="26" height="10" rx="5" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
           </g>
-
           <g class="lvl3" opacity=".95">
-            <rect x="146" y="112" width="18" height="22" rx="6" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
-            <circle cx="155" cy="118" r="2" fill="rgba(255,210,120,.22)"/>
-            <circle cx="155" cy="124" r="2" fill="rgba(255,210,120,.18)"/>
+            <rect x="168" y="132" width="16" height="22" rx="8" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
+          </g>
+          <g class="lvl4" opacity=".95">
+            <rect x="60" y="102" width="104" height="66" rx="22" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4"/>
           </g>
 
-          <g class="lvl4" opacity=".95">
-            <rect x="32" y="80" width="116" height="58" rx="16" fill="none" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
-          </g>
+          <rect x="62" y="64" width="96" height="22" rx="11"
+                fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+          <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">MARKET</text>
+          <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" id="shopLvlText">LV1</text>
         </svg>
       </div>
     </div>
-
-    <!-- Smoke puffs near garage -->
-    <div class="smoke garage"></div>
 
     <!-- PEOPLE -->
     <div class="people" id="peopleRow" aria-label="People near office"></div>
 
-    <!-- Click catcher for bubble (so clicking off closes) -->
+    <!-- Click catcher -->
     <div class="backdropClickCatcher" id="bubbleCatcher"></div>
 
-    <!-- Speech bubble anchored UI -->
-    <div class="bubble" id="bubble" role="dialog" aria-modal="false" aria-label="Location panel">
+    <!-- Speech bubble -->
+    <div class="bubble" id="bubble" role="dialog" aria-label="Location panel">
       <div class="bubbleHeader">
         <div>
           <div class="title" id="bubbleTitle">Office</div>
@@ -802,19 +885,19 @@
     <div class="hud">
       <div class="hudInner">
         <div class="brand">
-          <h1>Compound</h1>
+          <h1>Empire Reigns</h1>
           <div class="sub" id="status">Ready</div>
         </div>
         <div class="hudStats">
-          <div class="hudPill">
+          <div class="pillHud">
             <div class="k">Cash</div>
             <div class="v mono" id="hudCash">$0</div>
           </div>
-          <div class="hudPill">
+          <div class="pillHud">
             <div class="k">Income / sec</div>
             <div class="v mono" id="hudIps">$0/s</div>
           </div>
-          <div class="hudPill">
+          <div class="pillHud">
             <div class="k">EP</div>
             <div class="v mono" id="hudEp">0</div>
           </div>
@@ -837,17 +920,21 @@
               <div id="screenWorld">
                 <div class="item">
                   <div class="itemTop">
-                    <div style="font-weight:900;">Actions</div>
+                    <div style="font-weight:950;">Actions</div>
                     <div class="pill mono" id="ownedPill">Owned: 0</div>
                   </div>
+
                   <div class="btnRow" style="margin-top:10px;">
-                    <button class="primary canBuy" id="workBtn" style="min-width:160px;">Do Work (+$1)</button>
-                    <button id="quickHireBtn" style="min-width:160px;">Hire (Quick)</button>
+                    <button class="primary canBuy" id="workBtn" style="min-width:170px;">Do Work (+$1)</button>
+                    <button id="quickHireBtn" style="min-width:170px;">Hire (Quick)</button>
                   </div>
+
                   <div class="small" style="margin-top:8px;">
-                    Added: people bob + streetlight blink + sign/window/smoke idle.
+                    Cozy visuals pass: illustrated background + softer UI + warmer palette.
                   </div>
+
                   <div class="hr"></div>
+
                   <div class="btnRow">
                     <button id="saveBtn">Save</button>
                     <button id="newRunBtn" title="Resets cash + upgrades, keeps EP">New Run</button>
@@ -857,7 +944,7 @@
 
                 <div class="item" style="margin-top:12px;">
                   <div class="itemTop">
-                    <div style="font-weight:900;">Multipliers</div>
+                    <div style="font-weight:950;">Multipliers</div>
                     <div class="pill mono" id="multSummary">x1.00 total</div>
                   </div>
                   <div class="small mono" id="multDetails" style="margin-top:6px;">Ops x1.00 · Prestige x1.00</div>
@@ -867,70 +954,64 @@
               <div id="screenUpgrades" style="display:none;">
                 <div class="itemTop" style="margin-bottom:10px;">
                   <div>
-                    <div style="font-weight:900;">Upgrades</div>
+                    <div style="font-weight:950;">Upgrades</div>
                     <div class="small">Unlock in order (1 unlocks next).</div>
                   </div>
                   <div class="pill mono" id="epPill">EP: 0</div>
                 </div>
 
-                <div class="list">
-                  <div class="item" id="rowAssistant">
-                    <div class="itemTop">
-                      <div style="font-weight:900;">Hire an Assistant</div>
-                      <div class="pill mono" id="assistantCost">$25</div>
-                    </div>
-                    <div class="small">+ $1.00 base income/sec per purchase. Price grows each time.</div>
-                    <button id="buyAssistantBtn">Buy</button>
+                <div class="item" id="rowAssistant">
+                  <div class="itemTop">
+                    <div style="font-weight:950;">Hire an Assistant</div>
+                    <div class="pill mono" id="assistantCost">$25</div>
                   </div>
+                  <div class="small">+ $1.00 base income/sec per purchase. Price grows each time.</div>
+                  <button id="buyAssistantBtn">Buy</button>
+                </div>
 
-                  <div class="item locked" id="rowTools">
-                    <div class="itemTop">
-                      <div style="font-weight:900;">Buy Better Tools</div>
-                      <div class="pill mono" id="toolsCost">$60</div>
-                    </div>
-                    <div class="small">Multiply income by ×1.25 per purchase. Price grows each time.</div>
-                    <div class="small" id="toolsLockNote">Unlocks after: 1 assistant</div>
-                    <button id="buyToolsBtn" disabled>Locked</button>
+                <div class="item locked" id="rowTools" style="margin-top:10px;">
+                  <div class="itemTop">
+                    <div style="font-weight:950;">Buy Better Tools</div>
+                    <div class="pill mono" id="toolsCost">$60</div>
                   </div>
+                  <div class="small">Multiply income by ×1.25 per purchase. Price grows each time.</div>
+                  <div class="small" id="toolsLockNote">Unlocks after: 1 assistant</div>
+                  <button id="buyToolsBtn" disabled>Locked</button>
+                </div>
 
-                  <div class="item locked" id="rowProc">
-                    <div class="itemTop">
-                      <div style="font-weight:900;">Standardize Processes</div>
-                      <div class="pill mono" id="procCost">$150</div>
-                    </div>
-                    <div class="small">Multiply income by ×1.40 per purchase. Price grows each time.</div>
-                    <div class="small" id="procLockNote">Unlocks after: 1 tools</div>
-                    <button id="buyProcBtn" disabled>Locked</button>
+                <div class="item locked" id="rowProc" style="margin-top:10px;">
+                  <div class="itemTop">
+                    <div style="font-weight:950;">Standardize Processes</div>
+                    <div class="pill mono" id="procCost">$150</div>
                   </div>
+                  <div class="small">Multiply income by ×1.40 per purchase. Price grows each time.</div>
+                  <div class="small" id="procLockNote">Unlocks after: 1 tools</div>
+                  <button id="buyProcBtn" disabled>Locked</button>
+                </div>
 
-                  <div class="item locked" id="rowAuto">
-                    <div class="itemTop">
-                      <div style="font-weight:900;">Basic Automation</div>
-                      <div class="pill mono" id="autoCost">$400</div>
-                    </div>
-                    <div class="small">Multiply income by ×2.00 per purchase. Price grows each time.</div>
-                    <div class="small" id="autoLockNote">Unlocks after: 1 process</div>
-                    <button id="buyAutoBtn" disabled>Locked</button>
+                <div class="item locked" id="rowAuto" style="margin-top:10px;">
+                  <div class="itemTop">
+                    <div style="font-weight:950;">Basic Automation</div>
+                    <div class="pill mono" id="autoCost">$400</div>
                   </div>
+                  <div class="small">Multiply income by ×2.00 per purchase. Price grows each time.</div>
+                  <div class="small" id="autoLockNote">Unlocks after: 1 process</div>
+                  <button id="buyAutoBtn" disabled>Locked</button>
                 </div>
               </div>
 
               <div id="screenPrestige" style="display:none;">
                 <div class="item">
                   <div class="itemTop">
-                    <div style="font-weight:900;">Prestige</div>
+                    <div style="font-weight:950;">Prestige</div>
                     <div class="pill mono" id="prestReq">$10.00K goal</div>
                   </div>
-                  <div class="small" id="prestHint" style="margin-top:8px;">
-                    Reach the goal to unlock Prestige.
-                  </div>
+                  <div class="small" id="prestHint" style="margin-top:8px;">Reach the goal to unlock Prestige.</div>
                   <div class="btnRow" style="margin-top:10px;">
                     <button class="gold" id="prestigeBtn" disabled>Prestige (Locked)</button>
                   </div>
                   <div class="hr"></div>
-                  <div class="small">
-                    Prestige resets your run but increases your permanent multiplier (EP).
-                  </div>
+                  <div class="small">Prestige resets your run but increases your permanent multiplier (EP).</div>
                 </div>
               </div>
             </div>
@@ -938,7 +1019,7 @@
             <div>
               <div class="item">
                 <div class="itemTop">
-                  <div style="font-weight:900;">Stats</div>
+                  <div style="font-weight:950;">Stats</div>
                   <div class="pill mono" id="lifetime">$0</div>
                 </div>
                 <div class="small" style="margin-top:8px;">
@@ -950,11 +1031,11 @@
 
               <div class="item" style="margin-top:12px;">
                 <div class="itemTop">
-                  <div style="font-weight:900;">System</div>
-                  <div class="pill mono" id="verPill">v1.3</div>
+                  <div style="font-weight:950;">System</div>
+                  <div class="pill mono" id="verPill">v2.0</div>
                 </div>
                 <div class="small" style="margin-top:8px;">
-                  Idle polish: sign/window/smoke + people bob + streetlights blink.
+                  Cozy art direction pass done. Next: SFX toggle + juicier feedback.
                 </div>
               </div>
             </div>
@@ -972,10 +1053,13 @@
         <button class="navBtn" id="navPr"><div>Prestige</div><div class="k">Reset → grow</div></button>
       </div>
     </div>
+
+    <div class="vignette"></div>
+    <div class="grain"></div>
   </div>
 
   <script>
-    const KEY = "compound_idle_v1_3";
+    const KEY = "empire_reigns_cozy_v2";
 
     const state = {
       cash: 0,
@@ -1167,13 +1251,13 @@
       for(let i=0;i<count;i++){
         const p = document.createElement("div");
         p.className = "person";
-        p.style.transform = `translateY(${(i%3)*2}px)`; // tiny offset variety + CSS bob
+        p.style.transform = `translateY(${(i%3)*2}px)`;
         $peopleRow.appendChild(p);
       }
       if (count > 0){
         const first = $peopleRow.firstElementChild;
         if (first){
-          first.style.height = "36px";
+          first.style.height = "38px";
           first.style.opacity = "1";
         }
       }
@@ -1244,7 +1328,7 @@
       }
 
       if (bubbleContext === "proc"){
-        $bubbleTitle.textContent = "Garage";
+        $bubbleTitle.textContent = "Workshop";
         $bubbleSubtitle.textContent = "Systems & workflow";
         $bubbleDesc.textContent = "Standardize processes multiply income. Unlocks after buying 1 tools.";
         $bubbleOwned.textContent = "Owned: " + (state.owned.proc||0);
@@ -1257,7 +1341,7 @@
       }
 
       if (bubbleContext === "auto"){
-        $bubbleTitle.textContent = "Shop";
+        $bubbleTitle.textContent = "Market";
         $bubbleSubtitle.textContent = "Automation & scaling";
         $bubbleDesc.textContent = "Automation multiplies income hard. Unlocks after buying 1 process.";
         $bubbleOwned.textContent = "Owned: " + (state.owned.auto||0);
@@ -1295,7 +1379,7 @@
     const $procLockNote = document.getElementById("procLockNote");
     const $autoLockNote = document.getElementById("autoLockNote");
 
-    // ====== LEVELING RULES ======
+    // leveling rules
     function levelOffice(assistants){
       if (assistants >= 6) return 4;
       if (assistants >= 3) return 3;
@@ -1309,13 +1393,12 @@
       return 1;
     }
 
-    // ====== LEVEL-UP FX ENGINE ======
+    // level-up FX
     let lastLevels = null;
-
     function playLevelUpFx(buildingEl, newLevel){
       const r = buildingEl.getBoundingClientRect();
       const cx = r.left + r.width * 0.55;
-      const cy = r.top + r.height * 0.35;
+      const cy = r.top + r.height * 0.30;
 
       const badge = document.createElement("div");
       badge.className = "fxBadge";
@@ -1472,6 +1555,7 @@
       return true;
     }
 
+    // bubble events
     $bubbleClose.addEventListener("click", closeBubble);
     $bubbleCatcher.addEventListener("click", closeBubble);
     window.addEventListener("keydown", (e) => {
@@ -1528,6 +1612,7 @@
       }
     });
 
+    // actions
     document.getElementById("workBtn").addEventListener("click", (e) => {
       state.cash += 1; state.lifetimeEarned += 1;
       floatText("+$1", e.clientX, e.clientY);
@@ -1548,6 +1633,7 @@
     document.getElementById("resetBtn").addEventListener("click", hardReset);
     document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
 
+    // open bubble from list buttons
     document.getElementById("buyAssistantBtn").addEventListener("click", () => openBubble("assistant", $bOffice));
     document.getElementById("buyToolsBtn").addEventListener("click", () => openBubble("tools", $bWarehouse));
     document.getElementById("buyProcBtn").addEventListener("click", () => openBubble("proc", $bGarage));
@@ -1584,13 +1670,13 @@
 
       document.querySelector(".buildings").style.display = isW ? "block" : "none";
       document.getElementById("peopleRow").style.display = isW ? "flex" : "none";
+      document.querySelector(".sign").style.display = isW ? "block" : "none";
       if (!isW) closeBubble();
     }
 
     tabWorld.addEventListener("click", () => setActive("world"));
     tabUp.addEventListener("click", () => setActive("up"));
     tabPr.addEventListener("click", () => setActive("pr"));
-
     navWorld.addEventListener("click", () => setActive("world"));
     navUp.addEventListener("click", () => setActive("up"));
     navPr.addEventListener("click", () => setActive("pr"));
@@ -1598,7 +1684,6 @@
     // boot
     const hadSave = load();
     safeMerge();
-
     lastLevels = null;
 
     applyOfflineProgress();
