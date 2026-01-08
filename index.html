@@ -6,209 +6,304 @@
   <title>Compound — Idle Empire</title>
   <style>
     :root { color-scheme: dark; }
-    body {
-      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: #0b0f14; color: #e8eef7;
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:#0b0f14; color:#e8eef7;
     }
-    .wrap { max-width: 1040px; margin: 0 auto; padding: 18px; }
-    .top {
-      display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-      border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: 12px; margin-bottom: 14px;
+    .wrap{ max-width:1120px; margin:0 auto; padding:18px; }
+
+    /* ---------- HUD ---------- */
+    .hud{
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(11,15,20,.78);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      padding: 10px 0;
+      margin: -18px 0 14px;
     }
-    h1 { font-size: 18px; margin: 0; letter-spacing: .4px; }
-    .sub { opacity: .75; font-size: 12px; }
+    .hudInner{ max-width:1120px; margin:0 auto; padding:0 18px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+    .brand{ display:flex; gap:10px; align-items:baseline; }
+    .brand h1{ font-size:16px; margin:0; letter-spacing:.35px; }
+    .brand .sub{ font-size:12px; opacity:.75; }
+    .hudStats{ display:flex; gap:10px; flex-wrap:wrap; }
+    .hudPill{
+      display:flex; flex-direction:column; gap:2px;
+      padding: 8px 10px; border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      min-width: 110px;
+    }
+    .hudPill .k{ font-size:10px; opacity:.7; }
+    .hudPill .v{ font-size:14px; font-weight:800; font-variant-numeric: tabular-nums; }
 
-    .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
-    @media (min-width: 900px) { .grid { grid-template-columns: 1.2fr .8fr; } }
+    /* ---------- Layout ---------- */
+    .grid{ display:grid; gap:12px; grid-template-columns: 1fr; }
+    @media (min-width: 960px){ .grid{ grid-template-columns: 1.15fr .85fr; } }
 
-    .card {
+    .card{
       background: rgba(255,255,255,.04);
       border: 1px solid rgba(255,255,255,.10);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 14px;
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
     }
-    .statRow { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
-    .stat {
-      padding: 12px; border-radius: 12px;
-      background: rgba(0,0,0,.25);
-      border: 1px solid rgba(255,255,255,.08);
+
+    .row2{ display:grid; grid-template-columns: 1fr; gap:12px; }
+    @media (min-width: 720px){ .row2{ grid-template-columns: 1fr 1fr; } }
+
+    .hr{ height:1px; background: rgba(255,255,255,.10); margin: 12px 0; }
+    .mono{ font-variant-numeric: tabular-nums; }
+    .small{ font-size:12px; opacity:.82; line-height:1.35; }
+    .pill{
+      font-size:11px; opacity:.75;
+      padding: 4px 8px; border-radius: 999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
     }
-    .label { font-size: 11px; opacity: .7; margin-bottom: 6px; }
-    .value { font-size: 18px; font-weight: 700; }
-    .mono { font-variant-numeric: tabular-nums; }
-    .btnRow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-    button {
-      appearance: none; border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06); color: #e8eef7;
-      padding: 10px 12px; border-radius: 12px; cursor: pointer;
-      font-weight: 650;
+
+    /* ---------- Buttons ---------- */
+    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
+    button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color:#e8eef7;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:750;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+      user-select: none;
     }
-    button:hover { background: rgba(255,255,255,.10); }
-    button.primary { background: rgba(120,180,255,.18); border-color: rgba(120,180,255,.35); }
-    button.gold { background: rgba(255,210,120,.14); border-color: rgba(255,210,120,.30); }
-    button.danger { background: rgba(255,100,120,.14); border-color: rgba(255,100,120,.28); }
-    button:disabled { opacity: .5; cursor: not-allowed; }
+    button:hover{ background: rgba(255,255,255,.10); }
+    button:active{ transform: translateY(1px); }
+    button:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
 
-    .small { font-size: 12px; opacity: .8; line-height: 1.35; }
-    .hr { height: 1px; background: rgba(255,255,255,.10); margin: 12px 0; }
-    .list { display: grid; gap: 10px; margin-top: 12px; }
-    .item { display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.08); }
-    .itemTop { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .pill { font-size: 11px; opacity: .75; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); }
-    .locked { opacity: .55; filter: saturate(.6); }
-    .lockNote { font-size: 12px; opacity: .75; }
-    footer { margin-top: 18px; opacity: .65; font-size: 11px; }
+    button.primary{
+      background: rgba(120,180,255,.18);
+      border-color: rgba(120,180,255,.35);
+    }
+    button.gold{
+      background: rgba(255,210,120,.14);
+      border-color: rgba(255,210,120,.30);
+    }
+    button.danger{
+      background: rgba(255,100,120,.14);
+      border-color: rgba(255,100,120,.28);
+    }
 
-    /* --- Visual Scene --- */
-    .sceneWrap { display: grid; gap: 12px; grid-template-columns: 1fr; margin-bottom: 12px; }
-    @media (min-width: 620px) { .sceneWrap { grid-template-columns: 1fr 1fr; } }
-
-    .scene {
+    /* primary action area */
+    .actionCard{
+      display:flex; flex-direction:column; gap:10px;
+      border-radius: 16px;
+      padding: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      position: relative;
+      overflow: hidden;
+    }
+    .actionTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:baseline; }
+    .actionTop strong{ font-size: 13px; letter-spacing:.2px; }
+    .actionTop span{ font-size: 11px; opacity: .75; }
+    .bigRow{ display:flex; gap:10px; flex-wrap:wrap; }
+    .bigBtn{
+      padding: 12px 14px;
       border-radius: 14px;
+      font-size: 14px;
+      min-width: 160px;
+    }
+
+    /* affordability glow */
+    .canBuy{
+      box-shadow: 0 0 0 1px rgba(120,180,255,.25), 0 0 18px rgba(120,180,255,.14);
+      border-color: rgba(120,180,255,.40) !important;
+    }
+
+    /* subtle shake feedback */
+    @keyframes shake { 0%{transform:translateX(0)} 20%{transform:translateX(-3px)} 40%{transform:translateX(3px)} 60%{transform:translateX(-2px)} 80%{transform:translateX(2px)} 100%{transform:translateX(0)} }
+    .shake{ animation: shake .18s linear; }
+
+    /* +$ floater */
+    .floater{
+      position: fixed;
+      pointer-events:none;
+      font-weight: 800;
+      font-size: 12px;
+      opacity: .9;
+      transform: translate(-50%, -50%);
+      animation: floatUp .55s ease forwards;
+      z-index: 999;
+      text-shadow: 0 6px 18px rgba(0,0,0,.55);
+      font-variant-numeric: tabular-nums;
+    }
+    @keyframes floatUp{
+      from{ opacity:.95; transform: translate(-50%, -50%) translateY(0); }
+      to{ opacity:0; transform: translate(-50%, -50%) translateY(-26px); }
+    }
+
+    /* ---------- Visual scene ---------- */
+    .scene{
+      border-radius: 16px;
       border: 1px solid rgba(255,255,255,.10);
       background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18));
       padding: 12px;
       position: relative;
       overflow: hidden;
-      min-height: 160px;
+      min-height: 180px;
     }
-    .sceneTitle { display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
-    .sceneTitle strong { font-size: 13px; letter-spacing: .2px; }
-    .sceneTitle span { font-size: 11px; opacity: .75; }
+    .sceneTitle{ display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
+    .sceneTitle strong{ font-size: 13px; letter-spacing: .2px; }
+    .sceneTitle span{ font-size: 11px; opacity: .75; }
 
-    .room {
+    .room{
       margin-top: 10px;
-      border-radius: 12px;
+      border-radius: 14px;
       border: 1px solid rgba(255,255,255,.10);
       background:
         radial-gradient(1200px 240px at 50% 0%, rgba(120,180,255,.14), transparent 60%),
         linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.35));
-      height: 110px;
+      height: 120px;
       position: relative;
     }
-    .desk {
-      position: absolute;
-      left: 16px; bottom: 14px;
-      width: 92px; height: 26px;
-      border-radius: 10px;
+    .desk{
+      position:absolute; left:16px; bottom:14px;
+      width: 104px; height: 28px;
+      border-radius: 12px;
       background: rgba(255,255,255,.10);
       border: 1px solid rgba(255,255,255,.14);
     }
-    .desk:before {
-      content: "";
-      position: absolute;
-      left: 10px; top: -10px;
-      width: 36px; height: 18px;
-      border-radius: 8px;
+    .desk:before{
+      content:"";
+      position:absolute; left:12px; top:-12px;
+      width: 40px; height: 20px;
+      border-radius: 10px;
       background: rgba(120,180,255,.20);
       border: 1px solid rgba(120,180,255,.28);
     }
-    .avatar {
-      position: absolute;
-      left: 130px; bottom: 18px;
+    .avatar{
+      position:absolute; left:140px; bottom:18px;
       width: 22px; height: 22px;
       border-radius: 999px;
       background: rgba(255,255,255,.12);
       border: 1px solid rgba(255,255,255,.18);
-      display: none;
+      display:none;
     }
-    .avatar:after {
-      content: "";
-      position: absolute;
-      left: 4px; top: 22px;
-      width: 14px; height: 16px;
+    .avatar:after{
+      content:"";
+      position:absolute; left:4px; top:22px;
+      width:14px; height:16px;
       border-radius: 10px;
       background: rgba(255,255,255,.08);
       border: 1px solid rgba(255,255,255,.12);
     }
-    .toolrack {
-      position: absolute;
-      right: 14px; bottom: 14px;
-      width: 52px; height: 44px;
-      border-radius: 12px;
+    .toolrack{
+      position:absolute; right:14px; bottom:14px;
+      width:56px; height:48px;
+      border-radius: 14px;
       background: rgba(255,255,255,.07);
       border: 1px solid rgba(255,255,255,.12);
-      display: none;
+      display:none;
     }
-    .toolrack:before {
-      content: "";
-      position: absolute;
-      left: 10px; top: 10px;
-      width: 32px; height: 6px;
+    .toolrack:before{
+      content:"";
+      position:absolute; left:10px; top:10px;
+      width:36px; height:6px;
       border-radius: 999px;
       background: rgba(255,210,120,.18);
       border: 1px solid rgba(255,210,120,.26);
     }
-    .clipboard {
-      position: absolute;
-      right: 80px; bottom: 20px;
-      width: 24px; height: 34px;
-      border-radius: 8px;
+    .clipboard{
+      position:absolute; right:86px; bottom:22px;
+      width:26px; height:36px;
+      border-radius: 10px;
       background: rgba(255,255,255,.08);
       border: 1px solid rgba(255,255,255,.12);
-      display: none;
+      display:none;
       transform: rotate(-6deg);
     }
-    .clipboard:before {
-      content: "";
-      position: absolute;
-      left: 6px; top: 5px;
-      width: 12px; height: 6px;
+    .clipboard:before{
+      content:"";
+      position:absolute; left:6px; top:6px;
+      width:14px; height:6px;
       border-radius: 999px;
       background: rgba(120,180,255,.16);
       border: 1px solid rgba(120,180,255,.22);
     }
-    .automation {
-      position: absolute;
-      right: 26px; top: 10px;
-      width: 34px; height: 34px;
-      border-radius: 12px;
+    .automation{
+      position:absolute; right:26px; top:10px;
+      width:36px; height:36px;
+      border-radius: 14px;
       background: rgba(120,180,255,.10);
       border: 1px solid rgba(120,180,255,.18);
-      display: none;
+      display:none;
     }
-    .automation:before, .automation:after {
-      content: "";
-      position: absolute;
-      inset: 8px;
+    .automation:before,.automation:after{
+      content:"";
+      position:absolute;
+      inset:8px;
       border-radius: 999px;
       border: 2px solid rgba(255,255,255,.18);
     }
-    .automation:after {
-      inset: 14px;
+    .automation:after{
+      inset:14px;
       border-color: rgba(255,255,255,.12);
     }
-
-    .sceneLegend { margin-top: 10px; display:flex; flex-wrap:wrap; gap:8px; }
-    .tag {
-      font-size: 11px; opacity: .78;
+    .sceneLegend{ margin-top: 10px; display:flex; flex-wrap:wrap; gap:8px; }
+    .tag{
+      font-size: 11px; opacity:.78;
       padding: 4px 8px; border-radius: 999px;
       border: 1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.04);
-      display: none;
+      display:none;
     }
+
+    /* ---------- Upgrade list ---------- */
+    .list{ display:grid; gap:10px; margin-top: 12px; }
+    .item{
+      display:grid; gap:6px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .itemTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
+    .itemTitle{ font-weight:800; }
+    footer{ margin-top: 18px; opacity:.65; font-size:11px; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div>
+  <div class="hud">
+    <div class="hudInner">
+      <div class="brand">
         <h1>Compound</h1>
-        <div class="sub">Idle empire MVP — New Run (keeps EP) + visuals + upgrades + prestige</div>
+        <div class="sub" id="status">Ready</div>
       </div>
-      <div class="sub" id="status">Loading…</div>
+      <div class="hudStats">
+        <div class="hudPill">
+          <div class="k">Cash</div>
+          <div class="v mono" id="hudCash">$0</div>
+        </div>
+        <div class="hudPill">
+          <div class="k">Income / sec</div>
+          <div class="v mono" id="hudIps">$0/s</div>
+        </div>
+        <div class="hudPill">
+          <div class="k">EP</div>
+          <div class="v mono" id="hudEp">0</div>
+        </div>
+      </div>
     </div>
+  </div>
 
+  <div class="wrap">
     <div class="grid">
       <div class="card">
-        <div class="sceneWrap">
+        <div class="row2">
           <div class="scene">
             <div class="sceneTitle">
               <strong>Office</strong>
               <span id="sceneNote">Starting out</span>
             </div>
-
             <div class="room" aria-label="Office scene">
               <div class="desk" title="Desk"></div>
               <div class="avatar" id="vizAssistant" title="Assistant"></div>
@@ -216,7 +311,6 @@
               <div class="toolrack" id="vizTools" title="Tools"></div>
               <div class="automation" id="vizAuto" title="Automation"></div>
             </div>
-
             <div class="sceneLegend">
               <div class="tag" id="tagA">Assistant</div>
               <div class="tag" id="tagT">Tools</div>
@@ -225,86 +319,78 @@
             </div>
           </div>
 
-          <div class="scene">
-            <div class="sceneTitle">
-              <strong>Metrics</strong>
-              <span>Live</span>
+          <div class="actionCard">
+            <div class="actionTop">
+              <strong>Actions</strong>
+              <span class="mono" id="ownedPill">Owned: 0</span>
             </div>
 
-            <div class="statRow" style="margin-top:10px;">
-              <div class="stat">
-                <div class="label">Cash</div>
-                <div class="value mono" id="cash">$0</div>
-              </div>
-              <div class="stat">
-                <div class="label">Income / sec</div>
-                <div class="value mono" id="ips">$0</div>
-              </div>
+            <div class="bigRow">
+              <button class="primary bigBtn" id="workBtn">Do Work</button>
+              <button class="bigBtn" id="quickHireBtn" title="Same as buying Assistant">Hire (Quick)</button>
             </div>
 
-            <div class="statRow" style="margin-top:10px;">
-              <div class="stat">
-                <div class="label">Operations Multiplier</div>
-                <div class="value mono" id="opsMult">x1.00</div>
-              </div>
-              <div class="stat">
-                <div class="label">Prestige Multiplier</div>
-                <div class="value mono" id="prestMult">x1.00</div>
-              </div>
+            <div class="small">
+              Quick Hire becomes useful once you can afford assistants — it’s a “game-feel” shortcut.
             </div>
 
-            <div class="statRow" style="margin-top:10px;">
-              <div class="stat">
-                <div class="label">Equity Points (EP)</div>
-                <div class="value mono" id="ep">0</div>
-              </div>
-              <div class="stat">
-                <div class="label">Lifetime Earned</div>
-                <div class="value mono" id="lifetime">$0</div>
-              </div>
-            </div>
+            <div class="hr"></div>
 
             <div class="btnRow">
-              <button class="primary" id="workBtn">Do Work (+$1)</button>
               <button id="saveBtn">Save</button>
-              <button id="newRunBtn" title="Resets cash and upgrades but keeps EP">New Run</button>
+              <button id="newRunBtn" title="Resets cash + upgrades, keeps EP">New Run</button>
+              <button class="gold" id="prestigeBtn" disabled>Prestige</button>
               <button class="danger" id="resetBtn" title="Wipes everything including EP">Hard Reset</button>
             </div>
-          </div>
-        </div>
 
-        <div class="item">
-          <div class="itemTop">
-            <div style="font-weight:800;">Prestige: Exit & Reinvest</div>
-            <div class="pill mono" id="prestReq">$10.00K goal</div>
-          </div>
-          <div class="small" id="prestHint">
-            Reach the goal to unlock Prestige. Prestige resets your run but increases your permanent multiplier.
-          </div>
-          <div class="btnRow" style="margin-top:10px;">
-            <button class="gold" id="prestigeBtn" disabled>Prestige (Locked)</button>
+            <div class="small" id="prestHint" style="margin-top:6px;">
+              Reach $10.00K cash to unlock Prestige.
+            </div>
           </div>
         </div>
 
         <div class="hr"></div>
-        <div class="small">
-          New Run is your safe test-reset. Hard Reset is the nuke.
+
+        <div class="row2">
+          <div class="card" style="padding:12px;">
+            <div class="itemTop">
+              <div class="itemTitle">Multipliers</div>
+              <div class="pill mono" id="multSummary">x1.00 total</div>
+            </div>
+            <div class="small mono" id="multDetails" style="margin-top:6px;">
+              Ops x1.00 · Prestige x1.00
+            </div>
+          </div>
+
+          <div class="card" style="padding:12px;">
+            <div class="itemTop">
+              <div class="itemTitle">Progress</div>
+              <div class="pill mono" id="lifetime">$0</div>
+            </div>
+            <div class="small" style="margin-top:6px;">
+              Lifetime earned (resets on New Run / Prestige): <span class="mono" id="lifetime2">$0</span>
+            </div>
+          </div>
         </div>
+
+        <footer>
+          UI polish pass: sticky HUD, primary actions, affordability glow, micro feedback.
+        </footer>
       </div>
 
       <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div class="itemTop">
           <div>
-            <div style="font-weight:750;">Upgrades</div>
-            <div class="sub">Unlock in order (1 unlocks next)</div>
+            <div class="itemTitle">Upgrades</div>
+            <div class="small">Unlock in order (1 unlocks next). Buy buttons explain why.</div>
           </div>
-          <div class="pill mono" id="ownedPill">Owned: 0</div>
+          <div class="pill mono" id="epPill">EP: 0</div>
         </div>
 
         <div class="list">
           <div class="item" id="rowAssistant">
             <div class="itemTop">
-              <div style="font-weight:700;">Hire an Assistant</div>
+              <div class="itemTitle">Hire an Assistant</div>
               <div class="pill mono" id="assistantCost">$25</div>
             </div>
             <div class="small">+ $1.00 base income/sec per purchase. Price grows each time.</div>
@@ -313,49 +399,45 @@
 
           <div class="item locked" id="rowTools">
             <div class="itemTop">
-              <div style="font-weight:700;">Buy Better Tools</div>
+              <div class="itemTitle">Buy Better Tools</div>
               <div class="pill mono" id="toolsCost">$60</div>
             </div>
             <div class="small">Multiply income by ×1.25 per purchase. Price grows each time.</div>
-            <div class="lockNote" id="toolsLockNote">Locked: hire 1 assistant</div>
+            <div class="lockNote" id="toolsLockNote">Unlocks after: 1 assistant</div>
             <button id="buyToolsBtn" disabled>Locked</button>
           </div>
 
           <div class="item locked" id="rowProc">
             <div class="itemTop">
-              <div style="font-weight:700;">Standardize Processes</div>
+              <div class="itemTitle">Standardize Processes</div>
               <div class="pill mono" id="procCost">$150</div>
             </div>
             <div class="small">Multiply income by ×1.40 per purchase. Price grows each time.</div>
-            <div class="lockNote" id="procLockNote">Locked: buy 1 tool</div>
+            <div class="lockNote" id="procLockNote">Unlocks after: 1 tools</div>
             <button id="buyProcBtn" disabled>Locked</button>
           </div>
 
           <div class="item locked" id="rowAuto">
             <div class="itemTop">
-              <div style="font-weight:700;">Basic Automation</div>
+              <div class="itemTitle">Basic Automation</div>
               <div class="pill mono" id="autoCost">$400</div>
             </div>
             <div class="small">Multiply income by ×2.00 per purchase. Price grows each time.</div>
-            <div class="lockNote" id="autoLockNote">Locked: buy 1 process</div>
+            <div class="lockNote" id="autoLockNote">Unlocks after: 1 process</div>
             <button id="buyAutoBtn" disabled>Locked</button>
           </div>
         </div>
 
         <div class="hr"></div>
         <div class="small">
-          Offline gains are capped at 6 hours (v0). Everything saves automatically.
+          Offline gains are capped at 6 hours. Saves automatically every ~10s.
         </div>
       </div>
     </div>
-
-    <footer>
-      Single-file GitHub Pages MVP. New Run added.
-    </footer>
   </div>
 
   <script>
-    const KEY = "compound_idle_v0_5";
+    const KEY = "compound_idle_v0_6";
 
     const state = {
       cash: 0,
@@ -374,93 +456,90 @@
       autoCost: 400
     };
 
-    function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-    function money(n) {
+    // helpers
+    function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+    function money(n){
       const abs = Math.abs(n);
       if (abs >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
       if (abs >= 1e6) return "$" + (n/1e6).toFixed(2) + "M";
       if (abs >= 1e3) return "$" + (n/1e3).toFixed(2) + "K";
       return "$" + n.toFixed(2);
     }
-    function fmtX(n) { return "x" + n.toFixed(2); }
+    function fmtX(n){ return "x" + n.toFixed(2); }
 
-    function setStatus(msg) {
+    function setStatus(msg){
       const el = document.getElementById("status");
       el.textContent = msg;
       clearTimeout(setStatus._t);
       setStatus._t = setTimeout(() => {
         if (el.textContent === msg) el.textContent = "Ready";
-      }, 1200);
+      }, 1000);
     }
 
-    function safeMerge() {
-      state.owned = Object.assign({ assistant:0, tools:0, proc:0, auto:0 }, state.owned || {});
+    function safeMerge(){
+      state.owned = Object.assign({assistant:0, tools:0, proc:0, auto:0}, state.owned || {});
       if (typeof state.ep !== "number") state.ep = 0;
       if (typeof state.prestigeCount !== "number") state.prestigeCount = 0;
     }
 
-    function save(silent=false) {
+    function save(silent=false){
       state.lastSaveMs = Date.now();
       localStorage.setItem(KEY, JSON.stringify(state));
-      if (!silent) setStatus("Saved");
+      if(!silent) setStatus("Saved");
     }
 
-    function load() {
+    function load(){
       const raw = localStorage.getItem(KEY);
-      if (!raw) return false;
-      try {
-        const data = JSON.parse(raw);
-        Object.assign(state, data);
+      if(!raw) return false;
+      try{
+        Object.assign(state, JSON.parse(raw));
         safeMerge();
         return true;
-      } catch {
-        return false;
-      }
+      }catch{ return false; }
     }
 
-    function hardReset() {
+    function hardReset(){
       localStorage.removeItem(KEY);
       location.reload();
     }
 
-    // --- economics ---
-    function opsMultiplier() {
+    // economics
+    function opsMultiplier(){
       const toolsMult = Math.pow(1.25, state.owned.tools || 0);
       const procMult  = Math.pow(1.40, state.owned.proc  || 0);
       const autoMult  = Math.pow(2.00, state.owned.auto  || 0);
       return toolsMult * procMult * autoMult;
     }
-    function prestigeMultiplier() {
+    function prestigeMultiplier(){
       return Math.pow(1.2, state.ep || 0);
     }
-    function baseIncomePerSecond() {
+    function baseIncomePerSecond(){
       return (state.owned.assistant || 0) * 1.0;
     }
-    function incomePerSecond() {
+    function incomePerSecond(){
       return baseIncomePerSecond() * opsMultiplier() * prestigeMultiplier();
     }
 
     // gating (1 unlocks next)
-    function unlockedTools() { return (state.owned.assistant || 0) >= 1; }
-    function unlockedProc()  { return (state.owned.tools || 0) >= 1; }
-    function unlockedAuto()  { return (state.owned.proc || 0) >= 1; }
+    function unlockedTools(){ return (state.owned.assistant||0) >= 1; }
+    function unlockedProc(){  return (state.owned.tools||0) >= 1; }
+    function unlockedAuto(){  return (state.owned.proc||0) >= 1; }
 
     // prestige
     const PRESTIGE_GOAL = 10000;
-    function canPrestige() { return (state.cash || 0) >= PRESTIGE_GOAL; }
-    function epGainIfPrestigeNow() {
+    function canPrestige(){ return (state.cash||0) >= PRESTIGE_GOAL; }
+    function epGainIfPrestigeNow(){
       const le = Math.max(0, state.lifetimeEarned || 0) + 1;
       return Math.max(1, Math.floor(Math.log10(le)));
     }
 
-    function resetRunKeepEP() {
-      // Keep EP + prestigeCount, reset everything else
+    function resetRunKeepEP(){
       state.cash = 0;
       state.lastTickMs = Date.now();
       state.lastSaveMs = Date.now();
       state.lifetimeEarned = 0;
 
-      state.owned = { assistant: 0, tools: 0, proc: 0, auto: 0 };
+      state.owned = { assistant:0, tools:0, proc:0, auto:0 };
       state.assistantCost = 25;
       state.toolsCost = 60;
       state.procCost = 150;
@@ -471,39 +550,55 @@
       render();
     }
 
-    function doPrestige() {
-      if (!canPrestige()) return;
+    function doPrestige(){
+      if(!canPrestige()) return;
       const gain = epGainIfPrestigeNow();
-      state.ep = (state.ep || 0) + gain;
-      state.prestigeCount = (state.prestigeCount || 0) + 1;
+      state.ep = (state.ep||0) + gain;
+      state.prestigeCount = (state.prestigeCount||0) + 1;
       resetRunKeepEP();
       setStatus(`Prestiged: +${gain} EP`);
     }
 
-    function applyOfflineProgress() {
+    // offline
+    function applyOfflineProgress(){
       const now = Date.now();
       const secondsAway = (now - (state.lastTickMs || now)) / 1000;
-      const capped = clamp(secondsAway, 0, 6 * 3600);
+      const capped = clamp(secondsAway, 0, 6*3600);
       const earned = incomePerSecond() * capped;
-
-      if (earned > 0.01) {
+      if(earned > 0.01){
         state.cash += earned;
         state.lifetimeEarned += earned;
         setStatus(`Offline: +${money(earned)}`);
-      } else {
+      }else{
         setStatus("Ready");
       }
       state.lastTickMs = now;
     }
 
-    // --- UI refs ---
-    const $cash = document.getElementById("cash");
-    const $ips = document.getElementById("ips");
-    const $opsMult = document.getElementById("opsMult");
-    const $prestMult = document.getElementById("prestMult");
-    const $ep = document.getElementById("ep");
-    const $lifetime = document.getElementById("lifetime");
+    // micro feedback
+    function floatText(text, x, y){
+      const d = document.createElement("div");
+      d.className = "floater";
+      d.textContent = text;
+      d.style.left = x + "px";
+      d.style.top = y + "px";
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 650);
+    }
+    function shake(el){
+      el.classList.remove("shake");
+      void el.offsetWidth;
+      el.classList.add("shake");
+      setTimeout(() => el.classList.remove("shake"), 220);
+    }
+
+    // UI refs
+    const $hudCash = document.getElementById("hudCash");
+    const $hudIps = document.getElementById("hudIps");
+    const $hudEp = document.getElementById("hudEp");
+
     const $ownedPill = document.getElementById("ownedPill");
+    const $epPill = document.getElementById("epPill");
 
     const $assistantCost = document.getElementById("assistantCost");
     const $toolsCost = document.getElementById("toolsCost");
@@ -515,6 +610,7 @@
     const $buyProcBtn = document.getElementById("buyProcBtn");
     const $buyAutoBtn = document.getElementById("buyAutoBtn");
 
+    const $rowAssistant = document.getElementById("rowAssistant");
     const $rowTools = document.getElementById("rowTools");
     const $rowProc = document.getElementById("rowProc");
     const $rowAuto = document.getElementById("rowAuto");
@@ -524,10 +620,14 @@
     const $autoLockNote = document.getElementById("autoLockNote");
 
     const $prestigeBtn = document.getElementById("prestigeBtn");
-    const $prestReq = document.getElementById("prestReq");
     const $prestHint = document.getElementById("prestHint");
 
-    // Visual refs
+    const $multSummary = document.getElementById("multSummary");
+    const $multDetails = document.getElementById("multDetails");
+    const $lifetime = document.getElementById("lifetime");
+    const $lifetime2 = document.getElementById("lifetime2");
+
+    // visuals
     const $sceneNote = document.getElementById("sceneNote");
     const $vizAssistant = document.getElementById("vizAssistant");
     const $vizTools = document.getElementById("vizTools");
@@ -538,30 +638,33 @@
     const $tagP = document.getElementById("tagP");
     const $tagX = document.getElementById("tagX");
 
-    function totalOwned() {
+    function totalOwned(){
       return (state.owned.assistant||0) + (state.owned.tools||0) + (state.owned.proc||0) + (state.owned.auto||0);
     }
 
-    function setRowLocked(rowEl, btnEl, noteEl, locked, noteText, canBuy) {
-      if (locked) {
+    function setRowLocked(rowEl, btnEl, noteEl, locked, noteText, canBuy){
+      if(locked){
         rowEl.classList.add("locked");
         btnEl.disabled = true;
         btnEl.textContent = "Locked";
         noteEl.textContent = noteText;
         noteEl.style.display = "block";
-      } else {
+        rowEl.classList.remove("canBuy");
+      }else{
         rowEl.classList.remove("locked");
-        noteEl.style.display = "none";
+        noteEl.style.display = "block"; // keep explanation visible even when unlocked
+        noteEl.textContent = noteText;
         btnEl.disabled = !canBuy;
         btnEl.textContent = canBuy ? "Buy" : "Need more cash";
+        rowEl.classList.toggle("canBuy", canBuy);
       }
     }
 
-    function renderVisuals() {
-      const a = (state.owned.assistant || 0) > 0;
-      const t = (state.owned.tools || 0) > 0;
-      const p = (state.owned.proc || 0) > 0;
-      const x = (state.owned.auto || 0) > 0;
+    function renderVisuals(){
+      const a = (state.owned.assistant||0) > 0;
+      const t = (state.owned.tools||0) > 0;
+      const p = (state.owned.proc||0) > 0;
+      const x = (state.owned.auto||0) > 0;
 
       $vizAssistant.style.display = a ? "block" : "none";
       $vizTools.style.display = t ? "block" : "none";
@@ -580,13 +683,16 @@
       else $sceneNote.textContent = "Automation is online";
     }
 
-    function render() {
-      $cash.textContent = money(state.cash || 0);
-      $ips.textContent = money(incomePerSecond()) + "/s";
-      $opsMult.textContent = fmtX(opsMultiplier());
-      $prestMult.textContent = fmtX(prestigeMultiplier());
-      $ep.textContent = String(state.ep || 0);
-      $lifetime.textContent = money(state.lifetimeEarned || 0);
+    function render(){
+      const cash = state.cash||0;
+      const ips = incomePerSecond();
+      const ep = state.ep||0;
+
+      $hudCash.textContent = money(cash);
+      $hudIps.textContent = money(ips) + "/s";
+      $hudEp.textContent = String(ep);
+
+      $epPill.textContent = "EP: " + ep;
       $ownedPill.textContent = "Owned: " + totalOwned();
 
       $assistantCost.textContent = money(state.assistantCost);
@@ -594,87 +700,127 @@
       $procCost.textContent = money(state.procCost);
       $autoCost.textContent = money(state.autoCost);
 
-      $buyAssistantBtn.disabled = (state.cash || 0) < state.assistantCost;
-      $buyAssistantBtn.textContent = ((state.cash || 0) < state.assistantCost) ? "Need more cash" : "Buy";
+      // Assistant
+      const canBuyA = cash >= state.assistantCost;
+      $buyAssistantBtn.disabled = !canBuyA;
+      $buyAssistantBtn.textContent = canBuyA ? "Buy" : "Need more cash";
+      $rowAssistant.classList.toggle("canBuy", canBuyA);
 
-      const toolsUnlocked = unlockedTools();
-      const procUnlocked = unlockedProc();
-      const autoUnlocked = unlockedAuto();
+      // gated rows
+      setRowLocked($rowTools, $buyToolsBtn, $toolsLockNote, !unlockedTools(), "Unlocks after: 1 assistant", cash >= state.toolsCost);
+      setRowLocked($rowProc,  $buyProcBtn,  $procLockNote,  !unlockedProc(),  "Unlocks after: 1 tools",    cash >= state.procCost);
+      setRowLocked($rowAuto,  $buyAutoBtn,  $autoLockNote,  !unlockedAuto(),  "Unlocks after: 1 process",  cash >= state.autoCost);
 
-      setRowLocked($rowTools, $buyToolsBtn, $toolsLockNote, !toolsUnlocked, "Locked: hire 1 assistant", (state.cash||0) >= state.toolsCost);
-      setRowLocked($rowProc,  $buyProcBtn,  $procLockNote,  !procUnlocked,  "Locked: buy 1 tool",       (state.cash||0) >= state.procCost);
-      setRowLocked($rowAuto,  $buyAutoBtn,  $autoLockNote,  !autoUnlocked,  "Locked: buy 1 process",    (state.cash||0) >= state.autoCost);
-
-      $prestReq.textContent = money(PRESTIGE_GOAL) + " goal";
+      // Prestige
       const ok = canPrestige();
       $prestigeBtn.disabled = !ok;
       $prestigeBtn.textContent = ok ? `Prestige (+${epGainIfPrestigeNow()} EP)` : "Prestige (Locked)";
       $prestHint.textContent = ok
-        ? "Ready. This will reset your upgrades and cash, but permanently increase your multiplier."
-        : `Locked until Cash ≥ ${money(PRESTIGE_GOAL)}. Current EP gain if you prestige: +${epGainIfPrestigeNow()}.`;
+        ? "Ready. Prestige resets your run but permanently boosts income."
+        : `Prestige unlocks at ${money(PRESTIGE_GOAL)} cash.`;
+
+      // multipliers
+      const ops = opsMultiplier();
+      const pm = prestigeMultiplier();
+      $multSummary.textContent = fmtX(ops * pm) + " total";
+      $multDetails.textContent = `Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
+
+      $lifetime.textContent = money(state.lifetimeEarned||0);
+      $lifetime2.textContent = money(state.lifetimeEarned||0);
+
+      // quick hire button glow
+      const q = document.getElementById("quickHireBtn");
+      q.classList.toggle("canBuy", canBuyA);
 
       renderVisuals();
     }
 
-    function tick() {
+    function tick(){
       const now = Date.now();
       const dt = (now - state.lastTickMs) / 1000;
       state.lastTickMs = now;
 
       const earned = incomePerSecond() * dt;
-      if (earned > 0) {
+      if(earned > 0){
         state.cash += earned;
         state.lifetimeEarned += earned;
       }
 
-      if (now - state.lastSaveMs > 10000) save(true);
+      if(now - state.lastSaveMs > 10000) save(true);
       render();
     }
 
+    // purchases with feedback
+    function tryBuy(cost, onSuccess, buttonEl, event){
+      if((state.cash||0) < cost){
+        shake(buttonEl);
+        if(event) floatText("Need $" + (cost - state.cash).toFixed(0), event.clientX, event.clientY);
+        return false;
+      }
+      state.cash -= cost;
+      onSuccess();
+      return true;
+    }
+
     // actions
-    document.getElementById("workBtn").addEventListener("click", () => {
+    document.getElementById("workBtn").addEventListener("click", (e) => {
       state.cash += 1;
       state.lifetimeEarned += 1;
+      floatText("+$1", e.clientX, e.clientY);
       render();
     });
+
+    document.getElementById("quickHireBtn").addEventListener("click", (e) => {
+      // same as assistant buy
+      tryBuy(state.assistantCost, () => {
+        state.owned.assistant = (state.owned.assistant||0) + 1;
+        state.assistantCost = Math.ceil(state.assistantCost * 1.35);
+        setStatus("Assistant hired");
+      }, document.getElementById("quickHireBtn"), e);
+      render();
+    });
+
     document.getElementById("saveBtn").addEventListener("click", () => save(false));
     document.getElementById("newRunBtn").addEventListener("click", resetRunKeepEP);
-    document.getElementById("resetBtn").addEventListener("click", hardReset);
     document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
+    document.getElementById("resetBtn").addEventListener("click", hardReset);
 
-    $buyAssistantBtn.addEventListener("click", () => {
-      if ((state.cash || 0) < state.assistantCost) return;
-      state.cash -= state.assistantCost;
-      state.owned.assistant = (state.owned.assistant || 0) + 1;
-      state.assistantCost = Math.ceil(state.assistantCost * 1.35);
-      setStatus("Assistant hired");
+    $buyAssistantBtn.addEventListener("click", (e) => {
+      tryBuy(state.assistantCost, () => {
+        state.owned.assistant = (state.owned.assistant||0) + 1;
+        state.assistantCost = Math.ceil(state.assistantCost * 1.35);
+        setStatus("Assistant hired");
+      }, $buyAssistantBtn, e);
       render();
     });
-    $buyToolsBtn.addEventListener("click", () => {
-      if (!unlockedTools()) return;
-      if ((state.cash || 0) < state.toolsCost) return;
-      state.cash -= state.toolsCost;
-      state.owned.tools = (state.owned.tools || 0) + 1;
-      state.toolsCost = Math.ceil(state.toolsCost * 1.45);
-      setStatus("Tools upgraded");
+
+    $buyToolsBtn.addEventListener("click", (e) => {
+      if(!unlockedTools()) { shake($buyToolsBtn); return; }
+      tryBuy(state.toolsCost, () => {
+        state.owned.tools = (state.owned.tools||0) + 1;
+        state.toolsCost = Math.ceil(state.toolsCost * 1.45);
+        setStatus("Tools upgraded");
+      }, $buyToolsBtn, e);
       render();
     });
-    $buyProcBtn.addEventListener("click", () => {
-      if (!unlockedProc()) return;
-      if ((state.cash || 0) < state.procCost) return;
-      state.cash -= state.procCost;
-      state.owned.proc = (state.owned.proc || 0) + 1;
-      state.procCost = Math.ceil(state.procCost * 1.55);
-      setStatus("Processes standardized");
+
+    $buyProcBtn.addEventListener("click", (e) => {
+      if(!unlockedProc()) { shake($buyProcBtn); return; }
+      tryBuy(state.procCost, () => {
+        state.owned.proc = (state.owned.proc||0) + 1;
+        state.procCost = Math.ceil(state.procCost * 1.55);
+        setStatus("Processes standardized");
+      }, $buyProcBtn, e);
       render();
     });
-    $buyAutoBtn.addEventListener("click", () => {
-      if (!unlockedAuto()) return;
-      if ((state.cash || 0) < state.autoCost) return;
-      state.cash -= state.autoCost;
-      state.owned.auto = (state.owned.auto || 0) + 1;
-      state.autoCost = Math.ceil(state.autoCost * 1.70);
-      setStatus("Automation installed");
+
+    $buyAutoBtn.addEventListener("click", (e) => {
+      if(!unlockedAuto()) { shake($buyAutoBtn); return; }
+      tryBuy(state.autoCost, () => {
+        state.owned.auto = (state.owned.auto||0) + 1;
+        state.autoCost = Math.ceil(state.autoCost * 1.70);
+        setStatus("Automation installed");
+      }, $buyAutoBtn, e);
       render();
     });
 
