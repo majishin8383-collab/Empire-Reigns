@@ -298,6 +298,24 @@
     }
     .building.canBuy { animation: glowPulse 1.25s ease-in-out infinite; }
 
+    /* ====== BUILDING LEVEL VISIBILITY ====== */
+    .lvl2, .lvl3, .lvl4 { display: none; }
+    .building[data-lvl="2"] .lvl2 { display: block; }
+    .building[data-lvl="3"] .lvl2, .building[data-lvl="3"] .lvl3 { display: block; }
+    .building[data-lvl="4"] .lvl2, .building[data-lvl="4"] .lvl3, .building[data-lvl="4"] .lvl4 { display: block; }
+
+    .lvlBadge {
+      font-weight: 950;
+      letter-spacing: .3px;
+      fill: rgba(255,255,255,.88);
+    }
+    .lvlGlow {
+      filter: drop-shadow(0 0 10px rgba(255,210,120,.14));
+    }
+    .building[data-lvl="4"] .lvlGlow {
+      filter: drop-shadow(0 0 16px rgba(120,180,255,.18)) drop-shadow(0 0 10px rgba(255,210,120,.12));
+    }
+
     /* ====== PEOPLE (sprites near office) ====== */
     .people {
       position:absolute;
@@ -387,6 +405,55 @@
       display:none;
       background: transparent;
     }
+
+    /* ====== LEVEL-UP FX ====== */
+    .fxBurst {
+      position: fixed;
+      left: 0; top: 0;
+      width: 0; height: 0;
+      pointer-events: none;
+      z-index: 2000;
+    }
+    .fxParticle {
+      position: absolute;
+      width: 6px; height: 6px;
+      border-radius: 999px;
+      background: rgba(255,210,120,.85);
+      box-shadow: 0 0 10px rgba(255,210,120,.22);
+      transform: translate(-50%, -50%);
+      animation: fxPop .65s ease-out forwards;
+    }
+    .fxParticle.blue {
+      background: rgba(120,180,255,.85);
+      box-shadow: 0 0 10px rgba(120,180,255,.22);
+    }
+    @keyframes fxPop {
+      from { opacity: 1; transform: translate(-50%, -50%) translate(0,0) scale(1); }
+      to   { opacity: 0; transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(.6); }
+    }
+
+    .fxBadge {
+      position: fixed;
+      z-index: 2001;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      font-weight: 950;
+      letter-spacing: .3px;
+      font-size: 12px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      animation: fxBadge .9s ease-out forwards;
+      text-shadow: 0 10px 26px rgba(0,0,0,.55);
+    }
+    @keyframes fxBadge {
+      0%   { opacity: 0; transform: translate(-50%, -50%) translateY(10px) scale(.96); }
+      15%  { opacity: 1; transform: translate(-50%, -50%) translateY(0px) scale(1.02); }
+      100% { opacity: 0; transform: translate(-50%, -50%) translateY(-26px) scale(1.0); }
+    }
   </style>
 </head>
 <body>
@@ -405,7 +472,7 @@
     <!-- BUILDINGS -->
     <div class="buildings" aria-label="World buildings">
       <!-- Office -->
-      <div class="building b-office" id="bOffice" role="button" tabindex="0" aria-label="Office">
+      <div class="building b-office" id="bOffice" role="button" tabindex="0" aria-label="Office" data-lvl="1">
         <svg viewBox="0 0 180 150" width="100%" height="100%">
           <defs>
             <linearGradient id="roofA" x1="0" y1="0" x2="0" y2="1">
@@ -413,81 +480,123 @@
               <stop offset="1" stop-color="rgba(0,0,0,.20)"/>
             </linearGradient>
           </defs>
-          <!-- roof -->
+
           <path d="M18 56 L90 18 L162 56 L152 62 L90 30 L28 62 Z" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.16)" stroke-width="2"/>
-          <!-- building -->
           <rect x="26" y="58" width="128" height="78" rx="14" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.16)" stroke-width="2"/>
           <rect x="26" y="58" width="128" height="78" rx="14" fill="url(#roofA)" opacity=".55"/>
-          <!-- sign -->
-          <rect x="44" y="46" width="92" height="20" rx="10" fill="rgba(120,180,255,.16)" stroke="rgba(120,180,255,.24)" stroke-width="2"/>
+
+          <rect x="44" y="46" width="92" height="20" rx="10" class="lvlGlow" fill="rgba(120,180,255,.16)" stroke="rgba(120,180,255,.24)" stroke-width="2"/>
           <text x="90" y="60" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,255,255,.85)">OFFICE</text>
-          <!-- door -->
+          <text x="90" y="72" text-anchor="middle" font-size="9" class="lvlBadge" id="officeLvlText">LV1</text>
+
           <rect x="80" y="86" width="24" height="48" rx="10" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
           <circle cx="98" cy="110" r="2" fill="rgba(255,210,120,.35)"/>
-          <!-- windows -->
+
           <g opacity=".9">
             <rect x="44" y="78" width="20" height="16" rx="6" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.20)" stroke-width="2"/>
             <rect x="116" y="78" width="20" height="16" rx="6" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.20)" stroke-width="2"/>
+          </g>
+
+          <g class="lvl2" opacity=".9">
             <rect x="44" y="104" width="20" height="16" rx="6" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
             <rect x="116" y="104" width="20" height="16" rx="6" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
           </g>
-          <!-- base -->
-          <rect x="34" y="132" width="112" height="10" rx="6" fill="rgba(0,0,0,.24)" opacity=".65"/>
+
+          <g class="lvl3" opacity=".95">
+            <circle cx="34" cy="92" r="6" fill="rgba(255,210,120,.18)" stroke="rgba(255,210,120,.22)" stroke-width="2"/>
+            <rect x="18" y="108" width="18" height="22" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+            <path d="M22 116 H32" stroke="rgba(255,255,255,.22)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M22 122 H30" stroke="rgba(255,255,255,.18)" stroke-width="2" stroke-linecap="round"/>
+          </g>
+
+          <g class="lvl4" opacity=".95">
+            <rect x="34" y="132" width="112" height="10" rx="6" fill="rgba(120,180,255,.12)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
+            <rect x="42" y="135" width="96" height="4" rx="3" fill="rgba(255,210,120,.10)"/>
+          </g>
+
+          <rect x="34" y="140" width="112" height="6" rx="6" fill="rgba(0,0,0,.24)" opacity=".65"/>
         </svg>
       </div>
 
       <!-- Warehouse -->
-      <div class="building b-warehouse" id="bWarehouse" role="button" tabindex="0" aria-label="Warehouse">
+      <div class="building b-warehouse" id="bWarehouse" role="button" tabindex="0" aria-label="Warehouse" data-lvl="1">
         <svg viewBox="0 0 180 150" width="100%" height="100%">
-          <!-- roof -->
           <rect x="26" y="40" width="128" height="22" rx="12" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <!-- building -->
           <rect x="22" y="56" width="136" height="84" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <!-- stripes -->
+
+          <rect x="40" y="46" width="100" height="18" rx="9" class="lvlGlow" fill="rgba(255,210,120,.14)" stroke="rgba(255,210,120,.22)" stroke-width="2"/>
+          <text x="90" y="59" text-anchor="middle" font-size="9" font-weight="900" fill="rgba(255,255,255,.85)">WAREHOUSE</text>
+          <text x="90" y="72" text-anchor="middle" font-size="9" class="lvlBadge" id="whLvlText">LV1</text>
+
           <g opacity=".55">
             <rect x="30" y="66" width="120" height="10" rx="6" fill="rgba(255,210,120,.10)"/>
             <rect x="30" y="82" width="120" height="10" rx="6" fill="rgba(120,180,255,.10)"/>
           </g>
-          <!-- big door -->
+
           <rect x="58" y="78" width="64" height="60" rx="14" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
           <path d="M90 78 V138" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
-          <!-- sign -->
-          <rect x="40" y="46" width="100" height="18" rx="9" fill="rgba(255,210,120,.14)" stroke="rgba(255,210,120,.22)" stroke-width="2"/>
-          <text x="90" y="59" text-anchor="middle" font-size="9" font-weight="900" fill="rgba(255,255,255,.85)">WAREHOUSE</text>
-          <!-- pallets -->
-          <rect x="28" y="120" width="20" height="16" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
-          <rect x="132" y="120" width="20" height="16" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+
+          <g class="lvl2" opacity=".95">
+            <rect x="28" y="120" width="22" height="16" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+            <rect x="132" y="120" width="22" height="16" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+          </g>
+
+          <g class="lvl3" opacity=".95">
+            <rect x="18" y="126" width="18" height="10" rx="4" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
+            <circle cx="22" cy="138" r="3" fill="rgba(0,0,0,.30)"/>
+            <circle cx="32" cy="138" r="3" fill="rgba(0,0,0,.30)"/>
+            <path d="M34 126 V116 H42" stroke="rgba(255,255,255,.16)" stroke-width="2" stroke-linecap="round"/>
+          </g>
+
+          <g class="lvl4" opacity=".9">
+            <rect x="36" y="98" width="16" height="12" rx="5" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.16)" stroke-width="2"/>
+            <rect x="128" y="98" width="16" height="12" rx="5" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.16)" stroke-width="2"/>
+          </g>
         </svg>
       </div>
 
       <!-- Garage -->
-      <div class="building b-garage" id="bGarage" role="button" tabindex="0" aria-label="Garage">
+      <div class="building b-garage" id="bGarage" role="button" tabindex="0" aria-label="Garage" data-lvl="1">
         <svg viewBox="0 0 180 150" width="100%" height="100%">
-          <!-- roof -->
           <path d="M30 62 L90 28 L150 62 L140 70 L90 40 L40 70 Z" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <!-- building -->
           <rect x="30" y="64" width="120" height="76" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <!-- garage door -->
+
+          <rect x="54" y="52" width="72" height="18" rx="9" class="lvlGlow" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.22)" stroke-width="2"/>
+          <text x="90" y="65" text-anchor="middle" font-size="9" font-weight="900" fill="rgba(255,255,255,.85)">GARAGE</text>
+          <text x="90" y="78" text-anchor="middle" font-size="9" class="lvlBadge" id="garLvlText">LV1</text>
+
           <rect x="52" y="86" width="76" height="54" rx="14" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
           <g opacity=".7">
             <path d="M56 98 H124" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
             <path d="M56 110 H124" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
             <path d="M56 122 H124" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
           </g>
-          <!-- wrench icon -->
+
           <circle cx="46" cy="96" r="12" fill="rgba(120,180,255,.12)" stroke="rgba(120,180,255,.20)" stroke-width="2"/>
           <path d="M42 96 L50 104" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round"/>
           <path d="M50 90 L56 96" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round"/>
-          <!-- sign -->
-          <rect x="54" y="52" width="72" height="18" rx="9" fill="rgba(120,180,255,.14)" stroke="rgba(120,180,255,.22)" stroke-width="2"/>
-          <text x="90" y="65" text-anchor="middle" font-size="9" font-weight="900" fill="rgba(255,255,255,.85)">GARAGE</text>
+
+          <g class="lvl2" opacity=".95">
+            <rect x="18" y="124" width="22" height="12" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+            <rect x="20" y="118" width="18" height="6" rx="4" fill="rgba(255,210,120,.10)"/>
+          </g>
+
+          <g class="lvl3" opacity=".95">
+            <path d="M140 68 V82" stroke="rgba(255,255,255,.14)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="140" cy="88" r="8" fill="rgba(255,210,120,.14)" stroke="rgba(255,210,120,.20)" stroke-width="2"/>
+          </g>
+
+          <g class="lvl4" opacity=".95">
+            <circle cx="156" cy="64" r="6" fill="rgba(255,255,255,.06)"/>
+            <circle cx="164" cy="58" r="8" fill="rgba(255,255,255,.05)"/>
+            <circle cx="154" cy="54" r="5" fill="rgba(255,255,255,.04)"/>
+          </g>
         </svg>
       </div>
 
       <!-- Shop -->
-      <div class="building b-shop" id="bShop" role="button" tabindex="0" aria-label="Shop">
+      <div class="building b-shop" id="bShop" role="button" tabindex="0" aria-label="Shop" data-lvl="1">
         <svg viewBox="0 0 180 150" width="100%" height="100%">
-          <!-- awning -->
           <path d="M28 60 H152 L146 80 H34 Z" fill="rgba(255,210,120,.16)" stroke="rgba(255,210,120,.22)" stroke-width="2"/>
           <g opacity=".45">
             <path d="M40 60 L36 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
@@ -498,16 +607,30 @@
             <path d="M120 60 L116 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
             <path d="M136 60 L132 80" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
           </g>
-          <!-- building -->
+
           <rect x="30" y="78" width="120" height="62" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-          <!-- window -->
           <rect x="44" y="92" width="48" height="30" rx="12" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
-          <!-- door -->
           <rect x="104" y="92" width="32" height="48" rx="12" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
           <circle cx="128" cy="118" r="2" fill="rgba(255,210,120,.35)"/>
-          <!-- sign -->
-          <rect x="52" y="44" width="76" height="20" rx="10" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+
+          <rect x="52" y="44" width="76" height="20" rx="10" class="lvlGlow" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
           <text x="90" y="58" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,255,255,.85)">SHOP</text>
+          <text x="90" y="72" text-anchor="middle" font-size="9" class="lvlBadge" id="shopLvlText">LV1</text>
+
+          <g class="lvl2" opacity=".95">
+            <rect x="54" y="86" width="24" height="10" rx="5" fill="rgba(255,210,120,.12)" stroke="rgba(255,210,120,.18)" stroke-width="2"/>
+            <text x="66" y="94" text-anchor="middle" font-size="7" font-weight="900" fill="rgba(255,255,255,.80)">OPEN</text>
+          </g>
+
+          <g class="lvl3" opacity=".95">
+            <rect x="146" y="112" width="18" height="22" rx="6" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="2"/>
+            <circle cx="155" cy="118" r="2" fill="rgba(255,210,120,.22)"/>
+            <circle cx="155" cy="124" r="2" fill="rgba(255,210,120,.18)"/>
+          </g>
+
+          <g class="lvl4" opacity=".95">
+            <rect x="32" y="80" width="116" height="58" rx="16" fill="none" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
+          </g>
         </svg>
       </div>
     </div>
@@ -575,9 +698,7 @@
 
         <div class="panelInner">
           <div class="grid">
-            <!-- LEFT: main -->
             <div>
-              <!-- WORLD SCREEN -->
               <div id="screenWorld">
                 <div class="item">
                   <div class="itemTop">
@@ -589,7 +710,7 @@
                     <button id="quickHireBtn" style="min-width:160px;">Hire (Quick)</button>
                   </div>
                   <div class="small" style="margin-top:8px;">
-                    Tap buildings in the world to buy upgrades through an in-world speech bubble.
+                    Level-up FX added. Buy upgrades to see sparkles + badges.
                   </div>
                   <div class="hr"></div>
                   <div class="btnRow">
@@ -608,7 +729,6 @@
                 </div>
               </div>
 
-              <!-- UPGRADES SCREEN -->
               <div id="screenUpgrades" style="display:none;">
                 <div class="itemTop" style="margin-bottom:10px;">
                   <div>
@@ -660,7 +780,6 @@
                 </div>
               </div>
 
-              <!-- PRESTIGE SCREEN -->
               <div id="screenPrestige" style="display:none;">
                 <div class="item">
                   <div class="itemTop">
@@ -681,7 +800,6 @@
               </div>
             </div>
 
-            <!-- RIGHT: stats -->
             <div>
               <div class="item">
                 <div class="itemTop">
@@ -698,10 +816,10 @@
               <div class="item" style="margin-top:12px;">
                 <div class="itemTop">
                   <div style="font-weight:900;">System</div>
-                  <div class="pill mono" id="verPill">v0.9</div>
+                  <div class="pill mono" id="verPill">v1.1</div>
                 </div>
                 <div class="small" style="margin-top:8px;">
-                  Buildings + people are now in-world. Next: make buildings visually upgrade (levels) + add animated props.
+                  Level-up FX: sparkle burst + LV badge when buildings upgrade.
                 </div>
               </div>
             </div>
@@ -712,7 +830,6 @@
       </div>
     </div>
 
-    <!-- Bottom Nav -->
     <div class="bottomNav">
       <div class="bottomInner">
         <button class="navBtn active" id="navWorld"><div>World</div><div class="k">Tap + build</div></button>
@@ -723,7 +840,7 @@
   </div>
 
   <script>
-    const KEY = "compound_idle_v0_9";
+    const KEY = "compound_idle_v1_1";
 
     const state = {
       cash: 0,
@@ -739,7 +856,6 @@
       autoCost: 400
     };
 
-    // helpers
     function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
     function money(n){
       const abs = Math.abs(n);
@@ -778,7 +894,6 @@
     }
     function hardReset(){ localStorage.removeItem(KEY); location.reload(); }
 
-    // economics
     function opsMultiplier(){
       const toolsMult = Math.pow(1.25, state.owned.tools || 0);
       const procMult  = Math.pow(1.40, state.owned.proc  || 0);
@@ -789,12 +904,10 @@
     function baseIncomePerSecond(){ return (state.owned.assistant || 0) * 1.0; }
     function incomePerSecond(){ return baseIncomePerSecond() * opsMultiplier() * prestigeMultiplier(); }
 
-    // gating (1 unlocks next)
     function unlockedTools(){ return (state.owned.assistant||0) >= 1; }
     function unlockedProc(){  return (state.owned.tools||0) >= 1; }
     function unlockedAuto(){  return (state.owned.proc||0) >= 1; }
 
-    // prestige
     const PRESTIGE_GOAL = 10000;
     function canPrestige(){ return (state.cash||0) >= PRESTIGE_GOAL; }
     function epGainIfPrestigeNow(){
@@ -825,7 +938,6 @@
       setStatus(`Prestiged: +${gain} EP`);
     }
 
-    // offline
     function applyOfflineProgress(){
       const now = Date.now();
       const secondsAway = (now - (state.lastTickMs || now)) / 1000;
@@ -839,7 +951,6 @@
       state.lastTickMs = now;
     }
 
-    // floater
     function floatText(text, x, y){
       const d = document.createElement("div");
       d.className = "floater";
@@ -894,6 +1005,11 @@
     const $bGarage = document.getElementById("bGarage");
     const $bShop = document.getElementById("bShop");
 
+    const $officeLvlText = document.getElementById("officeLvlText");
+    const $whLvlText = document.getElementById("whLvlText");
+    const $garLvlText = document.getElementById("garLvlText");
+    const $shopLvlText = document.getElementById("shopLvlText");
+
     // people
     const $peopleRow = document.getElementById("peopleRow");
 
@@ -909,7 +1025,7 @@
     const $bubbleBuyBtn = document.getElementById("bubbleBuyBtn");
     const $bubbleLockNote = document.getElementById("bubbleLockNote");
 
-    let bubbleContext = null; // "assistant" | "tools" | "proc" | "auto"
+    let bubbleContext = null;
     let bubbleAnchorEl = null;
 
     function totalOwned(){
@@ -933,20 +1049,14 @@
     }
 
     function renderPeople(){
-      // show up to 12 assistants as little sprites; first sprite acts like "you"
       const count = Math.min(12, state.owned.assistant || 0);
       $peopleRow.innerHTML = "";
       for(let i=0;i<count;i++){
         const p = document.createElement("div");
         p.className = "person";
-        // subtle variation: shift shirt tint using CSS variable via inline style (still theme-consistent)
-        const t = 0.10 + (i % 4) * 0.03; // 0.10..0.19
-        p.style.setProperty("--t", t);
-        // slight stagger height vibe
         p.style.transform = `translateY(${(i%3)*2}px)`;
         $peopleRow.appendChild(p);
       }
-      // small tweak: make first person feel like "manager" if exists
       if (count > 0){
         const first = $peopleRow.firstElementChild;
         if (first){
@@ -962,18 +1072,15 @@
       const bubble = $bubble.getBoundingClientRect();
       const padding = 12;
 
-      // place bubble above the building, centered-ish
       let left = anchor.left + anchor.width * 0.5 - bubble.width * 0.5;
       left = Math.max(padding, Math.min(window.innerWidth - bubble.width - padding, left));
 
       let top = anchor.top - bubble.height - 10;
-      // if not enough room above, place below
       if (top < 70) top = anchor.bottom + 10;
 
       $bubble.style.left = left + "px";
       $bubble.style.top = top + "px";
 
-      // set tail X toward anchor center
       const anchorCenterX = anchor.left + anchor.width * 0.5;
       const tailX = clamp(anchorCenterX - left, 18, bubble.width - 18);
       $bubble.style.setProperty("--tailX", tailX + "px");
@@ -985,10 +1092,7 @@
       $bubble.style.display = "block";
       $bubbleCatcher.style.display = "block";
       renderBubbleCurrent();
-      // wait a frame for bubble size, then position
-      requestAnimationFrame(() => {
-        positionBubble();
-      });
+      requestAnimationFrame(() => positionBubble());
     }
 
     function closeBubble(){
@@ -1053,6 +1157,95 @@
       }
     }
 
+    // ====== LEVELING RULES ======
+    function levelOffice(assistants){
+      if (assistants >= 6) return 4;
+      if (assistants >= 3) return 3;
+      if (assistants >= 1) return 2;
+      return 1;
+    }
+    function levelGeneric(n){
+      if (n >= 3) return 4;
+      if (n >= 2) return 3;
+      if (n >= 1) return 2;
+      return 1;
+    }
+
+    // ====== LEVEL-UP FX ENGINE ======
+    let lastLevels = null; // {office, warehouse, garage, shop} once initialized
+
+    function playLevelUpFx(buildingEl, newLevel){
+      const r = buildingEl.getBoundingClientRect();
+      const cx = r.left + r.width * 0.55;
+      const cy = r.top + r.height * 0.35;
+
+      // badge
+      const badge = document.createElement("div");
+      badge.className = "fxBadge";
+      badge.textContent = `LV${newLevel}!`;
+      badge.style.left = cx + "px";
+      badge.style.top = (cy - 8) + "px";
+      document.body.appendChild(badge);
+      setTimeout(() => badge.remove(), 950);
+
+      // burst container
+      const burst = document.createElement("div");
+      burst.className = "fxBurst";
+      burst.style.left = cx + "px";
+      burst.style.top = cy + "px";
+      document.body.appendChild(burst);
+
+      const count = 14;
+      for(let i=0;i<count;i++){
+        const p = document.createElement("div");
+        const isBlue = i % 3 === 0;
+        p.className = "fxParticle" + (isBlue ? " blue" : "");
+        const ang = (Math.PI * 2) * (i / count);
+        const mag = 18 + Math.random() * 26;
+        const dx = Math.cos(ang) * mag;
+        const dy = Math.sin(ang) * mag - (10 + Math.random()*8);
+        p.style.setProperty("--dx", dx.toFixed(1) + "px");
+        p.style.setProperty("--dy", dy.toFixed(1) + "px");
+        p.style.left = "0px";
+        p.style.top = "0px";
+        burst.appendChild(p);
+      }
+      setTimeout(() => burst.remove(), 700);
+    }
+
+    function renderBuildingLevels(){
+      const a = state.owned.assistant || 0;
+      const t = state.owned.tools || 0;
+      const p = state.owned.proc || 0;
+      const x = state.owned.auto || 0;
+
+      const lo = levelOffice(a);
+      const lt = levelGeneric(t);
+      const lp = levelGeneric(p);
+      const lx = levelGeneric(x);
+
+      // initialize once (prevents “level up spam” on load)
+      if (!lastLevels){
+        lastLevels = { office: lo, warehouse: lt, garage: lp, shop: lx };
+      } else {
+        if (lo > lastLevels.office)    playLevelUpFx($bOffice, lo);
+        if (lt > lastLevels.warehouse) playLevelUpFx($bWarehouse, lt);
+        if (lp > lastLevels.garage)    playLevelUpFx($bGarage, lp);
+        if (lx > lastLevels.shop)      playLevelUpFx($bShop, lx);
+        lastLevels = { office: lo, warehouse: lt, garage: lp, shop: lx };
+      }
+
+      $bOffice.dataset.lvl = String(lo);
+      $bWarehouse.dataset.lvl = String(lt);
+      $bGarage.dataset.lvl = String(lp);
+      $bShop.dataset.lvl = String(lx);
+
+      $officeLvlText.textContent = "LV" + lo;
+      $whLvlText.textContent = "LV" + lt;
+      $garLvlText.textContent = "LV" + lp;
+      $shopLvlText.textContent = "LV" + lx;
+    }
+
     function render(){
       const cash = state.cash||0;
       const ips = incomePerSecond();
@@ -1062,7 +1255,7 @@
       $hudIps.textContent = money(ips) + "/s";
       $hudEp.textContent = String(ep);
 
-      $ownedPill.textContent = "Owned: " + totalOwned();
+      $ownedPill.textContent = "Owned: " + ((state.owned.assistant||0)+(state.owned.tools||0)+(state.owned.proc||0)+(state.owned.auto||0));
       $epPill.textContent = "EP: " + ep;
 
       $assistantCost.textContent = money(state.assistantCost);
@@ -1070,58 +1263,51 @@
       $procCost.textContent = money(state.procCost);
       $autoCost.textContent = money(state.autoCost);
 
-      // Assistant
       const canBuyA = cash >= state.assistantCost;
-      $buyAssistantBtn.disabled = !canBuyA;
-      $buyAssistantBtn.textContent = canBuyA ? "Buy" : "Need more cash";
-      $rowAssistant.classList.toggle("canBuy", canBuyA);
+      document.getElementById("buyAssistantBtn").disabled = !canBuyA;
+      document.getElementById("buyAssistantBtn").textContent = canBuyA ? "Buy" : "Need more cash";
+      document.getElementById("rowAssistant").classList.toggle("canBuy", canBuyA);
 
-      // gated
-      setRow($rowTools, $buyToolsBtn, $toolsLockNote, !unlockedTools(), "Unlocks after: 1 assistant", cash >= state.toolsCost);
-      setRow($rowProc,  $buyProcBtn,  $procLockNote,  !unlockedProc(),  "Unlocks after: 1 tools",    cash >= state.procCost);
-      setRow($rowAuto,  $buyAutoBtn,  $autoLockNote,  !unlockedAuto(),  "Unlocks after: 1 process",  cash >= state.autoCost);
+      setRow(document.getElementById("rowTools"), document.getElementById("buyToolsBtn"), document.getElementById("toolsLockNote"), !unlockedTools(), "Unlocks after: 1 assistant", cash >= state.toolsCost);
+      setRow(document.getElementById("rowProc"),  document.getElementById("buyProcBtn"),  document.getElementById("procLockNote"),  !unlockedProc(),  "Unlocks after: 1 tools",    cash >= state.procCost);
+      setRow(document.getElementById("rowAuto"),  document.getElementById("buyAutoBtn"),  document.getElementById("autoLockNote"),  !unlockedAuto(),  "Unlocks after: 1 process",  cash >= state.autoCost);
 
-      // prestige
-      $prestReq.textContent = money(PRESTIGE_GOAL) + " goal";
+      document.getElementById("prestReq").textContent = money(PRESTIGE_GOAL) + " goal";
       const ok = canPrestige();
-      $prestigeBtn.disabled = !ok;
-      $prestigeBtn.textContent = ok ? `Prestige (+${epGainIfPrestigeNow()} EP)` : "Prestige (Locked)";
-      $prestHint.textContent = ok ? "Ready. Prestige resets your run but permanently boosts income."
-                                 : `Prestige unlocks at ${money(PRESTIGE_GOAL)} cash.`;
+      document.getElementById("prestigeBtn").disabled = !ok;
+      document.getElementById("prestigeBtn").textContent = ok ? `Prestige (+${epGainIfPrestigeNow()} EP)` : "Prestige (Locked)";
+      document.getElementById("prestHint").textContent = ok ? "Ready. Prestige resets your run but permanently boosts income."
+                                                           : `Prestige unlocks at ${money(PRESTIGE_GOAL)} cash.`;
 
       const ops = opsMultiplier();
       const pm = prestigeMultiplier();
-      $multSummary.textContent = fmtX(ops * pm) + " total";
-      $multDetails.textContent = `Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
+      document.getElementById("multSummary").textContent = fmtX(ops * pm) + " total";
+      document.getElementById("multDetails").textContent = `Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
 
-      $lifetime.textContent = money(state.lifetimeEarned||0);
-      $lifetime2.textContent = money(state.lifetimeEarned||0);
-      $statsLine.textContent = `${money(ips)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
+      document.getElementById("lifetime").textContent = money(state.lifetimeEarned||0);
+      document.getElementById("lifetime2").textContent = money(state.lifetimeEarned||0);
+      document.getElementById("statsLine").textContent = `${money(ips)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
 
-      // scene note
-      const a = (state.owned.assistant||0) > 0;
-      const t = (state.owned.tools||0) > 0;
-      const p = (state.owned.proc||0) > 0;
-      const x = (state.owned.auto||0) > 0;
-      if (!a && !t && !p && !x) $sceneNote.textContent = "starting out";
-      else if (a && !t) $sceneNote.textContent = "hired help";
-      else if (t && !p) $sceneNote.textContent = "better tools";
-      else if (p && !x) $sceneNote.textContent = "systems in place";
+      const aa = (state.owned.assistant||0) > 0;
+      const tt = (state.owned.tools||0) > 0;
+      const pp = (state.owned.proc||0) > 0;
+      const xx = (state.owned.auto||0) > 0;
+      if (!aa && !tt && !pp && !xx) $sceneNote.textContent = "starting out";
+      else if (aa && !tt) $sceneNote.textContent = "hired help";
+      else if (tt && !pp) $sceneNote.textContent = "better tools";
+      else if (pp && !xx) $sceneNote.textContent = "systems in place";
       else $sceneNote.textContent = "automation online";
 
-      // quick hire glow
-      const q = document.getElementById("quickHireBtn");
-      q.classList.toggle("canBuy", canBuyA);
+      document.getElementById("quickHireBtn").classList.toggle("canBuy", canBuyA);
 
-      // building glow states (affordable + unlocked)
       $bOffice.classList.toggle("canBuy", canBuyA);
       $bWarehouse.classList.toggle("canBuy", unlockedTools() && cash >= state.toolsCost);
       $bGarage.classList.toggle("canBuy", unlockedProc() && cash >= state.procCost);
       $bShop.classList.toggle("canBuy", unlockedAuto() && cash >= state.autoCost);
 
       renderPeople();
+      renderBuildingLevels();
 
-      // keep bubble fresh
       if ($bubble.style.display === "block"){
         renderBubbleCurrent();
         positionBubble();
@@ -1208,7 +1394,6 @@
       }
     });
 
-    // building binds
     function bindBuilding(el, kind){
       el.addEventListener("click", () => openBubble(kind, el));
       el.addEventListener("keydown", (e) => {
@@ -1220,7 +1405,7 @@
     bindBuilding($bGarage, "proc");
     bindBuilding($bShop, "auto");
 
-    // events
+    // buttons
     document.getElementById("workBtn").addEventListener("click", (e) => {
       state.cash += 1; state.lifetimeEarned += 1;
       floatText("+$1", e.clientX, e.clientY);
@@ -1241,11 +1426,11 @@
     document.getElementById("resetBtn").addEventListener("click", hardReset);
     document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
 
-    // upgrades tab buttons (kept for debugging + redundancy)
-    $buyAssistantBtn.addEventListener("click", (e) => { openBubble("assistant", $bOffice); });
-    $buyToolsBtn.addEventListener("click", (e) => { openBubble("tools", $bWarehouse); });
-    $buyProcBtn.addEventListener("click", (e) => { openBubble("proc", $bGarage); });
-    $buyAutoBtn.addEventListener("click", (e) => { openBubble("auto", $bShop); });
+    // upgrades tab buttons -> open bubble at building
+    document.getElementById("buyAssistantBtn").addEventListener("click", () => openBubble("assistant", $bOffice));
+    document.getElementById("buyToolsBtn").addEventListener("click", () => openBubble("tools", $bWarehouse));
+    document.getElementById("buyProcBtn").addEventListener("click", () => openBubble("proc", $bGarage));
+    document.getElementById("buyAutoBtn").addEventListener("click", () => openBubble("auto", $bShop));
 
     // tabs + bottom nav
     const tabWorld = document.getElementById("tabWorld");
@@ -1276,7 +1461,6 @@
       navUp.classList.toggle("active", isU);
       navPr.classList.toggle("active", isP);
 
-      // show buildings+people only on world screen
       document.querySelector(".buildings").style.display = isW ? "block" : "none";
       document.getElementById("peopleRow").style.display = isW ? "flex" : "none";
       if (!isW) closeBubble();
@@ -1293,6 +1477,10 @@
     // boot
     const hadSave = load();
     safeMerge();
+
+    // ensure we don't trigger level-up FX on first render
+    lastLevels = null;
+
     applyOfflineProgress();
     render();
     setStatus(hadSave ? "Loaded" : "New run");
