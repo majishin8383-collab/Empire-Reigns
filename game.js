@@ -1,15 +1,13 @@
 /* Empire Reigns — Cozy Idle
-   Upgrade A:
-   - Work combo streak (fast taps increase multiplier)
-   - Rare Golden Payout proc (big shiny reward + FX + SFX)
-   - UI shows streak + golden hint
-   - Crash overlay remains (no silent black screen)
+   Upgrade A: streak + golden
+   Upgrade B: building level tracks + gated unlocks + per-building income/sec
 */
 (() => {
-  // ---------------------------
-  // Crash overlay (prevents silent black screen)
-  // ---------------------------
   const BUILD = (window.BUILD || "unknown");
+
+  // ---------------------------
+  // Crash overlay (no silent black screen)
+  // ---------------------------
   const crash = (msg) => {
     try {
       const d = document.createElement("div");
@@ -27,7 +25,7 @@
           <div style="opacity:.88;margin-top:12px;">
             Fix checklist:
             <ul>
-              <li>Confirm <b>index.html</b>, <b>styles.css</b>, <b>game.js</b> are in the <b>repo root</b> (same folder).</li>
+              <li>Confirm <b>index.html</b>, <b>styles.css</b>, <b>game.js</b> are in the <b>repo root</b>.</li>
               <li>Open with cache buster: <b>?v=${BUILD}</b> and hard refresh <b>Ctrl+Shift+R</b>.</li>
               <li>If this appears, copy/paste the error block back to me.</li>
             </ul>
@@ -37,7 +35,6 @@
       document.body.appendChild(d);
     } catch {}
   };
-
   window.addEventListener("error", (e) => {
     const msg = [
       e?.message || "Unknown error",
@@ -45,15 +42,12 @@
     ].join("\n");
     crash(msg);
   });
-
-  window.addEventListener("unhandledrejection", (e) => {
-    crash(String(e?.reason || "Unhandled promise rejection"));
-  });
+  window.addEventListener("unhandledrejection", (e) => crash(String(e?.reason || "Unhandled promise rejection")));
 
   // ---------------------------
   // Utilities
   // ---------------------------
-  const SAVE_KEY = "empire_reigns_cozy_v3_upgradeA";
+  const SAVE_KEY = "empire_reigns_cozy_v4_upgradeB";
   const SFX_KEY  = "empire_reigns_sfx_on";
 
   const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
@@ -99,13 +93,9 @@
       const raw = localStorage.getItem(SFX_KEY);
       enabled = raw == null ? true : raw === "1";
     }
-    function saveEnabled(){
-      localStorage.setItem(SFX_KEY, enabled ? "1" : "0");
-    }
+    function saveEnabled(){ localStorage.setItem(SFX_KEY, enabled ? "1" : "0"); }
     function ensure(){
-      if (!ctx){
-        ctx = new (window.AudioContext || window.webkitAudioContext)();
-      }
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
       if (ctx.state === "suspended") ctx.resume().catch(()=>{});
     }
     function beep({type="sine", f=440, t=0.06, v=0.06, det=0, a=0.005, r=0.06}){
@@ -114,7 +104,6 @@
       const now = ctx.currentTime;
       const o = ctx.createOscillator();
       const g = ctx.createGain();
-
       o.type = type;
       o.frequency.setValueAtTime(f, now);
       if (det) o.detune.setValueAtTime(det, now);
@@ -123,16 +112,11 @@
       g.gain.exponentialRampToValueAtTime(Math.max(0.0001, v), now + a);
       g.gain.exponentialRampToValueAtTime(0.0001, now + t + r);
 
-      o.connect(g);
-      g.connect(ctx.destination);
-
-      o.start(now);
-      o.stop(now + t + r + 0.01);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(now); o.stop(now + t + r + 0.01);
     }
 
-    function click(){
-      beep({type:"triangle", f:520, t:0.03, v:0.035, det:-15, a:0.003, r:0.03});
-    }
+    function click(){ beep({type:"triangle", f:520, t:0.03, v:0.035, det:-15, a:0.003, r:0.03}); }
     function purchase(){
       beep({type:"sine", f:420, t:0.05, v:0.06, det:12, a:0.004, r:0.06});
       setTimeout(() => beep({type:"triangle", f:720, t:0.04, v:0.04, det:-8, a:0.003, r:0.05}), 35);
@@ -147,29 +131,31 @@
       setTimeout(() => beep({type:"sine", f:660, t:0.14, v:0.055, a:0.01, r:0.18}), 240);
     }
     function golden(){
-      // bright triple chime
       beep({type:"sine", f:880, t:0.08, v:0.055, a:0.004, r:0.10});
       setTimeout(() => beep({type:"triangle", f:1320, t:0.10, v:0.05, a:0.004, r:0.12}), 90);
       setTimeout(() => beep({type:"sine", f:1760, t:0.12, v:0.05, a:0.004, r:0.16}), 210);
     }
 
-    function setEnabled(v){
-      enabled = !!v;
-      saveEnabled();
-    }
+    function setEnabled(v){ enabled = !!v; saveEnabled(); }
     function isEnabled(){ return enabled; }
-
-    // Unlock audio on first interaction
     function armOneTimeUnlock(){
       const handler = () => { ensure(); };
       window.addEventListener("pointerdown", handler, {capture:true, once:true});
     }
 
-    loadEnabled();
-    armOneTimeUnlock();
-
+    loadEnabled(); armOneTimeUnlock();
     return { click, purchase, levelUp, prestige, golden, setEnabled, isEnabled, ensure };
   })();
+
+  // ---------------------------
+  // Upgrade B: Building Track Definitions
+  // ---------------------------
+  const BUILDINGS = {
+    office:    { name:"Office",    gate: null,                 baseCost: 50,  costGrow: 1.35, incomePerLevel: 0.40 },
+    warehouse: { name:"Warehouse", gate: { b:"office", lv:2 }, baseCost: 120, costGrow: 1.38, incomePerLevel: 0.85 },
+    workshop:  { name:"Workshop",  gate: { b:"warehouse", lv:2 }, baseCost: 280, costGrow: 1.42, incomePerLevel: 1.70 },
+    market:    { name:"Market",    gate: { b:"workshop", lv:2 }, baseCost: 650, costGrow: 1.46, incomePerLevel: 3.40 },
+  };
 
   // ---------------------------
   // State
@@ -181,6 +167,7 @@
     lifetimeEarned: 0,
     ep: 0,
     prestigeCount: 0,
+
     owned: { assistant: 0, tools: 0, proc: 0, auto: 0 },
     assistantCost: 25,
     toolsCost: 60,
@@ -191,8 +178,12 @@
     streakCount: 0,
     streakMult: 1.0,
     lastWorkMs: 0,
-    goldenHeat: 0,           // ramps up with streak to make "almost!" feel
-    lastGoldenMs: 0
+    goldenHeat: 0,
+    lastGoldenMs: 0,
+
+    // Upgrade B: building levels + level costs
+    bLvl: { office: 1, warehouse: 1, workshop: 1, market: 1 },
+    bCost: { office: 50, warehouse: 120, workshop: 280, market: 650 }
   };
 
   function safeMerge(){
@@ -205,6 +196,14 @@
     if (typeof state.lastWorkMs !== "number") state.lastWorkMs = 0;
     if (typeof state.goldenHeat !== "number") state.goldenHeat = 0;
     if (typeof state.lastGoldenMs !== "number") state.lastGoldenMs = 0;
+
+    state.bLvl = Object.assign({office:1, warehouse:1, workshop:1, market:1}, state.bLvl || {});
+    state.bCost = Object.assign({
+      office: BUILDINGS.office.baseCost,
+      warehouse: BUILDINGS.warehouse.baseCost,
+      workshop: BUILDINGS.workshop.baseCost,
+      market: BUILDINGS.market.baseCost
+    }, state.bCost || {});
   }
 
   function save(silent=false){
@@ -233,8 +232,30 @@
     return toolsMult * procMult * autoMult;
   }
   function prestigeMultiplier(){ return Math.pow(1.2, state.ep || 0); }
-  function baseIncomePerSecond(){ return (state.owned.assistant || 0) * 1.0; }
-  function incomePerSecond(){ return baseIncomePerSecond() * opsMultiplier() * prestigeMultiplier(); }
+
+  function buildingIncomePerSecond(){
+    // LV1 is "existing building" baseline. Income is per additional level beyond 1 + a small base trickle.
+    let total = 0;
+    for (const k of Object.keys(BUILDINGS)){
+      const lv = Math.max(1, state.bLvl[k] || 1);
+      const def = BUILDINGS[k];
+      const extra = Math.max(0, lv - 1);
+      // a tiny baseline so even lvl1 feels alive
+      const baseTrickle = def.incomePerLevel * 0.25;
+      total += baseTrickle + extra * def.incomePerLevel;
+    }
+    return total;
+  }
+
+  function baseIncomePerSecond(){
+    // assistants still matter (office staffing)
+    return (state.owned.assistant || 0) * 1.0;
+  }
+
+  function incomePerSecond(){
+    const base = baseIncomePerSecond() + buildingIncomePerSecond();
+    return base * opsMultiplier() * prestigeMultiplier();
+  }
 
   function unlockedTools(){ return (state.owned.assistant||0) >= 1; }
   function unlockedProc(){  return (state.owned.tools||0) >= 1; }
@@ -253,18 +274,28 @@
     state.lastTickMs = Date.now();
     state.lastSaveMs = Date.now();
     state.lifetimeEarned = 0;
+
     state.owned = { assistant:0, tools:0, proc:0, auto:0 };
     state.assistantCost = 25;
     state.toolsCost = 60;
     state.procCost = 150;
     state.autoCost = 400;
 
-    // reset streak/golden
+    // streak/golden
     state.streakCount = 0;
     state.streakMult = 1.0;
     state.lastWorkMs = 0;
     state.goldenHeat = 0;
     state.lastGoldenMs = 0;
+
+    // building levels reset too (B)
+    state.bLvl = { office:1, warehouse:1, workshop:1, market:1 };
+    state.bCost = {
+      office: BUILDINGS.office.baseCost,
+      warehouse: BUILDINGS.warehouse.baseCost,
+      workshop: BUILDINGS.workshop.baseCost,
+      market: BUILDINGS.market.baseCost
+    };
 
     closeBubble();
     save(true);
@@ -298,32 +329,27 @@
   // ---------------------------
   // Upgrade A: Streak logic
   // ---------------------------
-  const STREAK_WINDOW_MS = 1300;    // tap within this keeps combo alive
-  const STREAK_MAX = 45;            // caps multiplier growth
-  const STREAK_STEP = 0.025;        // 2.5% per tap (feels good fast)
-  const STREAK_MAX_MULT = 2.50;     // max work multiplier
+  const STREAK_WINDOW_MS = 1300;
+  const STREAK_MAX = 45;
+  const STREAK_STEP = 0.025;
+  const STREAK_MAX_MULT = 2.50;
 
   function updateStreak(nowMs){
     const dt = nowMs - (state.lastWorkMs || 0);
-    if (dt <= STREAK_WINDOW_MS){
-      state.streakCount = Math.min(STREAK_MAX, (state.streakCount||0) + 1);
-    } else {
-      state.streakCount = 1;
-    }
+    if (dt <= STREAK_WINDOW_MS) state.streakCount = Math.min(STREAK_MAX, (state.streakCount||0) + 1);
+    else state.streakCount = 1;
+
     state.lastWorkMs = nowMs;
 
-    // multiplier: 1 + step*(count-1), capped
     const m = 1 + STREAK_STEP * Math.max(0, state.streakCount - 1);
     state.streakMult = clamp(m, 1.0, STREAK_MAX_MULT);
 
-    // golden heat increases with streak (psychological “almost there”)
     state.goldenHeat = clamp((state.goldenHeat||0) + 0.08 + (state.streakCount * 0.004), 0, 1.0);
   }
 
   function decayStreak(nowMs){
     const dt = nowMs - (state.lastWorkMs || 0);
     if (state.streakCount > 0 && dt > STREAK_WINDOW_MS){
-      // soft decay rather than instant reset (feels less punishing)
       const over = dt - STREAK_WINDOW_MS;
       const drop = Math.floor(over / 550);
       if (drop > 0){
@@ -339,17 +365,13 @@
     }
   }
 
-  // ---------------------------
-  // Upgrade A: Golden proc logic
-  // ---------------------------
   function goldenChance(){
-    // base rare chance + streak influence + a little “heat”
-    const base = 0.012; // 1.2%
-    const streakBoost = 0.010 * Math.min(1, (state.streakCount||0) / 20); // up to +1.0%
-    const heatBoost = 0.018 * (state.goldenHeat || 0); // up to +1.8%
+    const base = 0.012;
+    const streakBoost = 0.010 * Math.min(1, (state.streakCount||0) / 20);
+    const heatBoost = 0.018 * (state.goldenHeat || 0);
     const cooldownOk = (Date.now() - (state.lastGoldenMs||0)) > 1600;
     const raw = base + streakBoost + heatBoost;
-    return cooldownOk ? clamp(raw, 0.012, 0.040) : 0; // cap at 4.0%
+    return cooldownOk ? clamp(raw, 0.012, 0.040) : 0;
   }
 
   function playGoldFx(x, y, label="GOLDEN PAYOUT!"){
@@ -389,15 +411,14 @@
     const p = goldenChance();
     if (Math.random() > p) return 0;
 
-    // payout scales with streak + current economy a bit
-    const streakFactor = 1.0 + (state.streakCount || 0) * 0.06;  // big feels
-    const econFactor = 1.0 + Math.min(2.0, incomePerSecond() / 40); // scales later but capped
+    const streakFactor = 1.0 + (state.streakCount || 0) * 0.06;
+    const econFactor = 1.0 + Math.min(2.0, incomePerSecond() / 40);
     const payout = baseAmount * (6 + Math.random()*6) * streakFactor * econFactor;
 
     state.cash += payout;
     state.lifetimeEarned += payout;
     state.lastGoldenMs = Date.now();
-    state.goldenHeat = 0; // reset heat after hit
+    state.goldenHeat = 0;
 
     SFX.golden();
     playGoldFx(x, y);
@@ -407,7 +428,33 @@
   }
 
   // ---------------------------
-  // Buildings SVG (same as prior build)
+  // Upgrade B: Building level rules
+  // ---------------------------
+  function buildingGateLocked(key){
+    const def = BUILDINGS[key];
+    if (!def.gate) return null;
+    const need = def.gate;
+    const cur = state.bLvl[need.b] || 1;
+    if (cur >= need.lv) return null;
+    return `${BUILDINGS[need.b].name} LV${need.lv} required`;
+  }
+
+  function buildingLevelIncomeDelta(key){
+    return BUILDINGS[key].incomePerLevel;
+  }
+
+  function buildingLevelCost(key){
+    return Math.max(1, Math.floor(state.bCost[key] || BUILDINGS[key].baseCost));
+  }
+
+  function bumpBuildingCost(key){
+    const def = BUILDINGS[key];
+    const cur = buildingLevelCost(key);
+    state.bCost[key] = Math.ceil(cur * def.costGrow);
+  }
+
+  // ---------------------------
+  // Buildings SVG (same art)
   // ---------------------------
   function mountBuildingSvgs(){
     $("bOffice").innerHTML = officeSvg();
@@ -416,169 +463,181 @@
     $("bShop").innerHTML = shopSvg();
   }
 
-  function officeSvg(){ return `
-    <svg viewBox="0 0 220 190" width="100%" height="100%">
-      <ellipse cx="112" cy="170" rx="76" ry="12" fill="rgba(0,0,0,.25)"/>
-      <path d="M40 85 L110 35 L182 85 L170 96 L110 55 L52 96 Z"
-            fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.28)" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M56 92 L110 58 L166 92" stroke="rgba(0,0,0,.18)" stroke-width="4" stroke-linecap="round" opacity=".35"/>
-      <rect x="52" y="88" width="116" height="78" rx="20"
-            fill="rgba(255,245,220,.08)" stroke="rgba(255,245,220,.26)" stroke-width="3"/>
-      <rect x="58" y="94" width="104" height="66" rx="18"
-            fill="rgba(0,0,0,.10)" opacity=".55"/>
-      <rect x="70" y="150" width="80" height="16" rx="10"
-            fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
-      <rect x="98" y="118" width="28" height="48" rx="12"
-            fill="rgba(0,0,0,.25)" stroke="rgba(255,245,220,.22)" stroke-width="3"/>
-      <circle cx="121" cy="143" r="2.3" fill="rgba(255,210,120,.35)"/>
+  // (SVG functions unchanged from prior build)
+  function officeSvg(){ return `...`; }
+  function warehouseSvg(){ return `...`; }
+  function garageSvg(){ return `...`; }
+  function shopSvg(){ return `...`; }
 
-      <g opacity=".95">
-        <rect x="68" y="110" width="28" height="22" rx="10"
+  // IMPORTANT: Replace the SVG bodies with the ones you already had (unchanged)
+  // To avoid “huge message” duplication, I’m embedding the originals below programmatically:
+  // The actual SVG bodies are inserted at boot from a constant.
+  const SVG_BODIES = {
+    office: `
+      <svg viewBox="0 0 220 190" width="100%" height="100%">
+        <ellipse cx="112" cy="170" rx="76" ry="12" fill="rgba(0,0,0,.25)"/>
+        <path d="M40 85 L110 35 L182 85 L170 96 L110 55 L52 96 Z"
+              fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.28)" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M56 92 L110 58 L166 92" stroke="rgba(0,0,0,.18)" stroke-width="4" stroke-linecap="round" opacity=".35"/>
+        <rect x="52" y="88" width="116" height="78" rx="20"
+              fill="rgba(255,245,220,.08)" stroke="rgba(255,245,220,.26)" stroke-width="3"/>
+        <rect x="58" y="94" width="104" height="66" rx="18"
+              fill="rgba(0,0,0,.10)" opacity=".55"/>
+        <rect x="70" y="150" width="80" height="16" rx="10"
+              fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
+        <rect x="98" y="118" width="28" height="48" rx="12"
+              fill="rgba(0,0,0,.25)" stroke="rgba(255,245,220,.22)" stroke-width="3"/>
+        <circle cx="121" cy="143" r="2.3" fill="rgba(255,210,120,.35)"/>
+
+        <g opacity=".95">
+          <rect x="68" y="110" width="28" height="22" rx="10"
+                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+          <path d="M82 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
+          <path d="M68 121 H96" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
+          <rect x="136" y="110" width="28" height="22" rx="10"
+                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+          <path d="M150 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
+          <path d="M136 121 H164" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
+        </g>
+
+        <g class="lvl2" style="display:none;" opacity=".95">
+          <rect x="64" y="138" width="26" height="18" rx="9"
+                fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+          <rect x="140" y="138" width="26" height="18" rx="9"
+                fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+        </g>
+        <g class="lvl3" style="display:none;" opacity=".95">
+          <circle cx="56" cy="132" r="10" fill="rgba(120,220,180,.10)" stroke="rgba(120,220,180,.20)" stroke-width="3"/>
+          <path d="M56 125 V139" stroke="rgba(255,245,220,.18)" stroke-width="3"/>
+          <path d="M49 132 H63" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+        </g>
+        <g class="lvl4" style="display:none;" opacity=".95">
+          <path d="M74 86 C92 70, 128 70, 146 86" fill="none" stroke="rgba(255,210,120,.20)" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="110" cy="72" r="4" fill="rgba(255,210,120,.26)"/>
+        </g>
+
+        <rect x="62" y="78" width="96" height="22" rx="11"
+              fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+        <text x="110" y="93" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">OFFICE</text>
+        <text x="110" y="106" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
+      </svg>
+    `,
+    warehouse: `
+      <svg viewBox="0 0 220 190" width="100%" height="100%">
+        <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
+        <path d="M56 72 L110 36 L164 72 L164 86 L56 86 Z"
+              fill="rgba(255,140,170,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
+        <rect x="52" y="84" width="116" height="84" rx="22"
+              fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
+        <rect x="64" y="108" width="92" height="60" rx="18"
+              fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+        <path d="M110 108 V168" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+        <g opacity=".9">
+          <rect x="70" y="92" width="22" height="16" rx="8"
+                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+          <rect x="128" y="92" width="22" height="16" rx="8"
+                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+        </g>
+
+        <g class="lvl2" style="display:none;" opacity=".95">
+          <rect x="42" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+          <rect x="160" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+        </g>
+        <g class="lvl3" style="display:none;" opacity=".95">
+          <path d="M40 138 H70" stroke="rgba(120,220,180,.18)" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="40" cy="138" r="5" fill="rgba(120,220,180,.18)"/>
+        </g>
+        <g class="lvl4" style="display:none;" opacity=".95">
+          <path d="M178 120 C190 110, 196 122, 188 134" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="188" cy="136" r="5" fill="rgba(255,210,120,.18)"/>
+        </g>
+
+        <rect x="62" y="64" width="96" height="22" rx="11"
+              fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+        <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WAREHOUSE</text>
+        <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
+      </svg>
+    `,
+    garage: `
+      <svg viewBox="0 0 220 190" width="100%" height="100%">
+        <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
+        <path d="M54 78 L110 42 L166 78 L154 90 L110 62 L66 90 Z"
+              fill="rgba(120,220,180,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
+        <rect x="52" y="88" width="116" height="80" rx="22"
+              fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
+        <rect x="74" y="110" width="72" height="58" rx="18"
+              fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+        <g opacity=".65">
+          <path d="M80 122 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+          <path d="M80 134 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+          <path d="M80 146 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+        </g>
+
+        <circle cx="68" cy="120" r="12" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+        <path d="M64 120 L72 128" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M72 114 L78 120" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
+
+        <g class="lvl2" style="display:none;" opacity=".95">
+          <rect x="40" y="148" width="22" height="14" rx="7"
+                fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+        </g>
+        <g class="lvl3" style="display:none;" opacity=".95">
+          <path d="M170 92 V116" stroke="rgba(255,245,220,.14)" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="170" cy="124" r="10" fill="rgba(255,210,120,.12)" stroke="rgba(255,210,120,.20)" stroke-width="3"/>
+        </g>
+        <g class="lvl4" style="display:none;" opacity=".95">
+          <path d="M152 68 C162 54, 176 54, 186 68" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="169" cy="52" r="4" fill="rgba(255,210,120,.20)"/>
+        </g>
+
+        <rect x="62" y="80" width="96" height="22" rx="11"
+              fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+        <text x="110" y="95" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WORKSHOP</text>
+        <text x="110" y="108" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
+      </svg>
+    `,
+    shop: `
+      <svg viewBox="0 0 220 190" width="100%" height="100%">
+        <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
+        <path d="M58 80 H162 L154 104 H66 Z"
+              fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
+        <g opacity=".42">
+          <path d="M72 80 L68 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+          <path d="M92 80 L88 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+          <path d="M112 80 L108 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+          <path d="M132 80 L128 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+          <path d="M152 80 L148 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+        </g>
+
+        <rect x="60" y="102" width="104" height="66" rx="22"
+              fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
+        <rect x="76" y="120" width="50" height="30" rx="14"
               fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-        <path d="M82 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
-        <path d="M68 121 H96" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
-        <rect x="136" y="110" width="28" height="22" rx="10"
-              fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-        <path d="M150 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
-        <path d="M136 121 H164" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
-      </g>
+        <rect x="134" y="118" width="22" height="50" rx="14"
+              fill="rgba(0,0,0,.22)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+        <circle cx="150" cy="144" r="2.3" fill="rgba(255,210,120,.35)"/>
 
-      <g class="lvl2" style="display:none;" opacity=".95">
-        <rect x="64" y="138" width="26" height="18" rx="9"
-              fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-        <rect x="140" y="138" width="26" height="18" rx="9"
-              fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-      </g>
-      <g class="lvl3" style="display:none;" opacity=".95">
-        <circle cx="56" cy="132" r="10" fill="rgba(120,220,180,.10)" stroke="rgba(120,220,180,.20)" stroke-width="3"/>
-        <path d="M56 125 V139" stroke="rgba(255,245,220,.18)" stroke-width="3"/>
-        <path d="M49 132 H63" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
-      </g>
-      <g class="lvl4" style="display:none;" opacity=".95">
-        <path d="M74 86 C92 70, 128 70, 146 86" fill="none" stroke="rgba(255,210,120,.20)" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="110" cy="72" r="4" fill="rgba(255,210,120,.26)"/>
-      </g>
+        <g class="lvl2" style="display:none;" opacity=".95">
+          <rect x="78" y="112" width="26" height="10" rx="5" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+        </g>
+        <g class="lvl3" style="display:none;" opacity=".95">
+          <rect x="168" y="132" width="16" height="22" rx="8" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
+        </g>
+        <g class="lvl4" style="display:none;" opacity=".95">
+          <rect x="60" y="102" width="104" height="66" rx="22" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4"/>
+        </g>
 
-      <rect x="62" y="78" width="96" height="22" rx="11"
-            fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
-      <text x="110" y="93" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">OFFICE</text>
-      <text x="110" y="106" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
-    </svg>
-  `; }
-
-  function warehouseSvg(){ return `
-    <svg viewBox="0 0 220 190" width="100%" height="100%">
-      <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
-      <path d="M56 72 L110 36 L164 72 L164 86 L56 86 Z"
-            fill="rgba(255,140,170,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
-      <rect x="52" y="84" width="116" height="84" rx="22"
-            fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
-      <rect x="64" y="108" width="92" height="60" rx="18"
-            fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
-      <path d="M110 108 V168" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
-      <g opacity=".9">
-        <rect x="70" y="92" width="22" height="16" rx="8"
-              fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-        <rect x="128" y="92" width="22" height="16" rx="8"
-              fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-      </g>
-
-      <g class="lvl2" style="display:none;" opacity=".95">
-        <rect x="42" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-        <rect x="160" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-      </g>
-      <g class="lvl3" style="display:none;" opacity=".95">
-        <path d="M40 138 H70" stroke="rgba(120,220,180,.18)" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="40" cy="138" r="5" fill="rgba(120,220,180,.18)"/>
-      </g>
-      <g class="lvl4" style="display:none;" opacity=".95">
-        <path d="M178 120 C190 110, 196 122, 188 134" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="188" cy="136" r="5" fill="rgba(255,210,120,.18)"/>
-      </g>
-
-      <rect x="62" y="64" width="96" height="22" rx="11"
-            fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
-      <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WAREHOUSE</text>
-      <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
-    </svg>
-  `; }
-
-  function garageSvg(){ return `
-    <svg viewBox="0 0 220 190" width="100%" height="100%">
-      <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
-      <path d="M54 78 L110 42 L166 78 L154 90 L110 62 L66 90 Z"
-            fill="rgba(120,220,180,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
-      <rect x="52" y="88" width="116" height="80" rx="22"
-            fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
-      <rect x="74" y="110" width="72" height="58" rx="18"
-            fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
-      <g opacity=".65">
-        <path d="M80 122 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
-        <path d="M80 134 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
-        <path d="M80 146 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
-      </g>
-
-      <circle cx="68" cy="120" r="12" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-      <path d="M64 120 L72 128" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
-      <path d="M72 114 L78 120" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
-
-      <g class="lvl2" style="display:none;" opacity=".95">
-        <rect x="40" y="148" width="22" height="14" rx="7"
-              fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-      </g>
-      <g class="lvl3" style="display:none;" opacity=".95">
-        <path d="M170 92 V116" stroke="rgba(255,245,220,.14)" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="170" cy="124" r="10" fill="rgba(255,210,120,.12)" stroke="rgba(255,210,120,.20)" stroke-width="3"/>
-      </g>
-      <g class="lvl4" style="display:none;" opacity=".95">
-        <path d="M152 68 C162 54, 176 54, 186 68" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="169" cy="52" r="4" fill="rgba(255,210,120,.20)"/>
-      </g>
-
-      <rect x="62" y="80" width="96" height="22" rx="11"
-            fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
-      <text x="110" y="95" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WORKSHOP</text>
-      <text x="110" y="108" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
-    </svg>
-  `; }
-
-  function shopSvg(){ return `
-    <svg viewBox="0 0 220 190" width="100%" height="100%">
-      <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
-      <path d="M58 80 H162 L154 104 H66 Z"
-            fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
-      <g opacity=".42">
-        <path d="M72 80 L68 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-        <path d="M92 80 L88 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-        <path d="M112 80 L108 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-        <path d="M132 80 L128 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-        <path d="M152 80 L148 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-      </g>
-
-      <rect x="60" y="102" width="104" height="66" rx="22"
-            fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
-      <rect x="76" y="120" width="50" height="30" rx="14"
-            fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-      <rect x="134" y="118" width="22" height="50" rx="14"
-            fill="rgba(0,0,0,.22)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
-      <circle cx="150" cy="144" r="2.3" fill="rgba(255,210,120,.35)"/>
-
-      <g class="lvl2" style="display:none;" opacity=".95">
-        <rect x="78" y="112" width="26" height="10" rx="5" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-      </g>
-      <g class="lvl3" style="display:none;" opacity=".95">
-        <rect x="168" y="132" width="16" height="22" rx="8" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
-      </g>
-      <g class="lvl4" style="display:none;" opacity=".95">
-        <rect x="60" y="102" width="104" height="66" rx="22" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4"/>
-      </g>
-
-      <rect x="62" y="64" width="96" height="22" rx="11"
-            fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
-      <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">MARKET</text>
-      <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
-    </svg>
-  `; }
+        <rect x="62" y="64" width="96" height="22" rx="11"
+              fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+        <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">MARKET</text>
+        <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
+      </svg>
+    `
+  };
+  function officeSvg(){ return SVG_BODIES.office; }
+  function warehouseSvg(){ return SVG_BODIES.warehouse; }
+  function garageSvg(){ return SVG_BODIES.garage; }
+  function shopSvg(){ return SVG_BODIES.shop; }
 
   // ---------------------------
   // Bubble UI
@@ -594,6 +653,12 @@
     cost: $("bubbleCost"),
     buyBtn: $("bubbleBuyBtn"),
     lockNote: $("bubbleLockNote"),
+    // NEW
+    lvlPill: $("bubbleLevel"),
+    lvlIncome: $("bubbleLevelIncome"),
+    lvlCost: $("bubbleLevelCost"),
+    lvlBtn: $("bubbleLevelBtn"),
+
     ctx: null,
     anchor: null
   };
@@ -626,7 +691,6 @@
     renderBubble();
     requestAnimationFrame(positionBubble);
   }
-
   function closeBubble(){
     bubble.el.style.display = "none";
     bubble.catcher.style.display = "none";
@@ -637,22 +701,46 @@
   function renderBubble(){
     const cash = state.cash || 0;
 
+    // Map bubble context → building key + main upgrade row
+    const map = {
+      assistant: { b:"office"   },
+      tools:     { b:"warehouse"},
+      proc:      { b:"workshop" },
+      auto:      { b:"market"   }
+    };
+    const m = map[bubble.ctx];
+
+    // Building track UI (always shown)
+    if (m){
+      const bKey = m.b;
+      const lv = state.bLvl[bKey] || 1;
+      bubble.lvlPill.textContent = `Building LV ${lv}`;
+      bubble.lvlIncome.textContent = `+ ${money(buildingLevelIncomeDelta(bKey))}/s`;
+      bubble.lvlCost.textContent = `Cost: ${money(buildingLevelCost(bKey))}`;
+
+      const gate = buildingGateLocked(bKey);
+      const canLvl = !gate && cash >= buildingLevelCost(bKey);
+      bubble.lvlBtn.disabled = !canLvl;
+      bubble.lvlBtn.textContent = gate ? "Locked" : (canLvl ? "Upgrade Building" : "Need more cash");
+      bubble.lvlPill.classList.toggle("sparkle", canLvl);
+    }
+
     if (bubble.ctx === "assistant"){
       bubble.title.textContent = "Office";
       bubble.subtitle.textContent = "Hiring & staffing";
-      bubble.desc.textContent = "Hire assistants to generate steady income per second.";
+      bubble.desc.textContent = "Hire assistants for base income. Upgrade the building to add passive income scaling.";
       bubble.owned.textContent = "Owned: " + (state.owned.assistant||0);
       bubble.cost.textContent = "Cost: " + money(state.assistantCost);
       const can = cash >= state.assistantCost;
       bubble.buyBtn.disabled = !can;
       bubble.buyBtn.textContent = can ? "Hire Assistant" : "Need more cash";
-      bubble.lockNote.textContent = "Unlock: available immediately.";
+      bubble.lockNote.textContent = "Building LV gates: Warehouse LV upgrades require Office LV2.";
     }
 
     if (bubble.ctx === "tools"){
       bubble.title.textContent = "Warehouse";
       bubble.subtitle.textContent = "Equipment & output";
-      bubble.desc.textContent = "Better tools multiply income. Unlocks after hiring 1 assistant.";
+      bubble.desc.textContent = "Tools multiply income. Upgrade the building for stronger passive income scaling.";
       bubble.owned.textContent = "Owned: " + (state.owned.tools||0);
       bubble.cost.textContent = "Cost: " + money(state.toolsCost);
       const unlocked = unlockedTools();
@@ -665,7 +753,7 @@
     if (bubble.ctx === "proc"){
       bubble.title.textContent = "Workshop";
       bubble.subtitle.textContent = "Systems & workflow";
-      bubble.desc.textContent = "Standardize processes multiply income. Unlocks after buying 1 tools.";
+      bubble.desc.textContent = "Processes multiply income. Upgrade the building for stronger passive income scaling.";
       bubble.owned.textContent = "Owned: " + (state.owned.proc||0);
       bubble.cost.textContent = "Cost: " + money(state.procCost);
       const unlocked = unlockedProc();
@@ -678,7 +766,7 @@
     if (bubble.ctx === "auto"){
       bubble.title.textContent = "Market";
       bubble.subtitle.textContent = "Automation & scaling";
-      bubble.desc.textContent = "Automation multiplies income hard. Unlocks after buying 1 process.";
+      bubble.desc.textContent = "Automation multiplies income hard. Upgrade the building for stronger passive income scaling.";
       bubble.owned.textContent = "Owned: " + (state.owned.auto||0);
       bubble.cost.textContent = "Cost: " + money(state.autoCost);
       const unlocked = unlockedAuto();
@@ -690,22 +778,9 @@
   }
 
   // ---------------------------
-  // Leveling + FX (existing)
+  // Level-up FX + visuals
   // ---------------------------
   let lastLevels = null;
-
-  function levelOffice(assistants){
-    if (assistants >= 6) return 4;
-    if (assistants >= 3) return 3;
-    if (assistants >= 1) return 2;
-    return 1;
-  }
-  function levelGeneric(n){
-    if (n >= 3) return 4;
-    if (n >= 2) return 3;
-    if (n >= 1) return 2;
-    return 1;
-  }
 
   function playLevelUpFx(buildingEl, newLevel){
     SFX.levelUp();
@@ -763,15 +838,10 @@
   }
 
   function renderBuildingLevels(){
-    const a = state.owned.assistant || 0;
-    const t = state.owned.tools || 0;
-    const p = state.owned.proc || 0;
-    const x = state.owned.auto || 0;
-
-    const lo = levelOffice(a);
-    const lt = levelGeneric(t);
-    const lp = levelGeneric(p);
-    const lx = levelGeneric(x);
+    const lo = Math.min(4, state.bLvl.office || 1);
+    const lw = Math.min(4, state.bLvl.warehouse || 1);
+    const lg = Math.min(4, state.bLvl.workshop || 1);
+    const ls = Math.min(4, state.bLvl.market || 1);
 
     const bOffice = $("bOffice");
     const bWarehouse = $("bWarehouse");
@@ -779,19 +849,19 @@
     const bShop = $("bShop");
 
     if (!lastLevels){
-      lastLevels = { office: lo, warehouse: lt, garage: lp, shop: lx };
+      lastLevels = { office: lo, warehouse: lw, workshop: lg, market: ls };
     } else {
       if (lo > lastLevels.office)    playLevelUpFx(bOffice, lo);
-      if (lt > lastLevels.warehouse) playLevelUpFx(bWarehouse, lt);
-      if (lp > lastLevels.garage)    playLevelUpFx(bGarage, lp);
-      if (lx > lastLevels.shop)      playLevelUpFx(bShop, lx);
-      lastLevels = { office: lo, warehouse: lt, garage: lp, shop: lx };
+      if (lw > lastLevels.warehouse) playLevelUpFx(bWarehouse, lw);
+      if (lg > lastLevels.workshop)  playLevelUpFx(bGarage, lg);
+      if (ls > lastLevels.market)    playLevelUpFx(bShop, ls);
+      lastLevels = { office: lo, warehouse: lw, workshop: lg, market: ls };
     }
 
     setBuildingVisual(bOffice, lo);
-    setBuildingVisual(bWarehouse, lt);
-    setBuildingVisual(bGarage, lp);
-    setBuildingVisual(bShop, lx);
+    setBuildingVisual(bWarehouse, lw);
+    setBuildingVisual(bGarage, lg);
+    setBuildingVisual(bShop, ls);
   }
 
   // ---------------------------
@@ -830,15 +900,18 @@
     const ips = incomePerSecond();
     const ep = state.ep||0;
 
+    const buildingsIps = buildingIncomePerSecond();
+    const ops = opsMultiplier();
+    const pm = prestigeMultiplier();
+
     $("hudCash").textContent = money(cash);
     $("hudIps").textContent = money(ips) + "/s";
     $("hudEp").textContent = String(ep);
 
-    // Streak UI
+    // streak UI
     const streakX = state.streakMult || 1.0;
     $("hudStreak").textContent = fmtX(streakX);
     $("streakPill").textContent = `Streak: ${fmtX(streakX)} (${state.streakCount||0})`;
-
     const luckPill = $("luckPill");
     const near = (state.goldenHeat || 0) > 0.70 && (state.streakCount || 0) >= 10;
     luckPill.style.display = near ? "inline-flex" : "none";
@@ -851,6 +924,7 @@
     );
     $("epPill").textContent = "EP: " + ep;
 
+    // upgrade costs
     $("assistantCost").textContent = money(state.assistantCost);
     $("toolsCost").textContent = money(state.toolsCost);
     $("procCost").textContent = money(state.procCost);
@@ -867,6 +941,7 @@
     setRow($("rowProc"),  $("buyProcBtn"),  $("procLockNote"),  !unlockedProc(),  "Unlocks after: 1 tools",    cash >= state.procCost);
     setRow($("rowAuto"),  $("buyAutoBtn"),  $("autoLockNote"),  !unlockedAuto(),  "Unlocks after: 1 process",  cash >= state.autoCost);
 
+    // prestige
     $("prestReq").textContent = money(PRESTIGE_GOAL) + " goal";
     const ok = canPrestige();
     const pbtn = $("prestigeBtn");
@@ -875,58 +950,61 @@
     $("prestHint").textContent = ok ? "Ready. Prestige resets your run but permanently boosts income."
                                    : `Prestige unlocks at ${money(PRESTIGE_GOAL)} cash.`;
 
-    const ops = opsMultiplier();
-    const pm = prestigeMultiplier();
+    // multipliers panel
     $("multSummary").textContent = fmtX(ops * pm) + " total";
-    $("multDetails").textContent = `Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
+    $("multDetails").textContent = `Buildings ${money(buildingsIps)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
 
     $("lifetime").textContent = money(state.lifetimeEarned||0);
     $("lifetime2").textContent = money(state.lifetimeEarned||0);
-    $("statsLine").textContent = `${money(ips)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
+    $("statsLine").textContent = `${money(ips)}/s · Buildings ${money(buildingsIps)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
 
+    // building levels summary
+    $("bLvlSummary").textContent =
+      `Office ${state.bLvl.office||1} · Warehouse ${state.bLvl.warehouse||1} · Workshop ${state.bLvl.workshop||1} · Market ${state.bLvl.market||1}`;
+
+    // world note
     const note = $("sceneNote");
-    const aa = (state.owned.assistant||0) > 0;
-    const tt = (state.owned.tools||0) > 0;
-    const pp = (state.owned.proc||0) > 0;
-    const xx = (state.owned.auto||0) > 0;
-    if (!aa && !tt && !pp && !xx) note.textContent = "starting out";
-    else if (aa && !tt) note.textContent = "hired help";
-    else if (tt && !pp) note.textContent = "better tools";
-    else if (pp && !xx) note.textContent = "systems in place";
-    else note.textContent = "automation online";
+    const lvlSum = (state.bLvl.office||1) + (state.bLvl.warehouse||1) + (state.bLvl.workshop||1) + (state.bLvl.market||1);
+    if (lvlSum <= 4) note.textContent = "starting out";
+    else if (lvlSum <= 7) note.textContent = "getting built";
+    else if (lvlSum <= 10) note.textContent = "city growing";
+    else note.textContent = "empire humming";
 
-    $("quickHireBtn").classList.toggle("canBuy", canBuyA);
-
-    const bOffice = $("bOffice");
-    const bWarehouse = $("bWarehouse");
-    const bGarage = $("bGarage");
-    const bShop = $("bShop");
-
-    bOffice.classList.toggle("canBuy", canBuyA);
-    bWarehouse.classList.toggle("canBuy", unlockedTools() && cash >= state.toolsCost);
-    bGarage.classList.toggle("canBuy", unlockedProc() && cash >= state.procCost);
-    bShop.classList.toggle("canBuy", unlockedAuto() && cash >= state.autoCost);
-
-    renderPeople();
-    renderBuildingLevels();
-
-    if (bubble.el.style.display === "block"){
-      renderBubble();
-      positionBubble();
-    }
-
+    // SFX button
     const sfxBtn = $("sfxToggleBtn");
     sfxBtn.textContent = SFX.isEnabled() ? "SFX: ON" : "SFX: OFF";
     sfxBtn.classList.toggle("gold", SFX.isEnabled());
 
+    // build pill
     const ver = $("verPill");
     if (ver) ver.textContent = BUILD;
 
-    // Work button label reflects streak
+    // Work label reflects streak
     const work = $("workBtn");
     const base = 1;
     const perTap = base * (state.streakMult || 1);
-    work.textContent = `Do Work (+${money(perTap).replace("$","$")})`;
+    work.textContent = `Do Work (+${money(perTap)})`;
+
+    // glow “can buy” cues for main upgrades
+    $("quickHireBtn").classList.toggle("canBuy", canBuyA);
+    $("bOffice").classList.toggle("canBuy", canBuyA);
+
+    const canTools = unlockedTools() && cash >= state.toolsCost;
+    const canProc  = unlockedProc()  && cash >= state.procCost;
+    const canAuto  = unlockedAuto()  && cash >= state.autoCost;
+    $("bWarehouse").classList.toggle("canBuy", canTools);
+    $("bGarage").classList.toggle("canBuy", canProc);
+    $("bShop").classList.toggle("canBuy", canAuto);
+
+    // keep buildings visually leveled
+    renderPeople();
+    renderBuildingLevels();
+
+    // bubble refresh
+    if (bubble.el.style.display === "block"){
+      renderBubble();
+      positionBubble();
+    }
   }
 
   // ---------------------------
@@ -937,7 +1015,6 @@
     const dt = (now - state.lastTickMs) / 1000;
     state.lastTickMs = now;
 
-    // streak decay (soft)
     decayStreak(now);
 
     const earned = incomePerSecond() * dt;
@@ -993,9 +1070,7 @@
     document.addEventListener("click", (e) => {
       const t = e.target;
       if (!(t instanceof HTMLElement)) return;
-      if (t.tagName === "BUTTON" && !t.disabled){
-        SFX.click();
-      }
+      if (t.tagName === "BUTTON" && !t.disabled) SFX.click();
     }, true);
 
     $("sfxToggleBtn").addEventListener("click", () => {
@@ -1014,8 +1089,6 @@
       state.lifetimeEarned += gain;
 
       floatText("+" + money(gain), e.clientX, e.clientY);
-
-      // Try golden payout (uses streak & heat)
       tryGoldenPayout(gain, e.clientX, e.clientY);
 
       render();
@@ -1061,8 +1134,9 @@
       if (bubble.el.style.display === "block") positionBubble();
     });
 
+    // Main purchase button
     bubble.buyBtn.addEventListener("click", (e) => {
-      if(!bubble.ctx) return;
+      const cash = state.cash || 0;
 
       if (bubble.ctx === "assistant"){
         const ok = tryBuy(state.assistantCost, () => {
@@ -1074,8 +1148,9 @@
         if(ok) render();
         return;
       }
+
       if (bubble.ctx === "tools"){
-        if(!((state.owned.assistant||0) >= 1)) return;
+        if(!unlockedTools()) return;
         const ok = tryBuy(state.toolsCost, () => {
           state.owned.tools = (state.owned.tools||0) + 1;
           state.toolsCost = Math.ceil(state.toolsCost * 1.45);
@@ -1085,8 +1160,9 @@
         if(ok) render();
         return;
       }
+
       if (bubble.ctx === "proc"){
-        if(!((state.owned.tools||0) >= 1)) return;
+        if(!unlockedProc()) return;
         const ok = tryBuy(state.procCost, () => {
           state.owned.proc = (state.owned.proc||0) + 1;
           state.procCost = Math.ceil(state.procCost * 1.55);
@@ -1096,8 +1172,9 @@
         if(ok) render();
         return;
       }
+
       if (bubble.ctx === "auto"){
-        if(!((state.owned.proc||0) >= 1)) return;
+        if(!unlockedAuto()) return;
         const ok = tryBuy(state.autoCost, () => {
           state.owned.auto = (state.owned.auto||0) + 1;
           state.autoCost = Math.ceil(state.autoCost * 1.70);
@@ -1107,6 +1184,26 @@
         if(ok) render();
         return;
       }
+    });
+
+    // NEW: Building level button
+    bubble.lvlBtn.addEventListener("click", (e) => {
+      if (!bubble.ctx) return;
+      const map = { assistant:"office", tools:"warehouse", proc:"workshop", auto:"market" };
+      const key = map[bubble.ctx];
+      if (!key) return;
+
+      const gate = buildingGateLocked(key);
+      if (gate) { setStatus(gate); return; }
+
+      const cost = buildingLevelCost(key);
+      const ok = tryBuy(cost, () => {
+        state.bLvl[key] = (state.bLvl[key] || 1) + 1;
+        bumpBuildingCost(key);
+        setStatus(`${BUILDINGS[key].name} leveled up`);
+        SFX.levelUp();
+      }, e);
+      if (ok) render();
     });
 
     $("tabWorld").addEventListener("click", () => setActive("world"));
@@ -1120,9 +1217,15 @@
   // ---------------------------
   // Boot
   // ---------------------------
+  function mountBuildingSvgs(){
+    $("bOffice").innerHTML = officeSvg();
+    $("bWarehouse").innerHTML = warehouseSvg();
+    $("bGarage").innerHTML = garageSvg();
+    $("bShop").innerHTML = shopSvg();
+  }
+
   function boot(){
     mountBuildingSvgs();
-
     const hadSave = load();
     safeMerge();
     lastLevels = null;
@@ -1136,9 +1239,13 @@
     setInterval(tick, 100);
   }
 
-  // Final safety: if key DOM nodes missing, throw so overlay tells you
   function assertDom(){
-    const required = ["hudCash","hudIps","hudEp","hudStreak","streakPill","workBtn","bOffice","bWarehouse","bGarage","bShop"];
+    const required = [
+      "hudCash","hudIps","hudEp","hudStreak","streakPill","workBtn",
+      "bOffice","bWarehouse","bGarage","bShop",
+      "bubbleLevel","bubbleLevelIncome","bubbleLevelCost","bubbleLevelBtn",
+      "bLvlSummary"
+    ];
     for (const id of required){
       if (!document.getElementById(id)) throw new Error(`Missing DOM element #${id}. Check index.html matches game.js.`);
     }
