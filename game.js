@@ -1,16 +1,59 @@
-/* Empire Reigns — Cozy Idle (modular)
-   - Mechanics preserved
-   - SFX (WebAudio) + toggle
+/* Empire Reigns — Cozy Idle (modular + cache safe)
+   - Crash overlay (no silent black screen)
+   - SFX WebAudio + toggle
    - No external assets
 */
-
 (() => {
-  const SAVE_KEY = "empire_reigns_cozy_v2_modular";
-  const SFX_KEY  = "empire_reigns_sfx_on";
+  // ---------------------------
+  // Crash overlay (prevents silent black screen)
+  // ---------------------------
+  const BUILD = (window.BUILD || "unknown");
+  const crash = (msg) => {
+    try {
+      const d = document.createElement("div");
+      d.style.cssText = `
+        position:fixed; inset:0; z-index:99999; padding:18px;
+        background:#07080c; color:#f3f1ea; font-family:system-ui,Segoe UI,Roboto,Arial;
+        overflow:auto; border-top:6px solid rgba(255,140,170,.35);
+      `;
+      d.innerHTML = `
+        <div style="max-width:980px;margin:0 auto;">
+          <h2 style="margin:0 0 10px 0;">Empire Reigns crashed</h2>
+          <div style="opacity:.85;margin-bottom:10px;">Build: <b>${BUILD}</b></div>
+          <pre style="white-space:pre-wrap;opacity:.9;border:1px solid rgba(255,255,255,.14);
+            background:rgba(255,255,255,.04);padding:12px;border-radius:14px;">${String(msg || "Unknown error")}</pre>
+          <div style="opacity:.88;margin-top:12px;">
+            Fix checklist:
+            <ul>
+              <li>Confirm <b>index.html</b>, <b>styles.css</b>, <b>game.js</b> are in the <b>repo root</b> (same folder).</li>
+              <li>Open with cache buster: <b>?v=${BUILD}</b> and hard refresh <b>Ctrl+Shift+R</b>.</li>
+              <li>If this appears, copy/paste the error block back to me.</li>
+            </ul>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(d);
+    } catch {}
+  };
+
+  window.addEventListener("error", (e) => {
+    const msg = [
+      e?.message || "Unknown error",
+      `${e?.filename || ""}:${e?.lineno || ""}:${e?.colno || ""}`
+    ].join("\n");
+    crash(msg);
+  });
+
+  window.addEventListener("unhandledrejection", (e) => {
+    crash(String(e?.reason || "Unhandled promise rejection"));
+  });
 
   // ---------------------------
   // Utilities
   // ---------------------------
+  const SAVE_KEY = "empire_reigns_cozy_v2_modular";
+  const SFX_KEY  = "empire_reigns_sfx_on";
+
   const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
   const $ = (id) => document.getElementById(id);
 
@@ -35,6 +78,7 @@
 
   function setStatus(msg){
     const el = $("status");
+    if (!el) return;
     el.textContent = msg;
     clearTimeout(setStatus._t);
     setStatus._t = setTimeout(() => {
@@ -66,7 +110,6 @@
       if (!enabled) return;
       ensure();
       const now = ctx.currentTime;
-
       const o = ctx.createOscillator();
       const g = ctx.createGain();
 
@@ -86,21 +129,17 @@
     }
 
     function click(){
-      // soft tick
       beep({type:"triangle", f:520, t:0.03, v:0.035, det:-15, a:0.003, r:0.03});
     }
     function purchase(){
-      // warm “pop”
       beep({type:"sine", f:420, t:0.05, v:0.06, det:12, a:0.004, r:0.06});
       setTimeout(() => beep({type:"triangle", f:720, t:0.04, v:0.04, det:-8, a:0.003, r:0.05}), 35);
     }
     function levelUp(){
-      // gentle chime up
       beep({type:"sine", f:660, t:0.08, v:0.05, a:0.004, r:0.09});
       setTimeout(() => beep({type:"sine", f:990, t:0.08, v:0.045, a:0.004, r:0.09}), 70);
     }
     function prestige(){
-      // satisfying swell
       beep({type:"sine", f:330, t:0.12, v:0.05, a:0.01, r:0.14});
       setTimeout(() => beep({type:"triangle", f:440, t:0.12, v:0.05, a:0.01, r:0.14}), 120);
       setTimeout(() => beep({type:"sine", f:660, t:0.14, v:0.055, a:0.01, r:0.18}), 240);
@@ -114,7 +153,7 @@
 
     // Unlock audio on first interaction
     function armOneTimeUnlock(){
-      const handler = () => { ensure(); window.removeEventListener("pointerdown", handler, {capture:true}); };
+      const handler = () => { ensure(); };
       window.addEventListener("pointerdown", handler, {capture:true, once:true});
     }
 
@@ -125,7 +164,7 @@
   })();
 
   // ---------------------------
-  // Game State
+  // State
   // ---------------------------
   const state = {
     cash: 0,
@@ -228,7 +267,7 @@
   }
 
   // ---------------------------
-  // Buildings (inline SVG injection)
+  // Buildings SVG
   // ---------------------------
   function mountBuildingSvgs(){
     $("bOffice").innerHTML = officeSvg();
@@ -455,6 +494,7 @@
     renderBubble();
     requestAnimationFrame(positionBubble);
   }
+
   function closeBubble(){
     bubble.el.style.display = "none";
     bubble.catcher.style.display = "none";
@@ -537,7 +577,6 @@
 
   function playLevelUpFx(buildingEl, newLevel){
     SFX.levelUp();
-
     const r = buildingEl.getBoundingClientRect();
     const cx = r.left + r.width * 0.55;
     const cy = r.top + r.height * 0.30;
@@ -730,16 +769,17 @@
     renderPeople();
     renderBuildingLevels();
 
-    // keep bubble synced
     if (bubble.el.style.display === "block"){
       renderBubble();
       positionBubble();
     }
 
-    // SFX toggle label
     const sfxBtn = $("sfxToggleBtn");
     sfxBtn.textContent = SFX.isEnabled() ? "SFX: ON" : "SFX: OFF";
     sfxBtn.classList.toggle("gold", SFX.isEnabled());
+
+    const ver = $("verPill");
+    if (ver) ver.textContent = BUILD;
   }
 
   // ---------------------------
@@ -799,7 +839,6 @@
   // Bind events
   // ---------------------------
   function bind(){
-    // Buttons should “click” SFX
     document.addEventListener("click", (e) => {
       const t = e.target;
       if (!(t instanceof HTMLElement)) return;
@@ -808,14 +847,12 @@
       }
     }, true);
 
-    // SFX toggle
     $("sfxToggleBtn").addEventListener("click", () => {
       SFX.setEnabled(!SFX.isEnabled());
       setStatus(SFX.isEnabled() ? "SFX enabled" : "SFX disabled");
       render();
     });
 
-    // world actions
     $("workBtn").addEventListener("click", (e) => {
       state.cash += 1; state.lifetimeEarned += 1;
       floatText("+$1", e.clientX, e.clientY);
@@ -837,13 +874,11 @@
     $("resetBtn").addEventListener("click", hardReset);
     $("prestigeBtn").addEventListener("click", doPrestige);
 
-    // upgrade screen “open bubble at building”
     $("buyAssistantBtn").addEventListener("click", () => openBubble("assistant", $("bOffice")));
     $("buyToolsBtn").addEventListener("click", () => openBubble("tools", $("bWarehouse")));
     $("buyProcBtn").addEventListener("click", () => openBubble("proc", $("bGarage")));
     $("buyAutoBtn").addEventListener("click", () => openBubble("auto", $("bShop")));
 
-    // buildings open bubble
     const bindBuilding = (el, kind) => {
       el.addEventListener("click", () => openBubble(kind, el));
       el.addEventListener("keydown", (e) => {
@@ -855,7 +890,6 @@
     bindBuilding($("bGarage"), "proc");
     bindBuilding($("bShop"), "auto");
 
-    // bubble close
     bubble.closeBtn.addEventListener("click", closeBubble);
     bubble.catcher.addEventListener("click", closeBubble);
     window.addEventListener("keydown", (e) => {
@@ -865,7 +899,6 @@
       if (bubble.el.style.display === "block") positionBubble();
     });
 
-    // bubble buy
     bubble.buyBtn.addEventListener("click", (e) => {
       if(!bubble.ctx) return;
 
@@ -914,7 +947,6 @@
       }
     });
 
-    // tabs + bottom nav
     $("tabWorld").addEventListener("click", () => setActive("world"));
     $("tabUpgrades").addEventListener("click", () => setActive("up"));
     $("tabPrestige").addEventListener("click", () => setActive("pr"));
@@ -942,5 +974,14 @@
     setInterval(tick, 100);
   }
 
+  // Final safety: if key DOM nodes missing, throw so overlay tells you
+  function assertDom(){
+    const required = ["hudCash","hudIps","hudEp","workBtn","bOffice","bWarehouse","bGarage","bShop"];
+    for (const id of required){
+      if (!document.getElementById(id)) throw new Error(`Missing DOM element #${id}. Check index.html matches game.js.`);
+    }
+  }
+
+  assertDom();
   boot();
 })();
