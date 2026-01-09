@@ -1,7 +1,9 @@
-/* Empire Reigns — Cozy Idle (modular + cache safe)
-   - Crash overlay (no silent black screen)
-   - SFX WebAudio + toggle
-   - No external assets
+/* Empire Reigns — Cozy Idle
+   Upgrade A:
+   - Work combo streak (fast taps increase multiplier)
+   - Rare Golden Payout proc (big shiny reward + FX + SFX)
+   - UI shows streak + golden hint
+   - Crash overlay remains (no silent black screen)
 */
 (() => {
   // ---------------------------
@@ -51,7 +53,7 @@
   // ---------------------------
   // Utilities
   // ---------------------------
-  const SAVE_KEY = "empire_reigns_cozy_v2_modular";
+  const SAVE_KEY = "empire_reigns_cozy_v3_upgradeA";
   const SFX_KEY  = "empire_reigns_sfx_on";
 
   const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
@@ -83,7 +85,7 @@
     clearTimeout(setStatus._t);
     setStatus._t = setTimeout(() => {
       if (el.textContent === msg) el.textContent = "Ready";
-    }, 1000);
+    }, 1100);
   }
 
   // ---------------------------
@@ -144,6 +146,12 @@
       setTimeout(() => beep({type:"triangle", f:440, t:0.12, v:0.05, a:0.01, r:0.14}), 120);
       setTimeout(() => beep({type:"sine", f:660, t:0.14, v:0.055, a:0.01, r:0.18}), 240);
     }
+    function golden(){
+      // bright triple chime
+      beep({type:"sine", f:880, t:0.08, v:0.055, a:0.004, r:0.10});
+      setTimeout(() => beep({type:"triangle", f:1320, t:0.10, v:0.05, a:0.004, r:0.12}), 90);
+      setTimeout(() => beep({type:"sine", f:1760, t:0.12, v:0.05, a:0.004, r:0.16}), 210);
+    }
 
     function setEnabled(v){
       enabled = !!v;
@@ -160,7 +168,7 @@
     loadEnabled();
     armOneTimeUnlock();
 
-    return { click, purchase, levelUp, prestige, setEnabled, isEnabled, ensure };
+    return { click, purchase, levelUp, prestige, golden, setEnabled, isEnabled, ensure };
   })();
 
   // ---------------------------
@@ -177,13 +185,26 @@
     assistantCost: 25,
     toolsCost: 60,
     procCost: 150,
-    autoCost: 400
+    autoCost: 400,
+
+    // Upgrade A: streak + golden
+    streakCount: 0,
+    streakMult: 1.0,
+    lastWorkMs: 0,
+    goldenHeat: 0,           // ramps up with streak to make "almost!" feel
+    lastGoldenMs: 0
   };
 
   function safeMerge(){
     state.owned = Object.assign({assistant:0, tools:0, proc:0, auto:0}, state.owned || {});
     if (typeof state.ep !== "number") state.ep = 0;
     if (typeof state.prestigeCount !== "number") state.prestigeCount = 0;
+
+    if (typeof state.streakCount !== "number") state.streakCount = 0;
+    if (typeof state.streakMult !== "number") state.streakMult = 1.0;
+    if (typeof state.lastWorkMs !== "number") state.lastWorkMs = 0;
+    if (typeof state.goldenHeat !== "number") state.goldenHeat = 0;
+    if (typeof state.lastGoldenMs !== "number") state.lastGoldenMs = 0;
   }
 
   function save(silent=false){
@@ -237,6 +258,14 @@
     state.toolsCost = 60;
     state.procCost = 150;
     state.autoCost = 400;
+
+    // reset streak/golden
+    state.streakCount = 0;
+    state.streakMult = 1.0;
+    state.lastWorkMs = 0;
+    state.goldenHeat = 0;
+    state.lastGoldenMs = 0;
+
     closeBubble();
     save(true);
     setStatus("New run started");
@@ -267,7 +296,118 @@
   }
 
   // ---------------------------
-  // Buildings SVG
+  // Upgrade A: Streak logic
+  // ---------------------------
+  const STREAK_WINDOW_MS = 1300;    // tap within this keeps combo alive
+  const STREAK_MAX = 45;            // caps multiplier growth
+  const STREAK_STEP = 0.025;        // 2.5% per tap (feels good fast)
+  const STREAK_MAX_MULT = 2.50;     // max work multiplier
+
+  function updateStreak(nowMs){
+    const dt = nowMs - (state.lastWorkMs || 0);
+    if (dt <= STREAK_WINDOW_MS){
+      state.streakCount = Math.min(STREAK_MAX, (state.streakCount||0) + 1);
+    } else {
+      state.streakCount = 1;
+    }
+    state.lastWorkMs = nowMs;
+
+    // multiplier: 1 + step*(count-1), capped
+    const m = 1 + STREAK_STEP * Math.max(0, state.streakCount - 1);
+    state.streakMult = clamp(m, 1.0, STREAK_MAX_MULT);
+
+    // golden heat increases with streak (psychological “almost there”)
+    state.goldenHeat = clamp((state.goldenHeat||0) + 0.08 + (state.streakCount * 0.004), 0, 1.0);
+  }
+
+  function decayStreak(nowMs){
+    const dt = nowMs - (state.lastWorkMs || 0);
+    if (state.streakCount > 0 && dt > STREAK_WINDOW_MS){
+      // soft decay rather than instant reset (feels less punishing)
+      const over = dt - STREAK_WINDOW_MS;
+      const drop = Math.floor(over / 550);
+      if (drop > 0){
+        state.streakCount = Math.max(0, state.streakCount - drop);
+        const m = 1 + STREAK_STEP * Math.max(0, state.streakCount - 1);
+        state.streakMult = clamp(m, 1.0, STREAK_MAX_MULT);
+        state.goldenHeat = clamp((state.goldenHeat||0) - 0.10 * drop, 0, 1.0);
+        if (state.streakCount === 0){
+          state.streakMult = 1.0;
+          state.goldenHeat = 0;
+        }
+      }
+    }
+  }
+
+  // ---------------------------
+  // Upgrade A: Golden proc logic
+  // ---------------------------
+  function goldenChance(){
+    // base rare chance + streak influence + a little “heat”
+    const base = 0.012; // 1.2%
+    const streakBoost = 0.010 * Math.min(1, (state.streakCount||0) / 20); // up to +1.0%
+    const heatBoost = 0.018 * (state.goldenHeat || 0); // up to +1.8%
+    const cooldownOk = (Date.now() - (state.lastGoldenMs||0)) > 1600;
+    const raw = base + streakBoost + heatBoost;
+    return cooldownOk ? clamp(raw, 0.012, 0.040) : 0; // cap at 4.0%
+  }
+
+  function playGoldFx(x, y, label="GOLDEN PAYOUT!"){
+    const badge = document.createElement("div");
+    badge.className = "fxBadge gold";
+    badge.textContent = label;
+    badge.style.left = x + "px";
+    badge.style.top = (y - 6) + "px";
+    document.body.appendChild(badge);
+    setTimeout(() => badge.remove(), 980);
+
+    const burst = document.createElement("div");
+    burst.className = "fxBurst";
+    burst.style.left = x + "px";
+    burst.style.top = y + "px";
+    document.body.appendChild(burst);
+
+    const count = 22;
+    for(let i=0;i<count;i++){
+      const p = document.createElement("div");
+      const type = (i % 4 === 0) ? "blue" : "gold";
+      p.className = "fxParticle " + type;
+      const ang = (Math.PI * 2) * (i / count);
+      const mag = 22 + Math.random() * 42;
+      const dx = Math.cos(ang) * mag;
+      const dy = Math.sin(ang) * mag - (12 + Math.random()*14);
+      p.style.setProperty("--dx", dx.toFixed(1) + "px");
+      p.style.setProperty("--dy", dy.toFixed(1) + "px");
+      p.style.left = "0px";
+      p.style.top = "0px";
+      burst.appendChild(p);
+    }
+    setTimeout(() => burst.remove(), 760);
+  }
+
+  function tryGoldenPayout(baseAmount, x, y){
+    const p = goldenChance();
+    if (Math.random() > p) return 0;
+
+    // payout scales with streak + current economy a bit
+    const streakFactor = 1.0 + (state.streakCount || 0) * 0.06;  // big feels
+    const econFactor = 1.0 + Math.min(2.0, incomePerSecond() / 40); // scales later but capped
+    const payout = baseAmount * (6 + Math.random()*6) * streakFactor * econFactor;
+
+    state.cash += payout;
+    state.lifetimeEarned += payout;
+    state.lastGoldenMs = Date.now();
+    state.goldenHeat = 0; // reset heat after hit
+
+    SFX.golden();
+    playGoldFx(x, y);
+    floatText("+" + money(payout), x, y);
+    setStatus("✨ GOLDEN PAYOUT!");
+    return payout;
+  }
+
+  // ---------------------------
+  // Buildings SVG (same as prior build)
   // ---------------------------
   function mountBuildingSvgs(){
     $("bOffice").innerHTML = officeSvg();
@@ -276,177 +416,169 @@
     $("bShop").innerHTML = shopSvg();
   }
 
-  function officeSvg(){
-    return `
-      <svg viewBox="0 0 220 190" width="100%" height="100%">
-        <ellipse cx="112" cy="170" rx="76" ry="12" fill="rgba(0,0,0,.25)"/>
-        <path d="M40 85 L110 35 L182 85 L170 96 L110 55 L52 96 Z"
-              fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.28)" stroke-width="3" stroke-linejoin="round"/>
-        <path d="M56 92 L110 58 L166 92" stroke="rgba(0,0,0,.18)" stroke-width="4" stroke-linecap="round" opacity=".35"/>
-        <rect x="52" y="88" width="116" height="78" rx="20"
-              fill="rgba(255,245,220,.08)" stroke="rgba(255,245,220,.26)" stroke-width="3"/>
-        <rect x="58" y="94" width="104" height="66" rx="18"
-              fill="rgba(0,0,0,.10)" opacity=".55"/>
-        <rect x="70" y="150" width="80" height="16" rx="10"
-              fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
-        <rect x="98" y="118" width="28" height="48" rx="12"
-              fill="rgba(0,0,0,.25)" stroke="rgba(255,245,220,.22)" stroke-width="3"/>
-        <circle cx="121" cy="143" r="2.3" fill="rgba(255,210,120,.35)"/>
+  function officeSvg(){ return `
+    <svg viewBox="0 0 220 190" width="100%" height="100%">
+      <ellipse cx="112" cy="170" rx="76" ry="12" fill="rgba(0,0,0,.25)"/>
+      <path d="M40 85 L110 35 L182 85 L170 96 L110 55 L52 96 Z"
+            fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.28)" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M56 92 L110 58 L166 92" stroke="rgba(0,0,0,.18)" stroke-width="4" stroke-linecap="round" opacity=".35"/>
+      <rect x="52" y="88" width="116" height="78" rx="20"
+            fill="rgba(255,245,220,.08)" stroke="rgba(255,245,220,.26)" stroke-width="3"/>
+      <rect x="58" y="94" width="104" height="66" rx="18"
+            fill="rgba(0,0,0,.10)" opacity=".55"/>
+      <rect x="70" y="150" width="80" height="16" rx="10"
+            fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
+      <rect x="98" y="118" width="28" height="48" rx="12"
+            fill="rgba(0,0,0,.25)" stroke="rgba(255,245,220,.22)" stroke-width="3"/>
+      <circle cx="121" cy="143" r="2.3" fill="rgba(255,210,120,.35)"/>
 
-        <g opacity=".95">
-          <rect x="68" y="110" width="28" height="22" rx="10"
-                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-          <path d="M82 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
-          <path d="M68 121 H96" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
-          <rect x="136" y="110" width="28" height="22" rx="10"
-                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-          <path d="M150 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
-          <path d="M136 121 H164" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
-        </g>
-
-        <g class="lvl2" style="display:none;" opacity=".95">
-          <rect x="64" y="138" width="26" height="18" rx="9"
-                fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-          <rect x="140" y="138" width="26" height="18" rx="9"
-                fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-        </g>
-        <g class="lvl3" style="display:none;" opacity=".95">
-          <circle cx="56" cy="132" r="10" fill="rgba(120,220,180,.10)" stroke="rgba(120,220,180,.20)" stroke-width="3"/>
-          <path d="M56 125 V139" stroke="rgba(255,245,220,.18)" stroke-width="3"/>
-          <path d="M49 132 H63" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
-        </g>
-        <g class="lvl4" style="display:none;" opacity=".95">
-          <path d="M74 86 C92 70, 128 70, 146 86" fill="none" stroke="rgba(255,210,120,.20)" stroke-width="4" stroke-linecap="round"/>
-          <circle cx="110" cy="72" r="4" fill="rgba(255,210,120,.26)"/>
-        </g>
-
-        <rect x="62" y="78" width="96" height="22" rx="11"
-              fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
-        <text x="110" y="93" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">OFFICE</text>
-        <text x="110" y="106" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
-      </svg>
-    `;
-  }
-
-  function warehouseSvg(){
-    return `
-      <svg viewBox="0 0 220 190" width="100%" height="100%">
-        <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
-        <path d="M56 72 L110 36 L164 72 L164 86 L56 86 Z"
-              fill="rgba(255,140,170,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
-        <rect x="52" y="84" width="116" height="84" rx="22"
-              fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
-        <rect x="64" y="108" width="92" height="60" rx="18"
-              fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
-        <path d="M110 108 V168" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
-        <g opacity=".9">
-          <rect x="70" y="92" width="22" height="16" rx="8"
-                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-          <rect x="128" y="92" width="22" height="16" rx="8"
-                fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-        </g>
-
-        <g class="lvl2" style="display:none;" opacity=".95">
-          <rect x="42" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-          <rect x="160" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-        </g>
-        <g class="lvl3" style="display:none;" opacity=".95">
-          <path d="M40 138 H70" stroke="rgba(120,220,180,.18)" stroke-width="4" stroke-linecap="round"/>
-          <circle cx="40" cy="138" r="5" fill="rgba(120,220,180,.18)"/>
-        </g>
-        <g class="lvl4" style="display:none;" opacity=".95">
-          <path d="M178 120 C190 110, 196 122, 188 134" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
-          <circle cx="188" cy="136" r="5" fill="rgba(255,210,120,.18)"/>
-        </g>
-
-        <rect x="62" y="64" width="96" height="22" rx="11"
-              fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
-        <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WAREHOUSE</text>
-        <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
-      </svg>
-    `;
-  }
-
-  function garageSvg(){
-    return `
-      <svg viewBox="0 0 220 190" width="100%" height="100%">
-        <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
-        <path d="M54 78 L110 42 L166 78 L154 90 L110 62 L66 90 Z"
-              fill="rgba(120,220,180,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
-        <rect x="52" y="88" width="116" height="80" rx="22"
-              fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
-        <rect x="74" y="110" width="72" height="58" rx="18"
-              fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
-        <g opacity=".65">
-          <path d="M80 122 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
-          <path d="M80 134 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
-          <path d="M80 146 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
-        </g>
-
-        <circle cx="68" cy="120" r="12" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-        <path d="M64 120 L72 128" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
-        <path d="M72 114 L78 120" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
-
-        <g class="lvl2" style="display:none;" opacity=".95">
-          <rect x="40" y="148" width="22" height="14" rx="7"
-                fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-        </g>
-        <g class="lvl3" style="display:none;" opacity=".95">
-          <path d="M170 92 V116" stroke="rgba(255,245,220,.14)" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="170" cy="124" r="10" fill="rgba(255,210,120,.12)" stroke="rgba(255,210,120,.20)" stroke-width="3"/>
-        </g>
-        <g class="lvl4" style="display:none;" opacity=".95">
-          <path d="M152 68 C162 54, 176 54, 186 68" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
-          <circle cx="169" cy="52" r="4" fill="rgba(255,210,120,.20)"/>
-        </g>
-
-        <rect x="62" y="80" width="96" height="22" rx="11"
-              fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
-        <text x="110" y="95" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WORKSHOP</text>
-        <text x="110" y="108" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
-      </svg>
-    `;
-  }
-
-  function shopSvg(){
-    return `
-      <svg viewBox="0 0 220 190" width="100%" height="100%">
-        <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
-        <path d="M58 80 H162 L154 104 H66 Z"
-              fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
-        <g opacity=".42">
-          <path d="M72 80 L68 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-          <path d="M92 80 L88 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-          <path d="M112 80 L108 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-          <path d="M132 80 L128 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-          <path d="M152 80 L148 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
-        </g>
-
-        <rect x="60" y="102" width="104" height="66" rx="22"
-              fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
-        <rect x="76" y="120" width="50" height="30" rx="14"
+      <g opacity=".95">
+        <rect x="68" y="110" width="28" height="22" rx="10"
               fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
-        <rect x="134" y="118" width="22" height="50" rx="14"
-              fill="rgba(0,0,0,.22)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
-        <circle cx="150" cy="144" r="2.3" fill="rgba(255,210,120,.35)"/>
+        <path d="M82 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
+        <path d="M68 121 H96" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
+        <rect x="136" y="110" width="28" height="22" rx="10"
+              fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+        <path d="M150 110 V132" stroke="rgba(255,245,220,.18)" stroke-width="3" opacity=".7"/>
+        <path d="M136 121 H164" stroke="rgba(255,245,220,.16)" stroke-width="3" opacity=".7"/>
+      </g>
 
-        <g class="lvl2" style="display:none;" opacity=".95">
-          <rect x="78" y="112" width="26" height="10" rx="5" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
-        </g>
-        <g class="lvl3" style="display:none;" opacity=".95">
-          <rect x="168" y="132" width="16" height="22" rx="8" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
-        </g>
-        <g class="lvl4" style="display:none;" opacity=".95">
-          <rect x="60" y="102" width="104" height="66" rx="22" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4"/>
-        </g>
+      <g class="lvl2" style="display:none;" opacity=".95">
+        <rect x="64" y="138" width="26" height="18" rx="9"
+              fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+        <rect x="140" y="138" width="26" height="18" rx="9"
+              fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+      </g>
+      <g class="lvl3" style="display:none;" opacity=".95">
+        <circle cx="56" cy="132" r="10" fill="rgba(120,220,180,.10)" stroke="rgba(120,220,180,.20)" stroke-width="3"/>
+        <path d="M56 125 V139" stroke="rgba(255,245,220,.18)" stroke-width="3"/>
+        <path d="M49 132 H63" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+      </g>
+      <g class="lvl4" style="display:none;" opacity=".95">
+        <path d="M74 86 C92 70, 128 70, 146 86" fill="none" stroke="rgba(255,210,120,.20)" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="110" cy="72" r="4" fill="rgba(255,210,120,.26)"/>
+      </g>
 
-        <rect x="62" y="64" width="96" height="22" rx="11"
-              fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
-        <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">MARKET</text>
-        <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
-      </svg>
-    `;
-  }
+      <rect x="62" y="78" width="96" height="22" rx="11"
+            fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+      <text x="110" y="93" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">OFFICE</text>
+      <text x="110" y="106" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
+    </svg>
+  `; }
+
+  function warehouseSvg(){ return `
+    <svg viewBox="0 0 220 190" width="100%" height="100%">
+      <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
+      <path d="M56 72 L110 36 L164 72 L164 86 L56 86 Z"
+            fill="rgba(255,140,170,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="52" y="84" width="116" height="84" rx="22"
+            fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
+      <rect x="64" y="108" width="92" height="60" rx="18"
+            fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+      <path d="M110 108 V168" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+      <g opacity=".9">
+        <rect x="70" y="92" width="22" height="16" rx="8"
+              fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+        <rect x="128" y="92" width="22" height="16" rx="8"
+              fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+      </g>
+
+      <g class="lvl2" style="display:none;" opacity=".95">
+        <rect x="42" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+        <rect x="160" y="148" width="18" height="14" rx="7" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+      </g>
+      <g class="lvl3" style="display:none;" opacity=".95">
+        <path d="M40 138 H70" stroke="rgba(120,220,180,.18)" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="40" cy="138" r="5" fill="rgba(120,220,180,.18)"/>
+      </g>
+      <g class="lvl4" style="display:none;" opacity=".95">
+        <path d="M178 120 C190 110, 196 122, 188 134" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="188" cy="136" r="5" fill="rgba(255,210,120,.18)"/>
+      </g>
+
+      <rect x="62" y="64" width="96" height="22" rx="11"
+            fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+      <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WAREHOUSE</text>
+      <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
+    </svg>
+  `; }
+
+  function garageSvg(){ return `
+    <svg viewBox="0 0 220 190" width="100%" height="100%">
+      <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
+      <path d="M54 78 L110 42 L166 78 L154 90 L110 62 L66 90 Z"
+            fill="rgba(120,220,180,.10)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="52" y="88" width="116" height="80" rx="22"
+            fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
+      <rect x="74" y="110" width="72" height="58" rx="18"
+            fill="rgba(0,0,0,.24)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+      <g opacity=".65">
+        <path d="M80 122 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+        <path d="M80 134 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+        <path d="M80 146 H140" stroke="rgba(255,245,220,.10)" stroke-width="3"/>
+      </g>
+
+      <circle cx="68" cy="120" r="12" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+      <path d="M64 120 L72 128" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
+      <path d="M72 114 L78 120" stroke="rgba(255,245,220,.75)" stroke-width="3" stroke-linecap="round"/>
+
+      <g class="lvl2" style="display:none;" opacity=".95">
+        <rect x="40" y="148" width="22" height="14" rx="7"
+              fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+      </g>
+      <g class="lvl3" style="display:none;" opacity=".95">
+        <path d="M170 92 V116" stroke="rgba(255,245,220,.14)" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="170" cy="124" r="10" fill="rgba(255,210,120,.12)" stroke="rgba(255,210,120,.20)" stroke-width="3"/>
+      </g>
+      <g class="lvl4" style="display:none;" opacity=".95">
+        <path d="M152 68 C162 54, 176 54, 186 68" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="169" cy="52" r="4" fill="rgba(255,210,120,.20)"/>
+      </g>
+
+      <rect x="62" y="80" width="96" height="22" rx="11"
+            fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+      <text x="110" y="95" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">WORKSHOP</text>
+      <text x="110" y="108" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
+    </svg>
+  `; }
+
+  function shopSvg(){ return `
+    <svg viewBox="0 0 220 190" width="100%" height="100%">
+      <ellipse cx="110" cy="172" rx="84" ry="12" fill="rgba(0,0,0,.25)"/>
+      <path d="M58 80 H162 L154 104 H66 Z"
+            fill="rgba(255,210,120,.14)" stroke="rgba(255,245,220,.26)" stroke-width="3" stroke-linejoin="round"/>
+      <g opacity=".42">
+        <path d="M72 80 L68 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+        <path d="M92 80 L88 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+        <path d="M112 80 L108 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+        <path d="M132 80 L128 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+        <path d="M152 80 L148 104" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+      </g>
+
+      <rect x="60" y="102" width="104" height="66" rx="22"
+            fill="rgba(255,245,220,.06)" stroke="rgba(255,245,220,.24)" stroke-width="3"/>
+      <rect x="76" y="120" width="50" height="30" rx="14"
+            fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.20)" stroke-width="3"/>
+      <rect x="134" y="118" width="22" height="50" rx="14"
+            fill="rgba(0,0,0,.22)" stroke="rgba(255,245,220,.16)" stroke-width="3"/>
+      <circle cx="150" cy="144" r="2.3" fill="rgba(255,210,120,.35)"/>
+
+      <g class="lvl2" style="display:none;" opacity=".95">
+        <rect x="78" y="112" width="26" height="10" rx="5" fill="rgba(255,210,120,.10)" stroke="rgba(255,210,120,.18)" stroke-width="3"/>
+      </g>
+      <g class="lvl3" style="display:none;" opacity=".95">
+        <rect x="168" y="132" width="16" height="22" rx="8" fill="rgba(120,180,255,.10)" stroke="rgba(120,180,255,.18)" stroke-width="3"/>
+      </g>
+      <g class="lvl4" style="display:none;" opacity=".95">
+        <rect x="60" y="102" width="104" height="66" rx="22" fill="none" stroke="rgba(255,210,120,.18)" stroke-width="4"/>
+      </g>
+
+      <rect x="62" y="64" width="96" height="22" rx="11"
+            fill="rgba(12,10,14,.40)" stroke="rgba(255,245,220,.20)" stroke-width="3"/>
+      <text x="110" y="79" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.88)">MARKET</text>
+      <text x="110" y="92" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,245,220,.78)" class="lvlText">LV1</text>
+    </svg>
+  `; }
 
   // ---------------------------
   // Bubble UI
@@ -558,7 +690,7 @@
   }
 
   // ---------------------------
-  // Leveling + FX
+  // Leveling + FX (existing)
   // ---------------------------
   let lastLevels = null;
 
@@ -702,6 +834,15 @@
     $("hudIps").textContent = money(ips) + "/s";
     $("hudEp").textContent = String(ep);
 
+    // Streak UI
+    const streakX = state.streakMult || 1.0;
+    $("hudStreak").textContent = fmtX(streakX);
+    $("streakPill").textContent = `Streak: ${fmtX(streakX)} (${state.streakCount||0})`;
+
+    const luckPill = $("luckPill");
+    const near = (state.goldenHeat || 0) > 0.70 && (state.streakCount || 0) >= 10;
+    luckPill.style.display = near ? "inline-flex" : "none";
+
     $("ownedPill").textContent = "Owned: " + (
       (state.owned.assistant||0) +
       (state.owned.tools||0) +
@@ -780,6 +921,12 @@
 
     const ver = $("verPill");
     if (ver) ver.textContent = BUILD;
+
+    // Work button label reflects streak
+    const work = $("workBtn");
+    const base = 1;
+    const perTap = base * (state.streakMult || 1);
+    work.textContent = `Do Work (+${money(perTap).replace("$","$")})`;
   }
 
   // ---------------------------
@@ -790,11 +937,15 @@
     const dt = (now - state.lastTickMs) / 1000;
     state.lastTickMs = now;
 
+    // streak decay (soft)
+    decayStreak(now);
+
     const earned = incomePerSecond() * dt;
     if(earned > 0){
       state.cash += earned;
       state.lifetimeEarned += earned;
     }
+
     if(now - state.lastSaveMs > 10000) save(true);
     render();
   }
@@ -854,8 +1005,19 @@
     });
 
     $("workBtn").addEventListener("click", (e) => {
-      state.cash += 1; state.lifetimeEarned += 1;
-      floatText("+$1", e.clientX, e.clientY);
+      const now = Date.now();
+      updateStreak(now);
+
+      const base = 1;
+      const gain = base * (state.streakMult || 1);
+      state.cash += gain;
+      state.lifetimeEarned += gain;
+
+      floatText("+" + money(gain), e.clientX, e.clientY);
+
+      // Try golden payout (uses streak & heat)
+      tryGoldenPayout(gain, e.clientX, e.clientY);
+
       render();
     });
 
@@ -913,7 +1075,7 @@
         return;
       }
       if (bubble.ctx === "tools"){
-        if(!unlockedTools()) return;
+        if(!((state.owned.assistant||0) >= 1)) return;
         const ok = tryBuy(state.toolsCost, () => {
           state.owned.tools = (state.owned.tools||0) + 1;
           state.toolsCost = Math.ceil(state.toolsCost * 1.45);
@@ -924,7 +1086,7 @@
         return;
       }
       if (bubble.ctx === "proc"){
-        if(!unlockedProc()) return;
+        if(!((state.owned.tools||0) >= 1)) return;
         const ok = tryBuy(state.procCost, () => {
           state.owned.proc = (state.owned.proc||0) + 1;
           state.procCost = Math.ceil(state.procCost * 1.55);
@@ -935,7 +1097,7 @@
         return;
       }
       if (bubble.ctx === "auto"){
-        if(!unlockedAuto()) return;
+        if(!((state.owned.proc||0) >= 1)) return;
         const ok = tryBuy(state.autoCost, () => {
           state.owned.auto = (state.owned.auto||0) + 1;
           state.autoCost = Math.ceil(state.autoCost * 1.70);
@@ -976,7 +1138,7 @@
 
   // Final safety: if key DOM nodes missing, throw so overlay tells you
   function assertDom(){
-    const required = ["hudCash","hudIps","hudEp","workBtn","bOffice","bWarehouse","bGarage","bShop"];
+    const required = ["hudCash","hudIps","hudEp","hudStreak","streakPill","workBtn","bOffice","bWarehouse","bGarage","bShop"];
     for (const id of required){
       if (!document.getElementById(id)) throw new Error(`Missing DOM element #${id}. Check index.html matches game.js.`);
     }
