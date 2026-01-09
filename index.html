@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Empire Reigns — Cozy Idle</title>
 
-  <!-- CACHE BUSTER: change this ONE value per deploy -->
   <script>
-    window.BUILD = "ER-20260109a";
+    window.BUILD = "ER-20260109b";
   </script>
 
-  <link rel="stylesheet" href="./styles.css?v=ER-20260109a" />
+  <link rel="stylesheet" href="./styles.css?v=ER-20260109b" />
 </head>
 
 <body>
@@ -141,10 +140,24 @@
           <div class="small" id="bubbleDesc">…</div>
           <div class="pill mono" id="bubbleOwned">Owned: 0</div>
         </div>
+
         <div class="bubbleRow">
           <div class="pill mono" id="bubbleCost">$0</div>
           <button id="bubbleBuyBtn">Buy</button>
         </div>
+
+        <div class="hr"></div>
+
+        <!-- NEW: Building Level Track -->
+        <div class="bubbleRow">
+          <div class="pill mono sparkle" id="bubbleLevel">Building LV 1</div>
+          <div class="pill mono" id="bubbleLevelIncome">+ $0.00/s</div>
+        </div>
+        <div class="bubbleRow">
+          <div class="pill mono" id="bubbleLevelCost">$0</div>
+          <button class="gold" id="bubbleLevelBtn">Upgrade Building</button>
+        </div>
+
         <div class="small" id="bubbleLockNote" style="opacity:.85;"></div>
       </div>
     </div>
@@ -197,7 +210,7 @@
                   </div>
 
                   <div class="small" style="margin-top:8px;">
-                    <b>Work</b> builds a combo streak if you keep tapping. Rarely, you hit a <b>Golden Payout</b>.
+                    Tap <b>Work</b> to build a combo streak. Click buildings to buy upgrades and now: <b>upgrade building levels</b> for real scaling income.
                   </div>
 
                   <div class="hr"></div>
@@ -226,7 +239,15 @@
                     <div class="h">Multipliers</div>
                     <div class="pill mono" id="multSummary">x1.00 total</div>
                   </div>
-                  <div class="small mono" id="multDetails" style="margin-top:6px;">Ops x1.00 · Prestige x1.00</div>
+                  <div class="small mono" id="multDetails" style="margin-top:6px;">Buildings $0/s · Ops x1.00 · Prestige x1.00</div>
+                </div>
+
+                <div class="item" style="margin-top:12px;">
+                  <div class="itemTop">
+                    <div class="h">Building Levels</div>
+                    <div class="pill mono" id="bLvlSummary">Office 1 · Warehouse 1 · Workshop 1 · Market 1</div>
+                  </div>
+                  <div class="small" style="margin-top:6px;">Gates: Warehouse LV requires Office LV2 · Workshop LV requires Warehouse LV2 · Market LV requires Workshop LV2.</div>
                 </div>
               </div>
 
@@ -305,7 +326,7 @@
                   Lifetime earned: <span class="mono" id="lifetime2">$0</span>
                 </div>
                 <div class="hr"></div>
-                <div class="small mono" id="statsLine">$0/s · Ops x1.00 · Prestige x1.00</div>
+                <div class="small mono" id="statsLine">$0/s · Buildings $0/s · Ops x1.00 · Prestige x1.00</div>
               </div>
 
               <div class="item" style="margin-top:12px;">
@@ -346,6 +367,6 @@
     <div class="grain"></div>
   </div>
 
-  <script src="./game.js?v=ER-20260109a"></script>
+  <script src="./game.js?v=ER-20260109b"></script>
 </body>
-  </html>
+      </html>
