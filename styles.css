@@ -4,17 +4,12 @@
   --muted: rgba(243,241,234,.78);
   --line: rgba(255,255,255,.14);
   --panel: rgba(12,10,14,.44);
-  --panel2: rgba(12,10,14,.34);
   --glass: blur(10px);
-
-  --cream: rgba(255,245,220,.16);
-  --gold: rgba(255,210,120,.18);
-  --sky: rgba(120,180,255,.14);
-  --mint: rgba(120,220,180,.14);
-  --pink: rgba(255,140,170,.14);
 }
 
 *{ box-sizing:border-box; }
+html, body { height: 100%; }
+
 body{
   margin:0;
   font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -240,9 +235,7 @@ button{
   transition: transform .06s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease, filter .12s ease;
   user-select: none;
 }
-button:hover{
-  background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(0,0,0,.18));
-}
+button:hover{ background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(0,0,0,.18)); }
 button:active{ transform: translateY(1px); }
 button:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
 
@@ -454,16 +447,8 @@ button.danger{
 .padBottom{ height: 90px; }
 
 /* Toggle button style */
-.toggle{
-  border-radius: 999px;
-  padding: 10px 12px;
-}
-.toggleRow{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 12px;
-}
+.toggle{ border-radius: 999px; padding: 10px 12px; }
+.toggleRow{ display:flex; align-items:center; justify-content:space-between; gap: 12px; }
 
 /* Float text */
 .floater{
@@ -517,4 +502,4 @@ button.danger{
   0%{ opacity:0; transform: translate(-50%, -50%) translateY(10px) scale(.96); }
   15%{ opacity:1; transform: translate(-50%, -50%) translateY(0px) scale(1.02); }
   100%{ opacity:0; transform: translate(-50%, -50%) translateY(-26px) scale(1.0); }
-}
+  }
