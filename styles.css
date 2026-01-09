@@ -477,6 +477,10 @@ button.danger{
   background: rgba(120,180,255,.88);
   box-shadow: 0 0 12px rgba(120,180,255,.20);
 }
+.fxParticle.gold{
+  background: rgba(255,220,120,.95);
+  box-shadow: 0 0 18px rgba(255,220,120,.26);
+}
 @keyframes fxPop{
   from{ opacity: 1; transform: translate(-50%, -50%) translate(0,0) scale(1); }
   to{ opacity: 0; transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(.6); }
@@ -498,8 +502,23 @@ button.danger{
   animation: fxBadge .9s ease-out forwards;
   text-shadow: 0 10px 26px rgba(0,0,0,.60);
 }
+.fxBadge.gold{
+  border-color: rgba(255,220,120,.30);
+  box-shadow: 0 0 0 1px rgba(255,220,120,.12), 0 30px 90px rgba(0,0,0,.65);
+}
 @keyframes fxBadge{
   0%{ opacity:0; transform: translate(-50%, -50%) translateY(10px) scale(.96); }
   15%{ opacity:1; transform: translate(-50%, -50%) translateY(0px) scale(1.02); }
   100%{ opacity:0; transform: translate(-50%, -50%) translateY(-26px) scale(1.0); }
+}
+
+/* Sparkle pill (golden hint + streak flare) */
+@keyframes sparkle{
+  0%,100% { filter: brightness(1); box-shadow: 0 0 0 rgba(255,220,120,0); }
+  50% { filter: brightness(1.05); box-shadow: 0 0 22px rgba(255,220,120,.12); }
+}
+.sparkle{
+  border-color: rgba(255,220,120,.22) !important;
+  background: linear-gradient(180deg, rgba(255,220,120,.10), rgba(0,0,0,.16)) !important;
+  animation: sparkle 1.6s ease-in-out infinite;
   }
