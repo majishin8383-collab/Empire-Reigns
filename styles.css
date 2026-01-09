@@ -376,7 +376,7 @@ button.danger{
 .bubble{
   position:absolute;
   z-index: 90;
-  width: min(360px, 88vw);
+  width: min(380px, 90vw);
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(12,10,14,.62);
@@ -512,7 +512,7 @@ button.danger{
   100%{ opacity:0; transform: translate(-50%, -50%) translateY(-26px) scale(1.0); }
 }
 
-/* Sparkle pill (golden hint + streak flare) */
+/* Sparkle */
 @keyframes sparkle{
   0%,100% { filter: brightness(1); box-shadow: 0 0 0 rgba(255,220,120,0); }
   50% { filter: brightness(1.05); box-shadow: 0 0 22px rgba(255,220,120,.12); }
@@ -521,4 +521,4 @@ button.danger{
   border-color: rgba(255,220,120,.22) !important;
   background: linear-gradient(180deg, rgba(255,220,120,.10), rgba(0,0,0,.16)) !important;
   animation: sparkle 1.6s ease-in-out infinite;
-  }
+}
