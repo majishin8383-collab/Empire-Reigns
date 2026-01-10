@@ -6,10 +6,10 @@
   <title>Empire Reigns — Cozy Idle</title>
 
   <script>
-    window.BUILD = "ER-20260109b";
+    window.BUILD = "ER-20260109c";
   </script>
 
-  <link rel="stylesheet" href="./styles.css?v=ER-20260109b" />
+  <link rel="stylesheet" href="./styles.css?v=ER-20260109c" />
 </head>
 
 <body>
@@ -148,7 +148,7 @@
 
         <div class="hr"></div>
 
-        <!-- NEW: Building Level Track -->
+        <!-- Building Level Track -->
         <div class="bubbleRow">
           <div class="pill mono sparkle" id="bubbleLevel">Building LV 1</div>
           <div class="pill mono" id="bubbleLevelIncome">+ $0.00/s</div>
@@ -196,6 +196,7 @@
         <div class="tabs">
           <button class="tabBtn active" id="tabWorld">World</button>
           <button class="tabBtn" id="tabUpgrades">Upgrades</button>
+          <button class="tabBtn" id="tabMilestones">Milestones</button>
           <button class="tabBtn" id="tabPrestige">Prestige</button>
         </div>
 
@@ -210,7 +211,7 @@
                   </div>
 
                   <div class="small" style="margin-top:8px;">
-                    Tap <b>Work</b> to build a combo streak. Click buildings to buy upgrades and now: <b>upgrade building levels</b> for real scaling income.
+                    Tap <b>Work</b> to build a combo streak. Click buildings to buy upgrades and upgrade building levels.
                   </div>
 
                   <div class="hr"></div>
@@ -300,6 +301,29 @@
                 </div>
               </div>
 
+              <!-- NEW: Milestones screen -->
+              <div id="screenMilestones" style="display:none;">
+                <div class="item">
+                  <div class="itemTop">
+                    <div>
+                      <div class="h">Milestones</div>
+                      <div class="small">Permanent bonuses. Claiming is automatic when you hit the requirement.</div>
+                    </div>
+                    <div class="pill mono" id="msBonusPill">Bonus x1.00</div>
+                  </div>
+
+                  <div class="hr"></div>
+
+                  <!-- Filled by game.js once wired -->
+                  <div id="msList" class="msList"></div>
+
+                  <div class="hr"></div>
+                  <div class="small" id="msNote" style="opacity:.85;">
+                    If this list is empty, your game.js is not wired to milestones yet (next step).
+                  </div>
+                </div>
+              </div>
+
               <div id="screenPrestige" style="display:none;">
                 <div class="item">
                   <div class="itemTop">
@@ -359,6 +383,7 @@
       <div class="bottomInner">
         <button class="navBtn active" id="navWorld"><div>World</div><div class="k">Tap + build</div></button>
         <button class="navBtn" id="navUp"><div>Upgrades</div><div class="k">Spend wisely</div></button>
+        <button class="navBtn" id="navMs"><div>Milestones</div><div class="k">Permanent</div></button>
         <button class="navBtn" id="navPr"><div>Prestige</div><div class="k">Reset → grow</div></button>
       </div>
     </div>
@@ -367,6 +392,9 @@
     <div class="grain"></div>
   </div>
 
-  <script src="./game.js?v=ER-20260109b"></script>
+  <!-- NEW FILE -->
+  <script src="./milestones.js?v=ER-20260109c"></script>
+  <!-- Main game -->
+  <script src="./game.js?v=ER-20260109c"></script>
 </body>
-      </html>
+  </html>
