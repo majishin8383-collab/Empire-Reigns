@@ -1,11 +1,10 @@
 /* Empire Reigns — Cozy Idle
-   Build: ER-20260109c
-   A: streak + golden
-   B: building level tracks + gated unlocks + per-building income/sec
-   C: milestones + permanent bonuses (via milestones.js)
+   Build: ER-20260109d2
+   D2: Hotspots + tap sparks + coin sparkles + people celebration
 */
 (() => {
-  const BUILD = (window.BUILD || "unknown");
+  const BUILD = "ER-20260109d2";
+  window.BUILD = window.BUILD || BUILD;
 
   // ---------------------------
   // Crash overlay (no silent black screen)
@@ -85,10 +84,82 @@
   }
 
   // ---------------------------
+  // FX helpers (Upgrade D2)
+  // ---------------------------
+  function fxBurstAt(x, y, opts = {}) {
+    const {
+      count = 12,
+      magMin = 14,
+      magMax = 34,
+      biasUp = 10,
+      blueEvery = 4
+    } = opts;
+
+    const burst = document.createElement("div");
+    burst.className = "fxBurst";
+    burst.style.left = x + "px";
+    burst.style.top = y + "px";
+    document.body.appendChild(burst);
+
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement("div");
+      const isBlue = blueEvery > 0 && (i % blueEvery === 0);
+      p.className = "fxParticle" + (isBlue ? " blue" : "");
+      const ang = (Math.PI * 2) * (i / count);
+      const mag = magMin + Math.random() * (magMax - magMin);
+      const dx = Math.cos(ang) * mag;
+      const dy = Math.sin(ang) * mag - (biasUp + Math.random() * biasUp);
+      p.style.setProperty("--dx", dx.toFixed(1) + "px");
+      p.style.setProperty("--dy", dy.toFixed(1) + "px");
+      p.style.left = "0px";
+      p.style.top = "0px";
+      burst.appendChild(p);
+    }
+
+    setTimeout(() => burst.remove(), 760);
+  }
+
+  function tapSparkFromEl(el, intensity = 1) {
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width * (0.42 + Math.random() * 0.16);
+    const y = r.top + r.height * (0.38 + Math.random() * 0.16);
+    fxBurstAt(x, y, {
+      count: Math.round(10 + intensity * 6),
+      magMin: 10,
+      magMax: 26 + intensity * 10,
+      biasUp: 10,
+      blueEvery: intensity > 1.2 ? 3 : 4
+    });
+  }
+
+  function celebratePeople(label = "LEVEL UP!") {
+    const row = $("peopleRow");
+    if (!row) return;
+    const r = row.getBoundingClientRect();
+    const x = r.left + r.width * 0.5;
+    const y = r.top + r.height * 0.3;
+
+    const badge = document.createElement("div");
+    badge.className = "fxBadge";
+    badge.textContent = label;
+    badge.style.left = x + "px";
+    badge.style.top = (y - 8) + "px";
+    document.body.appendChild(badge);
+    setTimeout(() => badge.remove(), 950);
+
+    fxBurstAt(x, y, { count: 18, magMin: 16, magMax: 44, biasUp: 14, blueEvery: 3 });
+
+    // quick “bounce” effect using inline style so we don’t need CSS edits
+    row.style.transition = "transform 180ms cubic-bezier(.2,.8,.2,1)";
+    row.style.transform = "translateY(-4px)";
+    setTimeout(() => { row.style.transform = "translateY(0px)"; }, 220);
+    setTimeout(() => { row.style.transition = ""; }, 520);
+  }
+
+  // ---------------------------
   // Milestones (Upgrade C) integration
   // ---------------------------
   const MS = (() => {
-    // Safe wrapper around window.ER_MILESTONES
     const api = window.ER_MILESTONES || null;
     return {
       exists: !!api,
@@ -210,7 +281,10 @@
 
     // Upgrade B: building levels + level costs
     bLvl: { office: 1, warehouse: 1, workshop: 1, market: 1 },
-    bCost: { office: 50, warehouse: 120, workshop: 280, market: 650 }
+    bCost: { office: 50, warehouse: 120, workshop: 280, market: 650 },
+
+    // D2: sparkle timer
+    nextSparkleMs: Date.now() + 1400
   };
 
   function safeMerge(){
@@ -231,6 +305,8 @@
       workshop: BUILDINGS.workshop.baseCost,
       market: BUILDINGS.market.baseCost
     }, state.bCost || {});
+
+    if (typeof state.nextSparkleMs !== "number") state.nextSparkleMs = Date.now() + 1400;
   }
 
   function save(silent=false){
@@ -246,7 +322,6 @@
   }
   function hardReset(){
     localStorage.removeItem(SAVE_KEY);
-    // milestones remain (by design) unless user wipes localStorage manually
     location.reload();
   }
 
@@ -328,6 +403,8 @@
       market: BUILDINGS.market.baseCost
     };
 
+    state.nextSparkleMs = Date.now() + 1400;
+
     closeBubble();
     save(true);
     setStatus("New run started");
@@ -340,6 +417,7 @@
     state.ep = (state.ep||0) + gain;
     state.prestigeCount = (state.prestigeCount||0) + 1;
     SFX.prestige();
+    celebratePeople("PRESTIGE!");
     resetRunKeepEP();
     setStatus(`Prestiged: +${gain} EP`);
   }
@@ -421,28 +499,7 @@
     document.body.appendChild(badge);
     setTimeout(() => badge.remove(), 980);
 
-    const burst = document.createElement("div");
-    burst.className = "fxBurst";
-    burst.style.left = x + "px";
-    burst.style.top = y + "px";
-    document.body.appendChild(burst);
-
-    const count = 22;
-    for(let i=0;i<count;i++){
-      const p = document.createElement("div");
-      const type = (i % 4 === 0) ? "blue" : "gold";
-      p.className = "fxParticle " + type;
-      const ang = (Math.PI * 2) * (i / count);
-      const mag = 22 + Math.random() * 42;
-      const dx = Math.cos(ang) * mag;
-      const dy = Math.sin(ang) * mag - (12 + Math.random()*14);
-      p.style.setProperty("--dx", dx.toFixed(1) + "px");
-      p.style.setProperty("--dy", dy.toFixed(1) + "px");
-      p.style.left = "0px";
-      p.style.top = "0px";
-      burst.appendChild(p);
-    }
-    setTimeout(() => burst.remove(), 760);
+    fxBurstAt(x, y, { count: 22, magMin: 20, magMax: 54, biasUp: 18, blueEvery: 4 });
   }
 
   function tryGoldenPayout(baseAmount, x, y){
@@ -810,28 +867,9 @@
     document.body.appendChild(badge);
     setTimeout(() => badge.remove(), 950);
 
-    const burst = document.createElement("div");
-    burst.className = "fxBurst";
-    burst.style.left = cx + "px";
-    burst.style.top = cy + "px";
-    document.body.appendChild(burst);
+    fxBurstAt(cx, cy, { count: 16, magMin: 16, magMax: 40, biasUp: 14, blueEvery: 3 });
 
-    const count = 14;
-    for(let i=0;i<count;i++){
-      const p = document.createElement("div");
-      const isBlue = i % 3 === 0;
-      p.className = "fxParticle" + (isBlue ? " blue" : "");
-      const ang = (Math.PI * 2) * (i / count);
-      const mag = 18 + Math.random() * 26;
-      const dx = Math.cos(ang) * mag;
-      const dy = Math.sin(ang) * mag - (10 + Math.random()*8);
-      p.style.setProperty("--dx", dx.toFixed(1) + "px");
-      p.style.setProperty("--dy", dy.toFixed(1) + "px");
-      p.style.left = "0px";
-      p.style.top = "0px";
-      burst.appendChild(p);
-    }
-    setTimeout(() => burst.remove(), 700);
+    celebratePeople("LEVEL UP!");
   }
 
   function setBuildingVisual(buildingEl, level){
@@ -1054,7 +1092,7 @@
     const perTap = base * (state.streakMult || 1);
     work.textContent = `Do Work (+${money(perTap)})`;
 
-    // glow cues
+    // glow cues / hotspots intensify
     $("quickHireBtn").classList.toggle("canBuy", canBuyA);
     $("bOffice").classList.toggle("canBuy", canBuyA);
 
@@ -1080,8 +1118,47 @@
   }
 
   // ---------------------------
-  // Tick loop
+  // Tick loop + coin sparkles (D2)
   // ---------------------------
+  function maybeCoinSparkle(now){
+    if (now < (state.nextSparkleMs || 0)) return;
+
+    // schedule next check (randomized)
+    state.nextSparkleMs = now + (900 + Math.random() * 1900);
+
+    // only sparkle when there is momentum
+    const momentum = (state.streakCount || 0) >= 6 || incomePerSecond() >= 4;
+    if (!momentum) return;
+
+    // chance scales with streak
+    const chance = clamp(0.18 + (state.streakCount || 0) * 0.012, 0.18, 0.55);
+    if (Math.random() > chance) return;
+
+    // pick a building weighted by affordability (shiny chase)
+    const cash = state.cash || 0;
+    const options = [
+      { el: $("bOffice"), can: cash >= state.assistantCost, w: 1.0 },
+      { el: $("bWarehouse"), can: unlockedTools() && cash >= state.toolsCost, w: 1.1 },
+      { el: $("bGarage"), can: unlockedProc() && cash >= state.procCost, w: 1.15 },
+      { el: $("bShop"), can: unlockedAuto() && cash >= state.autoCost, w: 1.2 },
+    ].filter(x => x.el);
+
+    let total = 0;
+    for (const o of options) total += (o.can ? o.w * 1.7 : o.w);
+    let pick = Math.random() * total;
+    let chosen = options[0];
+    for (const o of options){
+      pick -= (o.can ? o.w * 1.7 : o.w);
+      if (pick <= 0){ chosen = o; break; }
+    }
+
+    const r = chosen.el.getBoundingClientRect();
+    const x = r.left + r.width * (0.45 + Math.random() * 0.18);
+    const y = r.top + r.height * (0.42 + Math.random() * 0.18);
+
+    fxBurstAt(x, y, { count: 9, magMin: 10, magMax: 22, biasUp: 12, blueEvery: 0 });
+  }
+
   function tick(){
     const now = Date.now();
     const dt = (now - state.lastTickMs) / 1000;
@@ -1098,10 +1175,12 @@
     // Milestones check (auto-claim)
     MS.tick(state, {
       onMilestoneClaim: (_id, meta) => {
-        // subtle status ping; milestones.js also toasts
         if (meta?.title) setStatus(`Milestone: ${meta.title}`);
       }
     });
+
+    // D2 sparkles
+    maybeCoinSparkle(now);
 
     if(now - state.lastSaveMs > 10000) save(true);
     render();
@@ -1148,7 +1227,7 @@
   }
 
   // ---------------------------
-  // Bind events
+  // Bind events (D2 hotspots)
   // ---------------------------
   function bind(){
     document.addEventListener("click", (e) => {
@@ -1184,6 +1263,7 @@
         state.assistantCost = Math.ceil(state.assistantCost * 1.35);
         setStatus("Assistant hired");
         SFX.purchase();
+        celebratePeople("HIRED!");
       }, e);
       if (ok) render();
     });
@@ -1199,9 +1279,19 @@
     $("buyAutoBtn").addEventListener("click", () => openBubble("auto", $("bShop")));
 
     const bindBuilding = (el, kind) => {
-      el.addEventListener("click", () => openBubble(kind, el));
+      el.addEventListener("click", () => {
+        // D2: tap spark + intensity if affordable (dopamine)
+        const intensity = el.classList.contains("canBuy") ? 1.6 : 1.0;
+        tapSparkFromEl(el, intensity);
+        openBubble(kind, el);
+      });
       el.addEventListener("keydown", (e) => {
-        if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openBubble(kind, el); }
+        if(e.key === "Enter" || e.key === " "){
+          e.preventDefault();
+          const intensity = el.classList.contains("canBuy") ? 1.6 : 1.0;
+          tapSparkFromEl(el, intensity);
+          openBubble(kind, el);
+        }
       });
     };
     bindBuilding($("bOffice"), "assistant");
@@ -1220,7 +1310,7 @@
 
     // Main purchase button
     bubble.buyBtn.addEventListener("click", (e) => {
-      const cash = state.cash || 0;
+      if (!bubble.ctx) return;
 
       if (bubble.ctx === "assistant"){
         const ok = tryBuy(state.assistantCost, () => {
@@ -1228,6 +1318,7 @@
           state.assistantCost = Math.ceil(state.assistantCost * 1.35);
           setStatus("Assistant hired");
           SFX.purchase();
+          celebratePeople("HIRED!");
         }, e);
         if(ok) render();
         return;
@@ -1240,6 +1331,7 @@
           state.toolsCost = Math.ceil(state.toolsCost * 1.45);
           setStatus("Tools upgraded");
           SFX.purchase();
+          celebratePeople("UPGRADED!");
         }, e);
         if(ok) render();
         return;
@@ -1252,6 +1344,7 @@
           state.procCost = Math.ceil(state.procCost * 1.55);
           setStatus("Processes standardized");
           SFX.purchase();
+          celebratePeople("UPGRADED!");
         }, e);
         if(ok) render();
         return;
@@ -1264,6 +1357,7 @@
           state.autoCost = Math.ceil(state.autoCost * 1.70);
           setStatus("Automation installed");
           SFX.purchase();
+          celebratePeople("UPGRADED!");
         }, e);
         if(ok) render();
         return;
@@ -1286,6 +1380,8 @@
         bumpBuildingCost(key);
         setStatus(`${BUILDINGS[key].name} leveled up`);
         SFX.levelUp();
+        // D2: extra spark on upgrade click
+        if (bubble.anchor) tapSparkFromEl(bubble.anchor, 1.8);
       }, e);
       if (ok) render();
     });
@@ -1338,3 +1434,4 @@
   assertDom();
   boot();
 })();
+```0
