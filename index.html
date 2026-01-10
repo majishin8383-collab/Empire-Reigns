@@ -6,16 +6,46 @@
   <title>Empire Reigns</title>
   <meta name="description" content="A cozy-ish idle empire builder." />
 
-  <!-- Cache-busted CSS -->
-  <link rel="stylesheet" href="./styles.css?v=ER-20260109d2" />
-
+  <link rel="stylesheet" href="./styles.css?v=ER-20260109d2b" />
   <style>
-    /* tiny safety so text shows even if css fails */
     body{margin:0}
+    .jsbar{
+      position:fixed; left:12px; right:12px; top:12px; z-index:9999;
+      padding:10px 12px; border-radius:16px;
+      border:1px solid rgba(255,245,220,.18);
+      background:rgba(12,10,14,.72);
+      color:rgba(255,245,220,.92);
+      font: 800 12px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    }
+    .jsbar .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:900;}
+    .jsbar .ok{color: rgba(120,220,180,.95);}
+    .jsbar .bad{color: rgba(255,140,170,.95);}
+    .jsbar button{
+      border-radius:14px; padding:8px 10px; cursor:pointer;
+      border:1px solid rgba(255,245,220,.18);
+      background:rgba(255,245,220,.06);
+      color:rgba(255,245,220,.92);
+      font-weight:900;
+    }
   </style>
 </head>
 
 <body>
+  <!-- JS Loader Status (no console needed) -->
+  <div class="jsbar" id="jsbar">
+    <div>
+      <span class="mono">JS loader:</span>
+      <span id="jsStatus" class="mono">starting…</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span class="mono" id="jsBuild">ER-20260109d2b</span>
+      <button id="jsReload">Hard Refresh</button>
+    </div>
+  </div>
+
   <div class="world" id="worldRoot">
 
     <div class="hud">
@@ -46,7 +76,6 @@
       </div>
     </div>
 
-    <!-- Scene background -->
     <div class="scene" aria-hidden="true">
       <div class="vignette"></div>
       <div class="grain"></div>
@@ -54,12 +83,10 @@
       <div class="road"></div>
     </div>
 
-    <!-- Sign -->
     <div class="sign">
       EMPIRE REIGNS <span class="mono" id="verPill">ER-20260109d2</span>
     </div>
 
-    <!-- Buildings (hotspots) -->
     <div class="buildings" aria-label="Buildings">
       <div id="bOffice" class="building b-office" tabindex="0" role="button" aria-label="Office"></div>
       <div id="bWarehouse" class="building b-warehouse" tabindex="0" role="button" aria-label="Warehouse"></div>
@@ -67,10 +94,8 @@
       <div id="bShop" class="building b-shop" tabindex="0" role="button" aria-label="Market"></div>
     </div>
 
-    <!-- People row -->
     <div class="people" id="peopleRow" aria-hidden="true"></div>
 
-    <!-- Main panel -->
     <div class="wrap">
       <div class="panel">
         <div class="tabs">
@@ -83,8 +108,6 @@
         </div>
 
         <div class="panelInner">
-
-          <!-- WORLD -->
           <div id="screenWorld">
             <div class="item">
               <div class="itemTop">
@@ -109,7 +132,6 @@
             </div>
           </div>
 
-          <!-- UPGRADES -->
           <div id="screenUpgrades" style="display:none;">
             <div class="grid">
               <div class="item" id="rowAssistant">
@@ -123,7 +145,6 @@
                 <div class="hr"></div>
                 <div class="btnRow">
                   <button class="primary" id="buyAssistantBtn">Open</button>
-                  <button id="buyAssistantBtn2" style="display:none;"></button>
                 </div>
               </div>
 
@@ -184,7 +205,6 @@
             </div>
           </div>
 
-          <!-- MILESTONES -->
           <div id="screenMilestones" style="display:none;">
             <div class="item">
               <div class="itemTop">
@@ -199,7 +219,6 @@
             </div>
           </div>
 
-          <!-- PRESTIGE -->
           <div id="screenPrestige" style="display:none;">
             <div class="item">
               <div class="itemTop">
@@ -225,7 +244,6 @@
       </div>
     </div>
 
-    <!-- Bubble -->
     <div class="backdropClickCatcher" id="bubbleCatcher"></div>
     <div class="bubble" id="bubble" role="dialog" aria-modal="true">
       <div class="bubbleHeader">
@@ -263,32 +281,63 @@
       </div>
     </div>
 
-    <!-- Bottom nav -->
     <div class="bottomNav">
       <div class="bottomInner">
-        <button class="navBtn active" id="navWorld">
-          World
-          <div class="k">Tap + hotspots</div>
-        </button>
-        <button class="navBtn" id="navUp">
-          Upgrades
-          <div class="k">Buy + scale</div>
-        </button>
-        <button class="navBtn" id="navMs">
-          Milestones
-          <div class="k">Permanent boosts</div>
-        </button>
-        <button class="navBtn" id="navPr">
-          Prestige
-          <div class="k">Reset for EP</div>
-        </button>
+        <button class="navBtn active" id="navWorld">World<div class="k">Tap + hotspots</div></button>
+        <button class="navBtn" id="navUp">Upgrades<div class="k">Buy + scale</div></button>
+        <button class="navBtn" id="navMs">Milestones<div class="k">Permanent boosts</div></button>
+        <button class="navBtn" id="navPr">Prestige<div class="k">Reset for EP</div></button>
       </div>
     </div>
 
   </div>
 
-  <!-- IMPORTANT: scripts at the end so DOM exists -->
-  <script src="./milestones.js?v=ER-20260109d2"></script>
-  <script src="./game.js?v=ER-20260109d2"></script>
+  <!-- Loader script: shows EXACTLY what's wrong -->
+  <script>
+    (function(){
+      const BUILD = "ER-20260109d2b";
+      const st = document.getElementById("jsStatus");
+      const bar = document.getElementById("jsbar");
+      const btn = document.getElementById("jsReload");
+
+      btn.addEventListener("click", () => {
+        // hard refresh shortcut
+        location.href = location.pathname + "?v=" + BUILD + "&r=" + Date.now();
+      });
+
+      function line(msg, ok=true){
+        st.innerHTML = (ok ? '<span class="ok">✔</span> ' : '<span class="bad">✖</span> ') + msg;
+        bar.style.borderColor = ok ? "rgba(120,220,180,.35)" : "rgba(255,140,170,.45)";
+      }
+
+      function loadScript(src, label){
+        return new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = src;
+          s.async = false;
+          s.onload = () => resolve(label);
+          s.onerror = () => reject(new Error("FAILED to load " + label + " (" + src + ")"));
+          document.body.appendChild(s);
+        });
+      }
+
+      // Catch runtime crashes from game.js
+      window.addEventListener("error", (e) => {
+        line("game.js crashed: " + (e.message || "unknown error"), false);
+      });
+      window.addEventListener("unhandledrejection", (e) => {
+        line("Promise rejection: " + String(e.reason || "unknown"), false);
+      });
+
+      line("starting…", true);
+
+      // Try to load both scripts with cache busting
+      const q = "?v=" + BUILD + "&t=" + Date.now();
+      loadScript("./milestones.js" + q, "milestones.js")
+        .then(() => { line("Loaded milestones.js", true); return loadScript("./game.js" + q, "game.js"); })
+        .then(() => { line("Loaded game.js (JS running)", true); })
+        .catch(err => { line(err.message, false); });
+    })();
+  </script>
 </body>
 </html>
