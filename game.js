@@ -1,6 +1,8 @@
 /* Empire Reigns — Cozy Idle
-   Upgrade A: streak + golden
-   Upgrade B: building level tracks + gated unlocks + per-building income/sec
+   Build: ER-20260109c
+   A: streak + golden
+   B: building level tracks + gated unlocks + per-building income/sec
+   C: milestones + permanent bonuses (via milestones.js)
 */
 (() => {
   const BUILD = (window.BUILD || "unknown");
@@ -25,8 +27,8 @@
           <div style="opacity:.88;margin-top:12px;">
             Fix checklist:
             <ul>
-              <li>Confirm <b>index.html</b>, <b>styles.css</b>, <b>game.js</b> are in the <b>repo root</b>.</li>
-              <li>Open with cache buster: <b>?v=${BUILD}</b> and hard refresh <b>Ctrl+Shift+R</b>.</li>
+              <li>Confirm <b>index.html</b>, <b>styles.css</b>, <b>game.js</b>, <b>milestones.js</b> are in the <b>repo root</b>.</li>
+              <li>Open with cache buster: <b>?v=${BUILD}</b> then hard refresh <b>Ctrl+Shift+R</b>.</li>
               <li>If this appears, copy/paste the error block back to me.</li>
             </ul>
           </div>
@@ -47,7 +49,7 @@
   // ---------------------------
   // Utilities
   // ---------------------------
-  const SAVE_KEY = "empire_reigns_cozy_v4_upgradeB";
+  const SAVE_KEY = "empire_reigns_cozy_v5_milestones";
   const SFX_KEY  = "empire_reigns_sfx_on";
 
   const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
@@ -81,6 +83,31 @@
       if (el.textContent === msg) el.textContent = "Ready";
     }, 1100);
   }
+
+  // ---------------------------
+  // Milestones (Upgrade C) integration
+  // ---------------------------
+  const MS = (() => {
+    // Safe wrapper around window.ER_MILESTONES
+    const api = window.ER_MILESTONES || null;
+    return {
+      exists: !!api,
+      load: () => { try { api?.load?.(); } catch {} },
+      tick: (state, hooks) => { try { api?.tick?.(state, hooks); } catch {} },
+      bonuses: () => {
+        try { return api?.getBonuses?.() || { globalMult:1, buildingMult:1, streakHold:1 }; }
+        catch { return { globalMult:1, buildingMult:1, streakHold:1 }; }
+      },
+      list: () => {
+        try { return api?.getList?.() || []; }
+        catch { return []; }
+      },
+      progressFor: (id, state) => {
+        try { return api?.progressFor?.(id, state) ?? 0; }
+        catch { return 0; }
+      }
+    };
+  })();
 
   // ---------------------------
   // SFX (WebAudio)
@@ -151,9 +178,9 @@
   // Upgrade B: Building Track Definitions
   // ---------------------------
   const BUILDINGS = {
-    office:    { name:"Office",    gate: null,                 baseCost: 50,  costGrow: 1.35, incomePerLevel: 0.40 },
-    warehouse: { name:"Warehouse", gate: { b:"office", lv:2 }, baseCost: 120, costGrow: 1.38, incomePerLevel: 0.85 },
-    workshop:  { name:"Workshop",  gate: { b:"warehouse", lv:2 }, baseCost: 280, costGrow: 1.42, incomePerLevel: 1.70 },
+    office:    { name:"Office",    gate: null,                   baseCost: 50,  costGrow: 1.35, incomePerLevel: 0.40 },
+    warehouse: { name:"Warehouse", gate: { b:"office", lv:2 },   baseCost: 120, costGrow: 1.38, incomePerLevel: 0.85 },
+    workshop:  { name:"Workshop",  gate: { b:"warehouse", lv:2 },baseCost: 280, costGrow: 1.42, incomePerLevel: 1.70 },
     market:    { name:"Market",    gate: { b:"workshop", lv:2 }, baseCost: 650, costGrow: 1.46, incomePerLevel: 3.40 },
   };
 
@@ -219,11 +246,12 @@
   }
   function hardReset(){
     localStorage.removeItem(SAVE_KEY);
+    // milestones remain (by design) unless user wipes localStorage manually
     location.reload();
   }
 
   // ---------------------------
-  // Economy
+  // Economy (Milestone bonuses applied here)
   // ---------------------------
   function opsMultiplier(){
     const toolsMult = Math.pow(1.25, state.owned.tools || 0);
@@ -233,14 +261,12 @@
   }
   function prestigeMultiplier(){ return Math.pow(1.2, state.ep || 0); }
 
-  function buildingIncomePerSecond(){
-    // LV1 is "existing building" baseline. Income is per additional level beyond 1 + a small base trickle.
+  function buildingIncomePerSecondRaw(){
     let total = 0;
     for (const k of Object.keys(BUILDINGS)){
       const lv = Math.max(1, state.bLvl[k] || 1);
       const def = BUILDINGS[k];
       const extra = Math.max(0, lv - 1);
-      // a tiny baseline so even lvl1 feels alive
       const baseTrickle = def.incomePerLevel * 0.25;
       total += baseTrickle + extra * def.incomePerLevel;
     }
@@ -248,13 +274,20 @@
   }
 
   function baseIncomePerSecond(){
-    // assistants still matter (office staffing)
     return (state.owned.assistant || 0) * 1.0;
   }
 
   function incomePerSecond(){
-    const base = baseIncomePerSecond() + buildingIncomePerSecond();
-    return base * opsMultiplier() * prestigeMultiplier();
+    const b = MS.bonuses();
+    const buildingsPart = buildingIncomePerSecondRaw() * (b.buildingMult || 1);
+    const basePart = baseIncomePerSecond();
+    const totalBase = basePart + buildingsPart;
+    return totalBase * opsMultiplier() * prestigeMultiplier() * (b.globalMult || 1);
+  }
+
+  function buildingIncomeShown(){
+    const b = MS.bonuses();
+    return buildingIncomePerSecondRaw() * (b.buildingMult || 1);
   }
 
   function unlockedTools(){ return (state.owned.assistant||0) >= 1; }
@@ -281,14 +314,12 @@
     state.procCost = 150;
     state.autoCost = 400;
 
-    // streak/golden
     state.streakCount = 0;
     state.streakMult = 1.0;
     state.lastWorkMs = 0;
     state.goldenHeat = 0;
     state.lastGoldenMs = 0;
 
-    // building levels reset too (B)
     state.bLvl = { office:1, warehouse:1, workshop:1, market:1 };
     state.bCost = {
       office: BUILDINGS.office.baseCost,
@@ -327,16 +358,22 @@
   }
 
   // ---------------------------
-  // Upgrade A: Streak logic
+  // Upgrade A: Streak logic (Milestone streakHold affects decay window)
   // ---------------------------
-  const STREAK_WINDOW_MS = 1300;
+  const STREAK_WINDOW_MS_BASE = 1300;
   const STREAK_MAX = 45;
   const STREAK_STEP = 0.025;
   const STREAK_MAX_MULT = 2.50;
 
+  function streakWindowMs(){
+    const b = MS.bonuses();
+    return STREAK_WINDOW_MS_BASE * (b.streakHold || 1);
+  }
+
   function updateStreak(nowMs){
     const dt = nowMs - (state.lastWorkMs || 0);
-    if (dt <= STREAK_WINDOW_MS) state.streakCount = Math.min(STREAK_MAX, (state.streakCount||0) + 1);
+    const win = streakWindowMs();
+    if (dt <= win) state.streakCount = Math.min(STREAK_MAX, (state.streakCount||0) + 1);
     else state.streakCount = 1;
 
     state.lastWorkMs = nowMs;
@@ -348,9 +385,10 @@
   }
 
   function decayStreak(nowMs){
+    const win = streakWindowMs();
     const dt = nowMs - (state.lastWorkMs || 0);
-    if (state.streakCount > 0 && dt > STREAK_WINDOW_MS){
-      const over = dt - STREAK_WINDOW_MS;
+    if (state.streakCount > 0 && dt > win){
+      const over = dt - win;
       const drop = Math.floor(over / 550);
       if (drop > 0){
         state.streakCount = Math.max(0, state.streakCount - drop);
@@ -454,24 +492,8 @@
   }
 
   // ---------------------------
-  // Buildings SVG (same art)
+  // Buildings SVG bodies
   // ---------------------------
-  function mountBuildingSvgs(){
-    $("bOffice").innerHTML = officeSvg();
-    $("bWarehouse").innerHTML = warehouseSvg();
-    $("bGarage").innerHTML = garageSvg();
-    $("bShop").innerHTML = shopSvg();
-  }
-
-  // (SVG functions unchanged from prior build)
-  function officeSvg(){ return `...`; }
-  function warehouseSvg(){ return `...`; }
-  function garageSvg(){ return `...`; }
-  function shopSvg(){ return `...`; }
-
-  // IMPORTANT: Replace the SVG bodies with the ones you already had (unchanged)
-  // To avoid “huge message” duplication, I’m embedding the originals below programmatically:
-  // The actual SVG bodies are inserted at boot from a constant.
   const SVG_BODIES = {
     office: `
       <svg viewBox="0 0 220 190" width="100%" height="100%">
@@ -634,10 +656,13 @@
       </svg>
     `
   };
-  function officeSvg(){ return SVG_BODIES.office; }
-  function warehouseSvg(){ return SVG_BODIES.warehouse; }
-  function garageSvg(){ return SVG_BODIES.garage; }
-  function shopSvg(){ return SVG_BODIES.shop; }
+
+  function mountBuildingSvgs(){
+    $("bOffice").innerHTML = SVG_BODIES.office;
+    $("bWarehouse").innerHTML = SVG_BODIES.warehouse;
+    $("bGarage").innerHTML = SVG_BODIES.garage;
+    $("bShop").innerHTML = SVG_BODIES.shop;
+  }
 
   // ---------------------------
   // Bubble UI
@@ -653,12 +678,10 @@
     cost: $("bubbleCost"),
     buyBtn: $("bubbleBuyBtn"),
     lockNote: $("bubbleLockNote"),
-    // NEW
     lvlPill: $("bubbleLevel"),
     lvlIncome: $("bubbleLevelIncome"),
     lvlCost: $("bubbleLevelCost"),
     lvlBtn: $("bubbleLevelBtn"),
-
     ctx: null,
     anchor: null
   };
@@ -700,19 +723,10 @@
 
   function renderBubble(){
     const cash = state.cash || 0;
+    const map = { assistant:"office", tools:"warehouse", proc:"workshop", auto:"market" };
+    const bKey = map[bubble.ctx];
 
-    // Map bubble context → building key + main upgrade row
-    const map = {
-      assistant: { b:"office"   },
-      tools:     { b:"warehouse"},
-      proc:      { b:"workshop" },
-      auto:      { b:"market"   }
-    };
-    const m = map[bubble.ctx];
-
-    // Building track UI (always shown)
-    if (m){
-      const bKey = m.b;
+    if (bKey){
       const lv = state.bLvl[bKey] || 1;
       bubble.lvlPill.textContent = `Building LV ${lv}`;
       bubble.lvlIncome.textContent = `+ ${money(buildingLevelIncomeDelta(bKey))}/s`;
@@ -865,6 +879,56 @@
   }
 
   // ---------------------------
+  // Milestones UI (screen)
+  // ---------------------------
+  function renderMilestones(){
+    const listEl = $("msList");
+    const pillEl = $("msBonusPill");
+    const noteEl = $("msNote");
+    if (!listEl || !pillEl || !noteEl) return;
+
+    if (!MS.exists){
+      pillEl.textContent = "Bonus x1.00";
+      listEl.innerHTML = "";
+      noteEl.textContent = "milestones.js not detected. Confirm milestones.js is in repo root and loaded before game.js.";
+      return;
+    }
+
+    const b = MS.bonuses();
+    const bonusX = (b.globalMult || 1) * (b.buildingMult || 1);
+    pillEl.textContent = "Bonus " + fmtX(bonusX);
+
+    const items = MS.list();
+    noteEl.textContent = "Bonuses are permanent and stack.";
+
+    const rows = [];
+    for (const it of items){
+      const prog = clamp(MS.progressFor(it.id, state), 0, 1);
+      const pct = Math.round(prog * 100);
+      const claimed = !!it.claimed;
+
+      rows.push(`
+        <div class="item" style="margin-top:10px; ${claimed ? "opacity:.82;" : ""}">
+          <div class="itemTop">
+            <div>
+              <div class="h">${it.title}</div>
+              <div class="small">${it.desc}</div>
+            </div>
+            <div class="pill mono ${claimed ? "" : "sparkle"}">${claimed ? "CLAIMED" : (pct + "%")}</div>
+          </div>
+          <div class="hr"></div>
+          <div style="height:10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg, rgba(255,210,120,.24), rgba(120,180,255,.18));"></div>
+          </div>
+          <div class="small" style="margin-top:8px; opacity:.88;"><b>Reward:</b> ${it.reward}</div>
+        </div>
+      `);
+    }
+
+    listEl.innerHTML = rows.join("");
+  }
+
+  // ---------------------------
   // Render
   // ---------------------------
   function renderPeople(){
@@ -900,9 +964,12 @@
     const ips = incomePerSecond();
     const ep = state.ep||0;
 
-    const buildingsIps = buildingIncomePerSecond();
+    const buildingsIps = buildingIncomeShown();
     const ops = opsMultiplier();
     const pm = prestigeMultiplier();
+    const bns = MS.bonuses();
+    const gmult = (bns.globalMult || 1);
+    const bmult = (bns.buildingMult || 1);
 
     $("hudCash").textContent = money(cash);
     $("hudIps").textContent = money(ips) + "/s";
@@ -951,12 +1018,14 @@
                                    : `Prestige unlocks at ${money(PRESTIGE_GOAL)} cash.`;
 
     // multipliers panel
-    $("multSummary").textContent = fmtX(ops * pm) + " total";
-    $("multDetails").textContent = `Buildings ${money(buildingsIps)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
+    $("multSummary").textContent = fmtX(ops * pm * gmult) + " total";
+    $("multDetails").textContent =
+      `Buildings ${money(buildingsIps)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)} · Milestones ${fmtX(gmult)} (global) / ${fmtX(bmult)} (build)`;
 
     $("lifetime").textContent = money(state.lifetimeEarned||0);
     $("lifetime2").textContent = money(state.lifetimeEarned||0);
-    $("statsLine").textContent = `${money(ips)}/s · Buildings ${money(buildingsIps)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)}`;
+    $("statsLine").textContent =
+      `${money(ips)}/s · Buildings ${money(buildingsIps)}/s · Ops ${fmtX(ops)} · Prestige ${fmtX(pm)} · MS ${fmtX(gmult)}`;
 
     // building levels summary
     $("bLvlSummary").textContent =
@@ -985,7 +1054,7 @@
     const perTap = base * (state.streakMult || 1);
     work.textContent = `Do Work (+${money(perTap)})`;
 
-    // glow “can buy” cues for main upgrades
+    // glow cues
     $("quickHireBtn").classList.toggle("canBuy", canBuyA);
     $("bOffice").classList.toggle("canBuy", canBuyA);
 
@@ -996,7 +1065,7 @@
     $("bGarage").classList.toggle("canBuy", canProc);
     $("bShop").classList.toggle("canBuy", canAuto);
 
-    // keep buildings visually leveled
+    // visuals
     renderPeople();
     renderBuildingLevels();
 
@@ -1005,6 +1074,9 @@
       renderBubble();
       positionBubble();
     }
+
+    // milestones screen
+    renderMilestones();
   }
 
   // ---------------------------
@@ -1022,6 +1094,14 @@
       state.cash += earned;
       state.lifetimeEarned += earned;
     }
+
+    // Milestones check (auto-claim)
+    MS.tick(state, {
+      onMilestoneClaim: (_id, meta) => {
+        // subtle status ping; milestones.js also toasts
+        if (meta?.title) setStatus(`Milestone: ${meta.title}`);
+      }
+    });
 
     if(now - state.lastSaveMs > 10000) save(true);
     render();
@@ -1043,18 +1123,22 @@
   function setActive(which){
     const isW = which === "world";
     const isU = which === "up";
+    const isM = which === "ms";
     const isP = which === "pr";
 
     $("screenWorld").style.display = isW ? "block" : "none";
     $("screenUpgrades").style.display = isU ? "block" : "none";
+    $("screenMilestones").style.display = isM ? "block" : "none";
     $("screenPrestige").style.display = isP ? "block" : "none";
 
     $("tabWorld").classList.toggle("active", isW);
     $("tabUpgrades").classList.toggle("active", isU);
+    $("tabMilestones").classList.toggle("active", isM);
     $("tabPrestige").classList.toggle("active", isP);
 
     $("navWorld").classList.toggle("active", isW);
     $("navUp").classList.toggle("active", isU);
+    $("navMs").classList.toggle("active", isM);
     $("navPr").classList.toggle("active", isP);
 
     document.querySelector(".buildings").style.display = isW ? "block" : "none";
@@ -1186,7 +1270,7 @@
       }
     });
 
-    // NEW: Building level button
+    // Building level button
     bubble.lvlBtn.addEventListener("click", (e) => {
       if (!bubble.ctx) return;
       const map = { assistant:"office", tools:"warehouse", proc:"workshop", auto:"market" };
@@ -1206,26 +1290,25 @@
       if (ok) render();
     });
 
+    // Tabs / Nav
     $("tabWorld").addEventListener("click", () => setActive("world"));
     $("tabUpgrades").addEventListener("click", () => setActive("up"));
+    $("tabMilestones").addEventListener("click", () => setActive("ms"));
     $("tabPrestige").addEventListener("click", () => setActive("pr"));
+
     $("navWorld").addEventListener("click", () => setActive("world"));
     $("navUp").addEventListener("click", () => setActive("up"));
+    $("navMs").addEventListener("click", () => setActive("ms"));
     $("navPr").addEventListener("click", () => setActive("pr"));
   }
 
   // ---------------------------
   // Boot
   // ---------------------------
-  function mountBuildingSvgs(){
-    $("bOffice").innerHTML = officeSvg();
-    $("bWarehouse").innerHTML = warehouseSvg();
-    $("bGarage").innerHTML = garageSvg();
-    $("bShop").innerHTML = shopSvg();
-  }
-
   function boot(){
     mountBuildingSvgs();
+    MS.load();
+
     const hadSave = load();
     safeMerge();
     lastLevels = null;
@@ -1244,7 +1327,8 @@
       "hudCash","hudIps","hudEp","hudStreak","streakPill","workBtn",
       "bOffice","bWarehouse","bGarage","bShop",
       "bubbleLevel","bubbleLevelIncome","bubbleLevelCost","bubbleLevelBtn",
-      "bLvlSummary"
+      "bLvlSummary",
+      "tabMilestones","navMs","screenMilestones","msList","msBonusPill"
     ];
     for (const id of required){
       if (!document.getElementById(id)) throw new Error(`Missing DOM element #${id}. Check index.html matches game.js.`);
