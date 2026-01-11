@@ -413,24 +413,27 @@
   // ---------------------------
   // Boot
   // ---------------------------
-  function boot(){
-    cacheBubbleEls();
-    assertDom();
+function boot(){
+  cacheBubbleEls();
+  assertDom();
 
-    ER.ms?.load?.();
+  ER.world?.mountBuildingSvgs?.();
 
-    const hadSave = ER.persist.load();
-    ER.persist.safeMerge?.(); // safe if present
-    E.applyOfflineProgress();
+  ER.ms?.load?.();
 
-    bind();
-    ER.ui.renderAll();
-    renderMilestones();
-    setActive("world");
+  const hadSave = ER.persist.load();
+  ER.persist.safeMerge?.();
+  E.applyOfflineProgress();
 
-    U.setStatus(hadSave ? "Loaded" : "New run");
-    setInterval(tick, 100);
-  }
+  bind();
+  ER.ui.renderAll();
+  renderMilestones();
+  setActive("world");
+
+  U.setStatus(hadSave ? "Loaded" : "New run");
+  setInterval(tick, 100);
+}
+
 
   window.addEventListener("DOMContentLoaded", boot);
 })();
