@@ -761,3 +761,9 @@ button.danger{
 /* Bubble layering fix */
 .backdropClickCatcher { z-index: 5000; pointer-events: auto; }
 .bubble { z-index: 6000; pointer-events: auto; }
+/* Bubble: never cut off on small screens */
+.bubble{
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
