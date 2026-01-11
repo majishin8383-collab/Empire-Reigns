@@ -5,47 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Empire Reigns</title>
 
-  <link rel="stylesheet" href="./styles.css?v=ER-20260109d2c" />
-  <style>
-    body{margin:0}
-    .jsbar{
-      position:fixed; left:12px; right:12px; top:12px; z-index:9999;
-      padding:10px 12px; border-radius:16px;
-      border:1px solid rgba(255,245,220,.18);
-      background:rgba(12,10,14,.72);
-      color:rgba(255,245,220,.92);
-      font: 850 12px system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 18px 60px rgba(0,0,0,.55);
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-    }
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:950;}
-    .ok{color: rgba(120,220,180,.95);}
-    .bad{color: rgba(255,140,170,.95);}
-    .warn{color: rgba(255,210,120,.95);}
-    .jsbar button{
-      border-radius:14px; padding:8px 10px; cursor:pointer;
-      border:1px solid rgba(255,245,220,.18);
-      background:rgba(255,245,220,.06);
-      color:rgba(255,245,220,.92);
-      font-weight:900;
-    }
-  </style>
+  <!-- Cache-bust version (change this string when you want to force refresh) -->
+  <link rel="stylesheet" href="./styles.css?v=ER-20260109d2d" />
 </head>
 
 <body>
-  <div class="jsbar" id="jsbar">
-    <div>
-      <span class="mono">JS:</span>
-      <span id="jsStatus" class="mono">starting…</span>
-      <span id="jsDetail" class="mono" style="opacity:.8;margin-left:10px;"></span>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <span class="mono" id="jsBuild">ER-20260109d2c</span>
-      <button id="jsReload">Reload (cache-bust)</button>
-    </div>
-  </div>
-
   <div class="world" id="worldRoot">
 
     <div class="hud">
@@ -292,96 +256,8 @@
 
   </div>
 
- <script src="./milestones.js?v=ER-20260109d2" defer></script>
-<script src="./game.js?v=ER-20260109d2" defer></script>
-
-    (function(){
-      const BUILD = "ER-20260109d2c";
-      const st = document.getElementById("jsStatus");
-      const dt = document.getElementById("jsDetail");
-      const bar = document.getElementById("jsbar");
-      document.getElementById("jsReload").addEventListener("click", () => {
-        location.href = location.pathname + "?v=" + BUILD + "&r=" + Date.now();
-      });
-
-      function set(msg, cls){
-        st.className = "mono " + (cls||"");
-        st.textContent = msg;
-      }
-      function detail(msg){ dt.textContent = msg || ""; }
-      function ok(msg){ set(msg, "ok"); bar.style.borderColor="rgba(120,220,180,.35)"; }
-      function bad(msg){ set(msg, "bad"); bar.style.borderColor="rgba(255,140,170,.45)"; }
-      function warn(msg){ set(msg, "warn"); bar.style.borderColor="rgba(255,210,120,.45)"; }
-
-      function loadScript(src){
-        return new Promise((resolve, reject) => {
-          const s = document.createElement("script");
-          s.src = src;
-          s.async = false;
-          s.onload = () => resolve();
-          s.onerror = () => reject(new Error("FAILED: " + src));
-          document.body.appendChild(s);
-        });
-      }
-
-      window.addEventListener("error", (e) => bad("Runtime error: " + (e.message || "unknown")));
-      window.addEventListener("unhandledrejection", (e) => bad("Promise rejection: " + String(e.reason || "unknown")));
-
-      ok("loading…");
-      const q = "?v=" + BUILD + "&t=" + Date.now();
-
-      Promise.resolve()
-        .then(() => loadScript("./milestones.js" + q).catch(() => warn("milestones.js missing (ok for now)")))
-        .then(() => loadScript("./game.js" + q))
-        .then(() => {
-          // ---- SELF TESTS ----
-          const build = window.BUILD;
-          if (!build) {
-            bad("game.js loaded but BUILD not set");
-            detail("Meaning: your game.js file is not the one we wrote, or it didn't execute.");
-            return;
-          }
-
-          const workBtn = document.getElementById("workBtn");
-          const cashEl = document.getElementById("hudCash");
-          if (!workBtn || !cashEl){
-            bad("DOM missing #workBtn or #hudCash");
-            return;
-          }
-
-          // Test 1: does the tick loop change HUD at all?
-          const beforeCashText = cashEl.textContent;
-
-          // Test 2: does clicking work change cash text?
-          workBtn.click();
-
-          setTimeout(() => {
-            const afterClickText = cashEl.textContent;
-
-            if (afterClickText !== beforeCashText) {
-              ok("RUNNING ✅ (click worked)");
-              detail("BUILD=" + build);
-              return;
-            }
-
-            // If click didn’t change, wait briefly to see if tick loop updates anything
-            setTimeout(() => {
-              const laterCashText = cashEl.textContent;
-
-              if (laterCashText !== beforeCashText) {
-                ok("RUNNING ✅ (tick loop updating HUD)");
-                detail("BUILD=" + build + " · click might be blocked by overlay/pointer-events");
-                return;
-              }
-
-              bad("DEAD ❌ (no click + no tick updates)");
-              detail("BUILD=" + build + " exists, so script executed, but game didn't bind or boot.");
-            }, 400);
-
-          }, 120);
-        })
-        .catch(err => bad(err.message));
-    })();
-  </script>
+  <!-- Load order matters: milestones first, then game -->
+  <script src="./js/milestones.js?v=ER-20260109d2d" defer></script>
+  <script src="./js/game.js?v=ER-20260109d2d" defer></script>
 </body>
 </html>
