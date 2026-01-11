@@ -758,3 +758,6 @@ button.danger{
 .msList{ display:block; }
 .toggleRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .toggle{ min-width:110px; }
+/* Bubble layering fix */
+.backdropClickCatcher { z-index: 5000; pointer-events: auto; }
+.bubble { z-index: 6000; pointer-events: auto; }
