@@ -767,3 +767,21 @@ button.danger{
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
+/* Force bubble to be a fixed modal above the world (no off-screen clipping) */
+.bubble{
+  position: fixed !important;
+  left: 50% !important;
+  top: 84px !important;      /* below your jsbar/hud */
+  bottom: auto !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+
+  max-height: calc(100vh - 140px) !important;
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch;
+
+  width: min(520px, calc(100vw - 24px)) !important;
+}
+
+/* The tail isn’t meaningful anymore when it's fixed */
+.bubble::after{ display:none !important; }
