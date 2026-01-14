@@ -64,6 +64,11 @@
 
   function prestigeMultiplier(){ return Math.pow(1.2, S.ep || 0); }
 
+  // ✅ Starter Pack: permanent 2× income
+  function starterPackMultiplier(){
+    return S && S.starterPack ? 2.0 : 1.0;
+  }
+
   function baseIncomePerSecond(){
     return (S.owned.assistant || 0) * 1.0;
   }
@@ -85,7 +90,11 @@
     const buildingsPart = buildingIncomePerSecondRaw() * (b.buildingMult || 1);
     const basePart = baseIncomePerSecond();
     const totalBase = basePart + buildingsPart;
-    return totalBase * opsMultiplier() * prestigeMultiplier() * (b.globalMult || 1);
+
+    const core = totalBase * opsMultiplier() * prestigeMultiplier() * (b.globalMult || 1);
+
+    // ✅ apply starter pack last so it doubles everything
+    return core * starterPackMultiplier();
   }
 
   function buildingIncomeShown(){
@@ -275,6 +284,9 @@
 
     // spending
     canAfford,
-    spend
+    spend,
+
+    // monetization (exposed for UI if needed)
+    starterPackMultiplier
   };
 })();
